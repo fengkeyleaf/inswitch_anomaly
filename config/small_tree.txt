@@ -1,0 +1,18 @@
+srcCount = [0,2,3,5,10,39];
+srcTLS = [1,4,502];
+dstCount = [1,5,7,9,44];
+dstTLS = [3,4];
+  when dstCount<=5.5 and srcCount<=5.5 and dstTLS<=4.5 and srcTLS<=502.0  then 0;
+  when dstCount<=5.5 and srcCount<=5.5 and dstTLS<=4.5 and srcTLS>502.0 and dstCount<=1.5  then 0;
+  when dstCount<=5.5 and srcCount<=5.5 and dstTLS<=4.5 and srcTLS>502.0 and dstCount>1.5  then 1;
+  when dstCount<=5.5 and srcCount<=5.5 and dstTLS>4.5 and srcTLS<=4.0 and srcCount<=2  then 0;
+  when dstCount<=5.5 and srcCount<=5.5 and dstTLS>4.5 and srcTLS<=4.0 and srcCount>2  then 1;
+  when dstCount<=5.5 and srcCount<=5.5 and dstTLS>4.5 and srcTLS>4.0  then 0;
+  when dstCount<=5.5 and srcCount>5.5  then 1;
+  when dstCount>5.5 and srcTLS<=1.5 and dstCount<=44.5 and srcCount<=39.0  then 0;
+  when dstCount>5.5 and srcTLS<=1.5 and dstCount<=44.5 and srcCount>39.0  then 1;
+  when dstCount>5.5 and srcTLS<=1.5 and dstCount>44.5  then 1;
+  when dstCount>5.5 and srcTLS>1.5 dstTLS<=3.5 and dstCount<=7.5 and srcCount<=10.5  then 0;
+  when dstCount>5.5 and srcTLS>1.5 dstTLS<=3.5 and dstCount<=7.5 and srcCount>10.5  then 1;
+  when dstCount>5.5 and srcTLS>1.5 dstTLS<=3.5 and dstCount>7.5  then 1;
+  when dstCount>5.5 and srcTLS>1.5 dstTLS>3.5  then 0;
