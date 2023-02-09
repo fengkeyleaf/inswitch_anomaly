@@ -18,7 +18,7 @@ And then the folders:
 # 2. Run the exmaple
 First put the project files in the path:
 
-`~/tutorials/exercises/`
+`~/tutorials/exercises/<FOLDER_NAME_OF_YOUR_CHOICE>/`
 
 Then run the command line:
 
