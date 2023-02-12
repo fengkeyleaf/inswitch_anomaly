@@ -1,5 +1,5 @@
 # 1. Project Structure
-This directory mainly has 5 files and 5 folders. The files are:
+This directory mainly has 5 files and 6 folders. The files are:
 
 1. inswitch_anomaly.p4 -> Entry p4 file ( Data plane ).
 2. mycontroller.py -> Entry py file ( Control plane ).
@@ -14,6 +14,7 @@ And then the folders:
 3. pod-topo -> Contains json files to configure the network topology and swtiches in the runtime, if needed.
 4. includes -> Contains p4 files included by the entry p4 file, inswtich_anomaly.p4.
 5. imports -> Contains py files imported by the entry control plane py file, mycontroller.py.
+6. pseudocode -> Contains pseudocode txt files for each model.
 
 # 2. Run the exmaple
 First put the project files in the path:

@@ -3,9 +3,12 @@
 #include <v1model.p4>
 // Other p4 files cannot be in the same folder where the entry file is located.
 // Otheriwse, complier error.
+#include "./includes/defines.p4"
 #include "./includes/headers.p4"
+// #include "./includes/functions.p4"
 #include "./includes/parser.p4"
 #include "./includes/checksum.p4"
+// #include "./includes/sketch.p4"
 #include "./includes/ingress.p4"
 #include "./includes/egress.p4"
 #include "./includes/deparser.p4"
@@ -17,6 +20,7 @@
 V1Switch(
     MyParser(),
     MyVerifyChecksum(),
+    // Sketch(),
     MyIngress(),
     MyEgress(),
     MyComputeChecksum(),
