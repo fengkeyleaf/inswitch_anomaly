@@ -9,6 +9,9 @@ control Sketch(
     // 1. Initialize the following global variables:
     // https://p4.org/p4-spec/docs/P4-16-v1.2.2.html#sec-default-values
     int32 c = 0; // Global IP counter.
+    int32 ik = -1; // Index for current pkt located in the Skecth.
+    int32 iks = -1; // Index for srcAddr of current pkt located in the Skecth.
+    int32 ikd = -1; // Index for dstAddr of current pkt located in the Skecth.
 
     // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L290
     // extern register<T> register(bit<32> size);
@@ -20,10 +23,75 @@ control Sketch(
     // Array of size of 16, each element in it is bit<10> presenting TLS for ips.
     register<int32>( 16 ) T;
 
+    /////////////////////////////////////
+
     // https://p4.org/p4-spec/docs/P4-16-v1.2.2.html#sec-invoke-actions
-    action drop() {
-        mark_to_drop( standard_metadata );
+    action src_count_select_a() {
+        int32 v = -1;
+        C.read( v, iks );
+        assert( v >= 0 );
+
+        if ( iks > -1 ) {
+            meta.src_count_select = v;
+            return;
+        }
+
+        meta.src_count_select = 0;
     }
+
+    table src_count_select_t {
+        key = {
+            hdr.ipv4.protocol : range;
+        }
+
+        actions = {
+	        NoAction;
+            src_count_select_a;
+        }
+
+        size = 1024;
+    } 
+
+    action src_tls_select() {
+        int32 v = -1;
+        T.read( v, iks );
+        assert( v >= 0 );
+
+        if ( iks > -1 ) {
+            meta.src_tls_select = v;
+            return;
+        }
+
+        meta.src_tls_select = MAX_COUNT;
+    }
+
+    action dst_count_select() {
+        int32 v = -1;
+        C.read( v, ikd );
+        assert( v >= 0 );
+        
+        if ( ikd > -1 ) {
+            meta.dst_count_select = v;
+            return;
+        }
+
+        meta.dst_count_select = 0;
+    }
+
+    action dst_tls_select() {
+        int32 v = -1;
+        T.read( v, ikd );
+        assert( v >= 0 );
+
+        if ( ikd > -1 ) {
+            meta.dst_tls_select = v;
+            return;
+        }
+
+        meta.dst_tls_select = MAX_COUNT;
+    }
+
+    /////////////////////////////////////
 
     bool is_empty = false;
     int32 ie = -1; // empty index
@@ -61,14 +129,16 @@ control Sketch(
         // 1. i <- Find the index so that I[ index ] is empty ( So are C[ index ] and T[ index ] )
         // 2. if such i exists
         if ( ie > -1 ) {
-            // 3. REPLACE( i, a )
+            // 3. then ik = i
+            ik = ie;
+            // 4. REPLACE( i, a )
             // replace( ie, a );
-            // 4. return true
+            // 5. return true
             is_empty = true;
             return;
         }
 
-        // 5. else return false
+        // 6. else return false
         is_empty = false;
     }
 
@@ -91,31 +161,36 @@ control Sketch(
     // Input. IP address, either srcAddr or dstAddr.
     // Output. To tell if we need to apply the replace policy.
     action is_replace_a( in ip4Addr_t a ) {
+        assert( ir > -1 && ik == -1 );
+        assert( ie > -1 && ik == -1 );
+
         // 1. if I contains a, locating at the index i
-        if ( ir >= -1 ) {
+        if ( ir > -1 ) {
+            // 2. ik = i
+            ik = ir;
             // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L351
             // void write(in bit<32> index, in T value);
-            // 2. then C[ i ] = C[ i ] + 1
+            // 3. then C[ i ] = C[ i ] + 1
             // int<32> v = -1;
             // C.read( v, ( bit<32> ) i );
             // C.write( ( bit<32> ) i, v + 1 );
-            // 3, T[ i ] = 0
+            // 4, T[ i ] = 0
             // T.write( ( bit<32> ) i, 0 );
-            // 4. return false
+            // 5. return false
             is_replace = false;
             return;
         } 
 
         
-        // 5. else if HASEMPTY( a )
+        // 6. else if HASEMPTY( a )
         has_empty( a );
         if ( is_empty ) {
-            // 6. then return false
+            // 7. then return false
             is_replace = false;
             return;
         }
         
-        // 7. else return true
+        // 8. else return true
         is_replace = true;
     }
 
@@ -179,10 +254,14 @@ control Sketch(
         int32 tls = -1;
         T.read( tls, ( bit<32> ) i );
         assert( tls >= 0 );
+        int32 ct = -1;
+        C.read( ct, ( bit<32> ) i );
+        assert( ct >= 0 );
 
-        if ( tls < st ) {
+        int32 ctls = cal_smallest_tls( ct, tls );
+        if ( ctls < st ) {
             ist = i;
-            st = tls;
+            st = ctls;
         }
     }
 
@@ -299,6 +378,11 @@ control Sketch(
         if ( hdr.ipv4.isValid() ) {
             assert( hdr.ipv4.srcAddr != 0 );
             assert( hdr.ipv4.srcAddr != hdr.ipv4.dstAddr );
+
+            // Reset indice.
+            ik = -1;
+            iks = -1;
+            ikd = -1;
             
             // Look for ir for srcAddr, index from 0 ~ 7
             ir = -1;
@@ -326,6 +410,9 @@ control Sketch(
             // 3. then SKETCH( p.header.ipv4.srcAddr )
             r = -1;
             sketch( hdr.ipv4.srcAddr );
+            // 4. iks = ik
+            assert( ik > -1 );
+            iks = ik;
             // Fill empty place process.
             // Increment process first, when srcAddr is already stored in I and I has empty spaces.
             if ( ir == -1 && ie > -1 ) {
@@ -334,11 +421,9 @@ control Sketch(
 
             // Increment process.
             if ( ir > -1 ) {
-                // 2. then C[ i ] = C[ i ] + 1
                 int<32> v = -1;
                 C.read( v, ( bit<32> ) ir );
                 C.write( ( bit<32> ) ir, v + 1 );
-                // 3, T[ i ] = 0
                 T.write( ( bit<32> ) ir, 0 );
             }
 
@@ -418,9 +503,12 @@ control Sketch(
             find_empty( 14 );
             find_empty( 15 );
 
-            // 4. SKETCH( p.header.ipv4.dstAddr )
+            // 5. SKETCH( p.header.ipv4.dstAddr )
             r = -1;
             sketch( hdr.ipv4.dstAddr );
+            // 6. ikd = ik
+            assert( ik > -1 );
+            ikd = ik;
             // Fill empty place process.
             // Increment process first, when srcAddr is already stored in I and I has empty spaces.
             if ( ir == -1 && ie > -1 ) {
@@ -492,13 +580,19 @@ control Sketch(
 
             /////////////////////////////////////
 
-            // TODO: 5. Run the feature tables and then run the decision tree in the control plane.
+            //7. Run the feature tables and then run the decision tree in the control plane.
+            assert( iks >= 0 && iks < 16 );
+            src_count_select();
+            src_tls_select();
+            assert( ikd >= 0 && ikd < 16 );
+            dst_count_select();
+            dst_tls_select();
 
-            // 6. Increment every element in T by 1, as well as c.
+            // 8. Increment every element in T by 1, as well as c.
             increment();
-            // 7. if c >= 1000
+            // 9. if c >= 1000
             if ( c >= 1000 ) {
-                // 8. then Reset every element in T to 0, as well as c.
+                // 10. then Reset every element in T to 0, as well as c.
                 reset();
             }
         }

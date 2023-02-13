@@ -2,14 +2,18 @@
 Algorithm SKETCHCLASSIFICATION( p )
 Input. Incomming packet.
 Initialize the following global variables:
-    c <- 0
+    c <- 0 // IP counter.
+    ik <- -1 // Index for current pkt located in the Skecth.
+    iks <- -1 // Index for srcAddr of current pkt located in the Skecth.
+    ikd <- -1 // Index for dstAddr of current pkt located in the Skecth.
     I <- Array of size of 16, each element in it is bit<48> presenting macAddr_t.
     C <- Array of size of 16, each element in it is bit<10> presenting counts for ips.
-    T <- Array of size of 16, each element in it is bit<10> presenting TLS for ips.\
-    ci <- -1 // contains index
+    T <- Array of size of 16, each element in it is bit<10> presenting TLS for ips.
 if p has a valid ipv4 header
    then SKETCH( p.header.ipv4.srcAddr )
+        iks = ik
         SKETCH( p.header.ipv4.dstAddr )
+        ikd = ik
         Run the feature tables and then run the decision tree in the control plane.
         Increment every element in T by 1, as well as c.
         if c >= 1000
@@ -36,7 +40,8 @@ Algorithm ISREPLACE( a )
 Input. IP address, either srcAddr or dstAddr.
 Output. To tell if we need to apply the replace policy.
 if I contains a, locating at the index i // *
-   then C[ i ] = C[ i ] + 1
+   then ik = i
+        C[ i ] = C[ i ] + 1
         T[ i ] = 0
         return false
    else if HASEMPTY( a )
@@ -49,7 +54,8 @@ Input. IP address, either srcAddr or dstAddr.
 Output. To tell if there is an empty spot.
 i <- Find the index so that I[ index ] is empty ( So are C[ index ] and T[ index ] ) // *
 if such i exists
-   then REPLACE( i, a )
+   then ik = i
+        REPLACE( i, a )
         return true
    else return false
 

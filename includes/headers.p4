@@ -38,11 +38,10 @@ header tcp_t {
 }
 
 struct metadata {
-     bit<14> action_select1;
-     bit<14> action_select2;
-     bit<14> action_select3;
-
-    //  
+     int32 src_count_select;
+     int32 src_tls_select;
+     int32 dst_count_select;
+     int32 dst_tls_select;
 }
 
 struct headers {

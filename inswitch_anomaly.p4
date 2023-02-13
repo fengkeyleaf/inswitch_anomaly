@@ -5,7 +5,7 @@
 // Otheriwse, complier error.
 #include "./includes/defines.p4"
 #include "./includes/headers.p4"
-// #include "./includes/functions.p4"
+#include "./includes/functions.p4"
 #include "./includes/parser.p4"
 #include "./includes/checksum.p4"
 // #include "./includes/sketch.p4"
