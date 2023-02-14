@@ -23,25 +23,21 @@ control Sketch(
     // Array of size of 16, each element in it is bit<10> presenting TLS for ips.
     register<int32>( 16 ) T;
 
+    int32 scv = -1; // src count value
+    int32 stv = -1; // src tls valule
+    int32 dcv = -1; // dst count value
+    int32 dtv = -1; // dst tls value
+
     /////////////////////////////////////
 
     // https://p4.org/p4-spec/docs/P4-16-v1.2.2.html#sec-invoke-actions
-    action src_count_select_a() {
-        int32 v = -1;
-        C.read( v, iks );
-        assert( v >= 0 );
-
-        if ( iks > -1 ) {
-            meta.src_count_select = v;
-            return;
-        }
-
-        meta.src_count_select = 0;
+    action src_count_select_a( int32 v ) {
+        meta.src_count_select = v;
     }
 
     table src_count_select_t {
         key = {
-            hdr.ipv4.protocol : range;
+            scv: range;
         }
 
         actions = {
@@ -52,44 +48,56 @@ control Sketch(
         size = 1024;
     } 
 
-    action src_tls_select() {
-        int32 v = -1;
-        T.read( v, iks );
-        assert( v >= 0 );
-
-        if ( iks > -1 ) {
-            meta.src_tls_select = v;
-            return;
-        }
-
-        meta.src_tls_select = MAX_COUNT;
+    action src_tls_select_a( int32 v ) {
+        meta.src_tls_select = v;
     }
 
-    action dst_count_select() {
-        int32 v = -1;
-        C.read( v, ikd );
-        assert( v >= 0 );
-        
-        if ( ikd > -1 ) {
-            meta.dst_count_select = v;
-            return;
+    table src_tls_select_t {
+        key = {
+            stv: range;
         }
 
-        meta.dst_count_select = 0;
-    }
-
-    action dst_tls_select() {
-        int32 v = -1;
-        T.read( v, ikd );
-        assert( v >= 0 );
-
-        if ( ikd > -1 ) {
-            meta.dst_tls_select = v;
-            return;
+        actions = {
+	        NoAction;
+            src_tls_select_a;
         }
 
-        meta.dst_tls_select = MAX_COUNT;
+        size = 1024;
+    } 
+
+    action dst_count_select_a( int32 v ) {
+        meta.dst_count_select = v;
     }
+
+    table dst_count_select_t {
+        key = {
+            dcv: range;
+        }
+
+        actions = {
+	        NoAction;
+            dst_count_select_a;
+        }
+
+        size = 1024;
+    } 
+
+    action dst_tls_select_a( int32 v ) {
+        meta.dst_tls_select = v;
+    }
+
+    table dst_tls_select_t {
+        key = {
+            dtv: range;
+        }
+
+        actions = {
+	        NoAction;
+            dst_tls_select_a;
+        }
+
+        size = 1024;
+    } 
 
     /////////////////////////////////////
 
@@ -582,11 +590,16 @@ control Sketch(
 
             //7. Run the feature tables and then run the decision tree in the control plane.
             assert( iks >= 0 && iks < 16 );
-            src_count_select();
-            src_tls_select();
+            C.read( scv, ( bit<32> ) iks );
+            src_count_select_t.apply();
+            T.read( stv, ( bit<32> ) iks );
+            src_tls_select_t.apply();
+
             assert( ikd >= 0 && ikd < 16 );
-            dst_count_select();
-            dst_tls_select();
+            C.read( dcv, ( bit<32> ) ikd );
+            dst_count_select_t.apply();
+            T.read( dtv, ( bit<32> ) ikd );
+            dst_tls_select_t.apply();
 
             // 8. Increment every element in T by 1, as well as c.
             increment();
