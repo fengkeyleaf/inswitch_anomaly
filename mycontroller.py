@@ -31,7 +31,9 @@ from imports.writeRules import writeBasicForwardingRules, writeMLRules, printGrp
 
 
 inputfile = '../decision_tree/tree.txt'
+inputfile = "./config/test_tree.txt"
 actionfile = '../decision_tree/action.txt'
+actionfile = "./config/action.txt"
 
 proto, src, dst = find_feature(inputfile)
 print( "Feature:\nproto=%s, src=%s, dst=%s" % ( proto, src, dst ) )

@@ -159,6 +159,8 @@ control Sketch(
         I.read( ip, ( bit<32> ) i );
         assert( ip >= 0 );
 
+        log_msg( "find_replace: a={}, ip={}, ir={}", { a, ip, ir } );
+        // TODO: assert confiction needs to be fixed.
         assert( ip == a && ir == -1 );
         if ( ip == a ) {
             ir = i;
@@ -591,15 +593,18 @@ control Sketch(
             //7. Run the feature tables and then run the decision tree in the control plane.
             assert( iks >= 0 && iks < 16 );
             C.read( scv, ( bit<32> ) iks );
+            log_msg( "scv={}", { scv } );
             src_count_select_t.apply();
             T.read( stv, ( bit<32> ) iks );
+            log_msg( "stv={}", { stv } );
             src_tls_select_t.apply();
 
             assert( ikd >= 0 && ikd < 16 );
             C.read( dcv, ( bit<32> ) ikd );
+            log_msg( "dcv={}", { dcv } );
             dst_count_select_t.apply();
-            T.read( dtv, ( bit<32> ) ikd );
-            dst_tls_select_t.apply();
+            // T.read( dtv, ( bit<32> ) ikd );
+            // dst_tls_select_t.apply();
 
             // 8. Increment every element in T by 1, as well as c.
             increment();

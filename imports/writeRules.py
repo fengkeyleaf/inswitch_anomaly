@@ -42,11 +42,11 @@ def writeactionrule(p4info_helper, switch, a, b, c, action, port):
     para = get_actionpara(port)
     print( "A: a=%s, b=%s, c=%s, action=%s, para=%s" % ( a, b, c, action, para ) )
     table_entry = p4info_helper.buildTableEntry(
-        table_name="MyIngress.ipv4_exact",
+        table_name="MyIngress.decision_tree",
         match_fields={
-            "meta.action_select1": a,
-            "meta.action_select2": b,
-            "meta.action_select3": c
+            "meta.src_count_select": a,
+            "meta.src_tls_select": b,
+            "meta.dst_count_select": c
         },
         action_name=action,
         action_params=para,
@@ -60,12 +60,12 @@ def writeactionrule(p4info_helper, switch, a, b, c, action, port):
 def writefeature1rule(p4info_helper, switch, range, ind):
     print( "F1: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
-        table_name="MyIngress.feature1_exact",
+        table_name="MyIngress.s.src_count_select_t",
         match_fields={
-            "hdr.ipv4.protocol": range},
-        action_name="MyIngress.set_actionselect1",
+            "scv": range},
+        action_name="MyIngress.s.src_count_select_a",
         action_params={
-            "featurevalue1": ind,
+            "v": ind,
         },
         priority=1
     )
@@ -76,12 +76,12 @@ def writefeature1rule(p4info_helper, switch, range, ind):
 def writefeature2rule(p4info_helper, switch, range, ind):
     print( "F2: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
-        table_name="MyIngress.feature2_exact",
+        table_name="MyIngress.s.src_tls_select_t",
         match_fields={
-            "hdr.tcp.srcPort": range},
-        action_name="MyIngress.set_actionselect2",
+            "stv": range},
+        action_name="MyIngress.s.src_tls_select_a",
         action_params={
-            "featurevalue2": ind,
+            "v": ind,
         },
         priority=1
     )
@@ -92,12 +92,12 @@ def writefeature2rule(p4info_helper, switch, range, ind):
 def writefeature3rule(p4info_helper, switch, range, ind):
     print( "F3: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
-        table_name="MyIngress.feature3_exact",
+        table_name="MyIngress.s.dst_count_select_t",
         match_fields={
-            "hdr.tcp.dstPort": range},
-        action_name="MyIngress.set_actionselect3",
+            "dcv": range},
+        action_name="MyIngress.s.dst_count_select_a",
         action_params={
-            "featurevalue3": ind,
+            "v": ind,
         },
         priority=1
     )
