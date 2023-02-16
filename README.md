@@ -52,6 +52,7 @@ And you will see the information about pkts in h1's and h3's terminal.
 Assumptions: 
 - Cannot send pkts to host itself.
 - All 4 features may be set to 0 when no replacement policy applied.
+- Replacement policy: replace the last one when ties.
 - Decision Tree configuration: ./config/test_tree.txt.
 
 Test cases:
