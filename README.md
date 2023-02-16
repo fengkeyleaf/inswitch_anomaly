@@ -1,4 +1,5 @@
 # 1. Project Structure
+
 This directory mainly has 5 files and 6 folders. The files are:
 
 1. inswitch_anomaly.p4 -> Entry p4 file ( Data plane ).
@@ -17,6 +18,7 @@ And then the folders:
 6. pseudocode -> Contains pseudocode txt files for each model.
 
 # 2. Run the exmaple
+
 First put the project files in the path:
 
 `~/tutorials/exercises/<FOLDER_NAME_OF_YOUR_CHOICE>/`
@@ -45,3 +47,20 @@ And then in h1's terminal, run:
 
 And you will see the information about pkts in h1's and h3's terminal.
 
+# 3. Sketch Testing
+
+Assumptions: 
+- Cannot send pkts to host itself.
+- All 4 features may be set to 0 when no replacement policy applied.
+- Decision Tree configuration: ./config/test_tree.txt.
+
+Test cases:
+
+1. One pkt: h3 -> pkt -> h1;
+2. Two pkts: h3 -> h1, h2 -> h1; h1 -> h2, h2 -> h3;
+3. Three pkts: h3 -> h1, h2 -> h1, h4 -> h1;
+4. Four pkts: h1 -> h2, h2 -> h3, h3 -> h4, h4 -> h1;
+5. Lowest count: Four pkts;
+6. Highest TLS: Four pkts;
+7. Smallest TLS: Four pkts;
+8. No replacement: Four pkts;

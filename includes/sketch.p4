@@ -1,5 +1,7 @@
 
 // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L710
+// TODO: Define the behavior when no replacement policy applied.\
+// TODO: Replacement policy: replace the last one when ties.
 // TODO: all integers are 32-bit for consistency now. And then adjust them to better ones.
 control Sketch( 
     inout headers hdr,
@@ -17,11 +19,11 @@ control Sketch(
     // extern register<T> register(bit<32> size);
 
     // Array of size of 16, each element in it is bit<48> presenting macAddr_t.
-    register<ip4Addr_t>( 16 ) I;
+    register<ip4Addr_t>( ARRAY_LEN ) I;
     // Array of size of 16, each element in it is bit<10> presenting counts for ips.
-    register<int32>( 16 ) C;
+    register<int32>( ARRAY_LEN ) C;
     // Array of size of 16, each element in it is bit<10> presenting TLS for ips.
-    register<int32>( 16 ) T;
+    register<int32>( ARRAY_LEN ) T;
 
     int32 scv = -1; // src count value
     int32 stv = -1; // src tls valule
@@ -112,9 +114,11 @@ control Sketch(
         assert( res >= 0 );
 
         // Find empty place only for once.
-        assert( res == 0 && ie == -1 );
+        log_msg( "res={}, i={}, ie={}", { res, i, ie } );
+        assert( res != 0 || ( res == 0 && ( ie == -1 || ie > -1 ) ) );
         // count(res) == 0 meaning no ip repace at i, emtpy space.
-        if ( res == 0 ) {
+        // There may be several empty spots, use the first one.
+        if ( res == 0 && ie == -1 ) {
             ie = i;
         }
     }
@@ -122,11 +126,11 @@ control Sketch(
     // Algorithm REPLACE( i, a )
     // Input. index where the replacement happens, and IP address to be replaced.
     action replace( in int32 i, in ip4Addr_t a ) {
-        // I[ i ] = a
+        // 1. I[ i ] = a
         I.write( ( bit<32> ) i, a );
-        // C[ i ] = 1
+        // 2. C[ i ] = 1
         C.write( ( bit<32> ) i, 1 );
-        // T[ i ] = 0
+        // 3. T[ i ] = 0
         T.write( ( bit<32> ) i, 0 );
     }
 
@@ -160,8 +164,7 @@ control Sketch(
         assert( ip >= 0 );
 
         log_msg( "find_replace: a={}, ip={}, ir={}", { a, ip, ir } );
-        // TODO: assert confiction needs to be fixed.
-        assert( ip == a && ir == -1 );
+        assert( ip != a || ip == a && ir == -1 );
         if ( ip == a ) {
             ir = i;
         }
@@ -171,8 +174,11 @@ control Sketch(
     // Input. IP address, either srcAddr or dstAddr.
     // Output. To tell if we need to apply the replace policy.
     action is_replace_a( in ip4Addr_t a ) {
-        assert( ir > -1 && ik == -1 );
-        assert( ie > -1 && ik == -1 );
+        log_msg( "ir={}, ie={}, ik={}", { ir, ie, ik } );
+        // Found a spot to replace, no replacement or fill-in-empty happened before.
+        assert( ir == -1 || ir > -1 && ik == -1 );
+        // Found an empty spot to fill in, no replacement or fill-in-empty happened before.
+        assert( ie == -1 || ie > -1 && ik == -1 );
 
         // 1. if I contains a, locating at the index i
         if ( ir > -1 ) {
@@ -291,11 +297,13 @@ control Sketch(
     // Algorithm SKETCH( a )
     // Input. IP address, either srcAddr or dstAddr.
     action sketch( in ip4Addr_t a ) {
+        assert( r == -1 );
         // Cannot call extern functions in conditional action block.
         // int32 r; // random number [0, 3].
         // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L367
         // extern void random<T>(out T result, in T lo, in T hi);
-        random( r, 0, 3 );
+        // random( r, 0, 3 );
+        r = 1;
         // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L668
         // extern void assert(in bool check );
         assert( r >= 0 && r <= 3 );
@@ -303,6 +311,8 @@ control Sketch(
 
         // 1. if ISREPLACE( a ) is true
         is_replace_a( a );
+        // Apply replacement policy when neither no empty spot nor a(addr) not in record.
+        assert( !is_replace || ( ie == -1 && ir == -1 ) );
         if ( is_replace ) {
             // Neither p's srcAddr nor p's dstAddr is in the Sketch.
             // Start the replacement policy.
@@ -341,16 +351,16 @@ control Sketch(
         increment_tls( 3 );
         increment_tls( 4 );
         increment_tls( 5 );
-        increment_tls( 6 );
-        increment_tls( 7 );
-        increment_tls( 8 );
-        increment_tls( 9 );
-        increment_tls( 10 );
-        increment_tls( 11 );
-        increment_tls( 12 );
-        increment_tls( 13 );
-        increment_tls( 14 );
-        increment_tls( 15 );
+        // increment_tls( 6 );
+        // increment_tls( 7 );
+        // increment_tls( 8 );
+        // increment_tls( 9 );
+        // increment_tls( 10 );
+        // increment_tls( 11 );
+        // increment_tls( 12 );
+        // increment_tls( 13 );
+        // increment_tls( 14 );
+        // increment_tls( 15 );
 
         c = c + 1;
     }
@@ -367,16 +377,16 @@ control Sketch(
         reset_tls( 3 );
         reset_tls( 4 );
         reset_tls( 5 );
-        reset_tls( 6 );
-        reset_tls( 7 );
-        reset_tls( 8 );
-        reset_tls( 9 );
-        reset_tls( 10 );
-        reset_tls( 11 );
-        reset_tls( 12 );
-        reset_tls( 13 );
-        reset_tls( 14 );
-        reset_tls( 15 );
+        // reset_tls( 6 );
+        // reset_tls( 7 );
+        // reset_tls( 8 );
+        // reset_tls( 9 );
+        // reset_tls( 10 );
+        // reset_tls( 11 );
+        // reset_tls( 12 );
+        // reset_tls( 13 );
+        // reset_tls( 14 );
+        // reset_tls( 15 );
 
         c = 0;
     }
@@ -399,11 +409,11 @@ control Sketch(
             find_replace( 0, hdr.ipv4.srcAddr );
             find_replace( 1, hdr.ipv4.srcAddr );
             find_replace( 2, hdr.ipv4.srcAddr );
-            find_replace( 3, hdr.ipv4.srcAddr );
-            find_replace( 4, hdr.ipv4.srcAddr );
-            find_replace( 5, hdr.ipv4.srcAddr );
-            find_replace( 6, hdr.ipv4.srcAddr );
-            find_replace( 7, hdr.ipv4.srcAddr );
+            // find_replace( 3, hdr.ipv4.srcAddr );
+            // find_replace( 4, hdr.ipv4.srcAddr );
+            // find_replace( 5, hdr.ipv4.srcAddr );
+            // find_replace( 6, hdr.ipv4.srcAddr );
+            // find_replace( 7, hdr.ipv4.srcAddr );
 
             // Look for ie for srcAddr, index from 0 ~ 7
             // A table can only be called once, no more than one!
@@ -411,17 +421,19 @@ control Sketch(
             find_empty( 0 );
             find_empty( 1 );
             find_empty( 2 );
-            find_empty( 3 );
-            find_empty( 4 );
-            find_empty( 5 );
-            find_empty( 6 );
-            find_empty( 7 );
+            // find_empty( 3 );
+            // find_empty( 4 );
+            // find_empty( 5 );
+            // find_empty( 6 );
+            // find_empty( 7 );
 
             // 3. then SKETCH( p.header.ipv4.srcAddr )
             r = -1;
             sketch( hdr.ipv4.srcAddr );
             // 4. iks = ik
-            assert( ik > -1 );
+            log_msg( "ir={}, ie={}, ik={}", { ir, ie, ik } );
+            // Find the spot in the sketch or replacement policy applied.
+            assert( ik > -1 || r > -1 );
             iks = ik;
             // Fill empty place process.
             // Increment process first, when srcAddr is already stored in I and I has empty spaces.
@@ -437,8 +449,9 @@ control Sketch(
                 T.write( ( bit<32> ) ir, 0 );
             }
 
+
             // Replace policy process.
-            if ( r == 0 ) {
+            if ( r == 0 && is_replace ) {
                 ilc = -1;
                 lc = MAX_COUNT;
 
@@ -446,16 +459,17 @@ control Sketch(
                 find_lowest_count( 0, hdr.ipv4.srcAddr );
                 find_lowest_count( 1, hdr.ipv4.srcAddr );
                 find_lowest_count( 2, hdr.ipv4.srcAddr );
-                find_lowest_count( 3, hdr.ipv4.srcAddr );
-                find_lowest_count( 4, hdr.ipv4.srcAddr );
-                find_lowest_count( 5, hdr.ipv4.srcAddr );
-                find_lowest_count( 6, hdr.ipv4.srcAddr );
-                find_lowest_count( 7, hdr.ipv4.srcAddr );
+                // find_lowest_count( 3, hdr.ipv4.srcAddr );
+                // find_lowest_count( 4, hdr.ipv4.srcAddr );
+                // find_lowest_count( 5, hdr.ipv4.srcAddr );
+                // find_lowest_count( 6, hdr.ipv4.srcAddr );
+                // find_lowest_count( 7, hdr.ipv4.srcAddr );
 
                 // Replace at the index, and this is guarantee to happen.
+                iks = ilc;
                 lowest_count( hdr.ipv4.srcAddr );
             }
-            else if ( r == 1 ) {
+            else if ( r == 1 && is_replace ) {
                 iht = -1;
                 ht = -1;
 
@@ -463,16 +477,17 @@ control Sketch(
                 find_highest_tls( 0 );
                 find_highest_tls( 1 );
                 find_highest_tls( 2 );
-                find_highest_tls( 3 );
-                find_highest_tls( 4 );
-                find_highest_tls( 5 );
-                find_highest_tls( 6 );
-                find_highest_tls( 7 );
+                // find_highest_tls( 3 );
+                // find_highest_tls( 4 );
+                // find_highest_tls( 5 );
+                // find_highest_tls( 6 );
+                // find_highest_tls( 7 );
 
                 // Replace at the index, and this is guarantee to happen.
+                iks = iht;
                 highest_tls( hdr.ipv4.srcAddr );
             }
-            else if ( r == 2 ) {
+            else if ( r == 2 && is_replace ) {
                 ist = -1;
                 st = MAX_TLS;
 
@@ -480,44 +495,58 @@ control Sketch(
                 find_smallest_tls( 0 );
                 find_smallest_tls( 1 );
                 find_smallest_tls( 2 );
-                find_smallest_tls( 3 );
-                find_smallest_tls( 4 );
-                find_smallest_tls( 5 );
-                find_smallest_tls( 6 );
-                find_smallest_tls( 7 );
+                // find_smallest_tls( 3 );
+                // find_smallest_tls( 4 );
+                // find_smallest_tls( 5 );
+                // find_smallest_tls( 6 );
+                // find_smallest_tls( 7 );
 
                 // Replace at the index, and this is guarantee to happen.
+                iks = ist;
                 smallest_tls( hdr.ipv4.srcAddr );
             }
 
+            // Either found a spot to replace or no replacement policy applied.
+            assert( iks > -1 || r == 3 );
+
             /////////////////////////////////////
+            // Don't forget to reset ik to -1, previous ik is recorded for srcAddr.
+            ik = -1;
             // Look for ir for dstAddr, index from 8 ~ 15
             ir = -1;
-            find_replace( 8, hdr.ipv4.dstAddr );
-            find_replace( 9, hdr.ipv4.dstAddr );
-            find_replace( 10, hdr.ipv4.dstAddr );
-            find_replace( 11, hdr.ipv4.dstAddr );
-            find_replace( 12, hdr.ipv4.dstAddr );
-            find_replace( 13, hdr.ipv4.dstAddr );
-            find_replace( 14, hdr.ipv4.dstAddr );
-            find_replace( 15, hdr.ipv4.dstAddr );
+            find_replace( 3, hdr.ipv4.dstAddr );
+            find_replace( 4, hdr.ipv4.dstAddr );
+            find_replace( 5, hdr.ipv4.dstAddr );
+
+            // find_replace( 8, hdr.ipv4.dstAddr );
+            // find_replace( 9, hdr.ipv4.dstAddr );
+            // find_replace( 10, hdr.ipv4.dstAddr );
+            // find_replace( 11, hdr.ipv4.dstAddr );
+            // find_replace( 12, hdr.ipv4.dstAddr );
+            // find_replace( 13, hdr.ipv4.dstAddr );
+            // find_replace( 14, hdr.ipv4.dstAddr );
+            // find_replace( 15, hdr.ipv4.dstAddr );
 
             // Look for ie for dstAddr, index from 8 ~ 15
             ie = -1;
-            find_empty( 8 );
-            find_empty( 9 );
-            find_empty( 10 );
-            find_empty( 11 );
-            find_empty( 12 );
-            find_empty( 13 );
-            find_empty( 14 );
-            find_empty( 15 );
+            find_empty( 3 );
+            find_empty( 4 );
+            find_empty( 5 );
+
+            // find_empty( 8 );
+            // find_empty( 9 );
+            // find_empty( 10 );
+            // find_empty( 11 );
+            // find_empty( 12 );
+            // find_empty( 13 );
+            // find_empty( 14 );
+            // find_empty( 15 );
 
             // 5. SKETCH( p.header.ipv4.dstAddr )
             r = -1;
             sketch( hdr.ipv4.dstAddr );
             // 6. ikd = ik
-            assert( ik > -1 );
+            assert( ik > -1 || r > -1 );
             ikd = ik;
             // Fill empty place process.
             // Increment process first, when srcAddr is already stored in I and I has empty spaces.
@@ -536,75 +565,97 @@ control Sketch(
             }
 
             // Replace policy process.
-            if ( r == 0 ) {
+            if ( r == 0 && is_replace ) {
                 ilc = -1;
                 lc = MAX_COUNT;
 
                 // Find lowest count index for dstAddr.
-                find_lowest_count( 8, hdr.ipv4.dstAddr );
-                find_lowest_count( 9, hdr.ipv4.dstAddr );
-                find_lowest_count( 10, hdr.ipv4.dstAddr );
-                find_lowest_count( 11, hdr.ipv4.dstAddr );
-                find_lowest_count( 12, hdr.ipv4.dstAddr );
-                find_lowest_count( 13, hdr.ipv4.dstAddr );
-                find_lowest_count( 14, hdr.ipv4.dstAddr );
-                find_lowest_count( 15, hdr.ipv4.dstAddr );
+                find_lowest_count( 3, hdr.ipv4.dstAddr );
+                find_lowest_count( 4, hdr.ipv4.dstAddr );
+                find_lowest_count( 5, hdr.ipv4.dstAddr );
+
+                // find_lowest_count( 8, hdr.ipv4.dstAddr );
+                // find_lowest_count( 9, hdr.ipv4.dstAddr );
+                // find_lowest_count( 10, hdr.ipv4.dstAddr );
+                // find_lowest_count( 11, hdr.ipv4.dstAddr );
+                // find_lowest_count( 12, hdr.ipv4.dstAddr );
+                // find_lowest_count( 13, hdr.ipv4.dstAddr );
+                // find_lowest_count( 14, hdr.ipv4.dstAddr );
+                // find_lowest_count( 15, hdr.ipv4.dstAddr );
 
                 // Replace at the index, and this is guarantee to happen.
+                ikd = ilc;
                 lowest_count( hdr.ipv4.dstAddr );
             }
-            else if ( r == 1 ) {
+            else if ( r == 1 && is_replace ) {
                 iht = -1;
                 ht = -1;
 
                 // Find highefst tls index for dstAddr.
-                find_highest_tls( 8 );
-                find_highest_tls( 9 );
-                find_highest_tls( 10 );
-                find_highest_tls( 11 );
-                find_highest_tls( 12 );
-                find_highest_tls( 13 );
-                find_highest_tls( 14 );
-                find_highest_tls( 15 );
+                find_highest_tls( 3 );
+                find_highest_tls( 4 );
+                find_highest_tls( 5 );
+
+                // find_highest_tls( 8 );
+                // find_highest_tls( 9 );
+                // find_highest_tls( 10 );
+                // find_highest_tls( 11 );
+                // find_highest_tls( 12 );
+                // find_highest_tls( 13 );
+                // find_highest_tls( 14 );
+                // find_highest_tls( 15 );
 
                 // Replace at the index, and this is guarantee to happen.
+                ikd = iht;
                 highest_tls( hdr.ipv4.dstAddr );
             }
-            else if ( r == 2 ) {
+            else if ( r == 2 && is_replace ) {
                 ist = -1;
                 st = MAX_TLS;
 
                 // Find smallest tls index for dstAddr.
-                find_smallest_tls( 8 );
-                find_smallest_tls( 9 );
-                find_smallest_tls( 10 );
-                find_smallest_tls( 11 );
-                find_smallest_tls( 12 );
-                find_smallest_tls( 13 );
-                find_smallest_tls( 14 );
-                find_smallest_tls( 15 );
+                find_smallest_tls( 3 );
+                find_smallest_tls( 4 );
+                find_smallest_tls( 5 );
+
+                // find_smallest_tls( 8 );
+                // find_smallest_tls( 9 );
+                // find_smallest_tls( 10 );
+                // find_smallest_tls( 11 );
+                // find_smallest_tls( 12 );
+                // find_smallest_tls( 13 );
+                // find_smallest_tls( 14 );
+                // find_smallest_tls( 15 );
 
                 // Replace at the index, and this is guarantee to happen.
+                ikd = ist;
                 smallest_tls( hdr.ipv4.dstAddr );
             }
 
+            assert( ikd > -1 || r == 3 );
+
             /////////////////////////////////////
 
-            //7. Run the feature tables and then run the decision tree in the control plane.
-            assert( iks >= 0 && iks < 16 );
-            C.read( scv, ( bit<32> ) iks );
-            log_msg( "scv={}", { scv } );
-            src_count_select_t.apply();
-            T.read( stv, ( bit<32> ) iks );
-            log_msg( "stv={}", { stv } );
-            src_tls_select_t.apply();
-
-            assert( ikd >= 0 && ikd < 16 );
-            C.read( dcv, ( bit<32> ) ikd );
-            log_msg( "dcv={}", { dcv } );
-            dst_count_select_t.apply();
-            // T.read( dtv, ( bit<32> ) ikd );
-            // dst_tls_select_t.apply();
+            // 7. Run the feature tables and then run the decision tree in the control plane.
+            // For now, iks and ikd may be -1 when no replacement policy applied.
+            if ( iks > -1 ) {
+                assert( iks >= 0 && iks < 16 );
+                C.read( scv, ( bit<32> ) iks );
+                log_msg( "scv={}", { scv } );
+                src_count_select_t.apply();
+                T.read( stv, ( bit<32> ) iks );
+                log_msg( "stv={}", { stv } );
+                src_tls_select_t.apply();
+            }
+            
+            if ( ikd > -1 ) {
+                assert( ikd >= 0 && ikd < 16 );
+                C.read( dcv, ( bit<32> ) ikd );
+                log_msg( "dcv={}", { dcv } );
+                dst_count_select_t.apply();
+                // T.read( dtv, ( bit<32> ) ikd );
+                // dst_tls_select_t.apply();
+            }
 
             // 8. Increment every element in T by 1, as well as c.
             increment();
