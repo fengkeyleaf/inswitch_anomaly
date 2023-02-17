@@ -35,9 +35,13 @@ inputfile = "./config/test_tree.txt"
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"
 
-proto, src, dst = find_feature(inputfile)
+proto, src, dst = find_feature( inputfile, 3 )
 print( "Feature:\nproto=%s, src=%s, dst=%s" % ( proto, src, dst ) )
-protocol, srouce, dstination, classfication = find_classification(inputfile, proto, src, dst)
+
+fr = r"(proto|src|dst)"
+FS = [ "proto", "src", "dst" ]
+
+protocol, srouce, dstination, classfication = find_classification( inputfile, [ proto, src, dst ], FS, fr )
 print( "Classification:\nprotocol=%s, srouce=%s, dst=%s, class=%s" % ( protocol, srouce, dstination, classfication ) )
 action = find_action(actionfile)
 print( "Action: %s" % ( action ) )

@@ -16,88 +16,74 @@ def find_action(textfile):
     return action
 
 
-def find_feature(textfile):
-    f = open(textfile)
-    line = f.readline()
-    proto = re.findall('\d+', line)
-    line = f.readline()
-    src = re.findall('\d+', line)
-    line = f.readline()
-    dst = re.findall('\d+', line)
-    f.close
-    proto = [int(i) for i in proto]
-    src = [int(i) for i in src]
-    dst = [int(i) for i in dst]
-    return proto, src, dst
+def find_feature( tf, n ):
+    """
+    :param tf: decision tree txt file.
+    :param n: # of features.
+    "return" ( feature1, feature2, ..., featureN )
+    """
+    # https://www.geeksforgeeks.org/with-statement-in-python/
+    F = []
+    with open( tf, "r" ) as f:
+        for _ in range( n ):
+            F.append( re.findall( '\d+', f.readline() ) )
 
-def find_classification(textfile, proto, src, dst):
+    # https://docs.python.org/3.8/library/functions.html#map
+    # https://www.geeksforgeeks.org/python-map-function/
+    r = map( lambda l : [ int( i ) for i in l ], F )
+    return ( e for e in r )
+
+
+def find_classification( tf, F, FS, fr ):
+    """
+    :param tf: decision tree txt file.
+    :param F: list of features.
+    :param FS: list of feature names in string.
+    :param fr: regular exp of feature names.
+    "return" ( feature1, feature2, ..., featureN, classfication )
+    """
     fea = []
     sign = []
     num = []
-    f = open(textfile, 'r')
-    for line in f:
-        n = re.findall(r"when", line)
-        if n:
-            fea.append(re.findall(r"(proto|src|dst)", line))
-            sign.append(re.findall(r"(<=|>)", line))
-            num.append(re.findall(r"\d+\.?\d*", line))
-    f.close()
+    with open( tf, "r" ) as f:
+        for line in f:
+            n = re.findall( r"when", line )
+            if n:
+                fea.append( re.findall( fr, line ) )
+                sign.append( re.findall( r"(<=|>)", line ) )
+                num.append( re.findall( r"\d+\.?\d*", line ) )
 
-    protocol = []
-    srouce = []
-    dstination = []
-    classfication = []
+    FL = [ [] for _ in range( len( F ) + 1 ) ]
 
-    for i in range(len(fea)):
-        feature1 = [k for k in range(len(proto) + 1)]
-        feature2 = [k for k in range(len(src) + 1)]
-        feature3 = [k for k in range(len(dst) + 1)]
-        for j, feature in enumerate(fea[i]):
-            if feature == 'proto':
-                sig = sign[i][j]
-                thres = int(float(num[i][j]))
-                id = proto.index(thres)
-                if sig == '<=':
-                    while id < len(proto):
-                        if id + 1 in feature1:
-                            feature1.remove(id + 1)
-                        id = id + 1
-                else:
-                    while id >= 0:
-                        if id in feature1:
-                            feature1.remove(id)
-                        id = id - 1
-            elif feature == 'src':
-                sig = sign[i][j]
-                thres = int(float(num[i][j]))
-                id = src.index(thres)
-                if sig == '<=':
-                    while id < len(src):
-                        if id + 1 in feature2:
-                            feature2.remove(id + 1)
-                        id = id + 1
-                else:
-                    while id >= 0:
-                        if id in feature2:
-                            feature2.remove(id)
-                        id = id - 1
+    for i in range( len( fea ) ):
+        FLT = [ [ k for k in range( len( f ) + 1 ) ] for f in F ]
+        assert len( FLT ) == len( FS ), str( len( FLT ) ) + " " + str( len( FS ) )
+        assert len( FS ) == len( F )
+
+        for j, feature in enumerate( fea[ i ] ):
+            for k in range( len( FS )):
+                if feature == FS[ k ]:
+                    sig = sign[ i ][ j ]
+                    thres = int( float( num[ i ][ j ] ) )
+                    id = F[ k ].index( thres )
+                    if sig == "<=":
+                        while id < len( F[ k ] ):
+                            if id + 1 in FLT[ k ]:
+                                FLT[ k ].remove( id + 1 )
+                            id = id + 1
+                    else:
+                        while id >= 0:
+                            if id in FLT[ k ]:
+                                FLT[ k ].remove( id )
+                            id = id - 1
+                # else:
+                    # https://www.geeksforgeeks.org/python-assert-keyword/
+                    # assert False, FS[ k ] + " " + feature
+        
+        for k in range( len( FL ) ):
+            if ( k == len( FL ) - 1 ):
+                FL[ k ].append( num[ i ][ len( num[ i ] ) - 1 ] )
             else:
-                sig = sign[i][j]
-                thres = int(float(num[i][j]))
-                id = dst.index(thres)
-                if sig == '<=':
-                    while id < len(dst):
-                        if id + 1 in feature3:
-                            feature3.remove(id + 1)
-                        id = id + 1
-                else:
-                    while id >= 0:
-                        if id in feature3:
-                            feature3.remove(id)
-                        id = id - 1
-        protocol.append(feature1)
-        srouce.append(feature2)
-        dstination.append(feature3)
-        a = len(num[i])
-        classfication.append(num[i][a - 1])
-    return (protocol, srouce, dstination, classfication)
+                FL[ k ].append( FLT[ k ] )
+
+    return ( e for e in FL )

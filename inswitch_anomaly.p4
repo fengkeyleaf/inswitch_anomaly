@@ -13,6 +13,11 @@
 #include "./includes/egress.p4"
 #include "./includes/deparser.p4"
 
+// Reference material about basic decision-tree combing packet re-forwading:
+// https://github.com/cucl-srg/IIsy
+// Reference material about basic p4 inswitch anomaly detection:
+// https://github.com/sdb2139/p4_inswitch_anomaly
+
 /*************************************************************************
 ***********************  S W I T C H  *******************************
 *************************************************************************/
