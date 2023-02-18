@@ -20,7 +20,7 @@ def find_feature( tf, n ):
     """
     :param tf: decision tree txt file.
     :param n: # of features.
-    "return" ( feature1, feature2, ..., featureN )
+    :return: ( feature1, feature2, ..., featureN )
     """
     # https://www.geeksforgeeks.org/with-statement-in-python/
     F = []
@@ -40,7 +40,7 @@ def find_classification( tf, F, FS, fr ):
     :param F: list of features.
     :param FS: list of feature names in string.
     :param fr: regular exp of feature names.
-    "return" ( feature1, feature2, ..., featureN, classfication )
+    :return: ( feature1, feature2, ..., featureN, classfication )
     """
     fea = []
     sign = []

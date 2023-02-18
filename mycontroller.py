@@ -32,18 +32,18 @@ from imports.writeRules import writeBasicForwardingRules, writeMLRules, printGrp
 
 inputfile = '../decision_tree/tree.txt'
 inputfile = "./config/test_tree.txt"
+inputfile = "./config/test_tree_4_features.txt"
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"
 
-proto, src, dst = find_feature( inputfile, 3 )
-print( "Feature:\nproto=%s, src=%s, dst=%s" % ( proto, src, dst ) )
+fr = r"(srcCount|srcTLS|dstCount|dstTLS)"
+FS = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
-fr = r"(proto|src|dst)"
-FS = [ "proto", "src", "dst" ]
-
-protocol, srouce, dstination, classfication = find_classification( inputfile, [ proto, src, dst ], FS, fr )
-print( "Classification:\nprotocol=%s, srouce=%s, dst=%s, class=%s" % ( protocol, srouce, dstination, classfication ) )
-action = find_action(actionfile)
+srcCount, srcTLS, dstCount, dstTLS = find_feature( inputfile, len( FS ) )
+print( "Feature:\nsrcCount=%s, srcTLS=%s, dstCount=%s, dstTLS=%s" % ( srcCount, srcTLS, dstCount, dstTLS ) )
+srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = find_classification( inputfile, [ srcCount, srcTLS, dstCount, dstTLS ], FS, fr )
+print( "Classification:\nsrcCountMap=%s, srcTLSMap=%s, dstCountMap=%s, dstTLSMap=%s, class=%s" % ( srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication ) )
+action = find_action( actionfile )
 print( "Action: %s" % ( action ) )
 
 
@@ -80,12 +80,14 @@ def main(p4info_file_path, bmv2_file_path):
         # writeBasicForwardingRules( p4info_helper, s1 )
 
         writeMLRules(
-            proto = proto,
-            src = src,
-            dst = dst,
-            protocol = protocol,
-            srouce = srouce,
-            dstination = dstination,
+            srcCount = srcCount,
+            srcCountMap = srcCountMap,
+            srcTLS = srcTLS,
+            srcTLSMap = srcTLSMap,
+            dstCount = dstCount,
+            dstCountMap = dstCountMap,
+            dstTLS = dstTLS,
+            dstTLSMap = dstTLSMap,
             classfication = classfication,
             action = action,
             s1 = s1,

@@ -303,8 +303,7 @@ control Sketch(
         // int32 r; // random number [0, 3].
         // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L367
         // extern void random<T>(out T result, in T lo, in T hi);
-        // random( r, 0, 3 );
-        r = 1;
+        random( r, 0, 3 );
         // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L668
         // extern void assert(in bool check );
         assert( r >= 0 && r <= 3 );
@@ -654,8 +653,8 @@ control Sketch(
                 C.read( dcv, ( bit<32> ) ikd );
                 log_msg( "dcv={}", { dcv } );
                 dst_count_select_t.apply();
-                // T.read( dtv, ( bit<32> ) ikd );
-                // dst_tls_select_t.apply();
+                T.read( dtv, ( bit<32> ) ikd );
+                dst_tls_select_t.apply();
             }
 
             // 8. Increment every element in T by 1, as well as c.

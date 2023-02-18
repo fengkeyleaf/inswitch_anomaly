@@ -38,15 +38,16 @@ def writeForwardingRules( p4info_helper, sw, range, port ):
 
 # Decision tree rules.
 
-def writeactionrule(p4info_helper, switch, a, b, c, action, port):
+def writeactionrule(p4info_helper, switch, a, b, c, d, action, port):
     para = get_actionpara(port)
-    print( "A: a=%s, b=%s, c=%s, action=%s, para=%s" % ( a, b, c, action, para ) )
+    print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.decision_tree",
         match_fields={
             "meta.src_count_select": a,
             "meta.src_tls_select": b,
-            "meta.dst_count_select": c
+            "meta.dst_count_select": c,
+            "meta.dst_tls_select": d,
         },
         action_name=action,
         action_params=para,
@@ -62,7 +63,8 @@ def writefeature1rule(p4info_helper, switch, range, ind):
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.s.src_count_select_t",
         match_fields={
-            "scv": range},
+            "scv": range
+        },
         action_name="MyIngress.s.src_count_select_a",
         action_params={
             "v": ind,
@@ -103,6 +105,22 @@ def writefeature3rule(p4info_helper, switch, range, ind):
     )
     switch.WriteTableEntry(table_entry)
     print("Installed feature3 rule on %s" % switch.name)
+
+
+def writefeature4rule(p4info_helper, switch, range, ind):
+    print( "F4: range=%s, ind=%s" % ( range, ind ) )
+    table_entry = p4info_helper.buildTableEntry(
+        table_name="MyIngress.s.dst_tls_select_t",
+        match_fields={
+            "dtv": range},
+        action_name="MyIngress.s.dst_tls_select_a",
+        action_params={
+            "v": ind,
+        },
+        priority=1
+    )
+    switch.WriteTableEntry(table_entry)
+    print("Installed feature4 rule on %s" % switch.name)
 
 #
 # Print out a switch information.
@@ -157,59 +175,75 @@ def writeBasicForwardingRules( p4info_helper, s1 ):
 
 
 def writeMLRules( 
-    classfication, protocol, srouce, 
-    dstination, action, p4info_helper,
-    s1, proto, src, dst
+    dstTLS, srcCount, srcTLS, dstCount,
+    srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, 
+    classfication, action, s1, p4info_helper
 ):
     for i in range(len(classfication)):
-        a = protocol[i]
+        a = srcCountMap[i]
         id = len(a) - 1
         del a[1:id]
         if (len(a) == 1):
             a.append(a[0])
-        b = srouce[i]
+
+        b = srcTLSMap[i]
         id = len(b) - 1
         del b[1:id]
         if (len(b) == 1):
             b.append(b[0])
-        c = dstination[i]
+
+        c = dstCountMap[i]
         id = len(c) - 1
         del c[1:id]
         if (len(c) == 1):
             c.append(c[0])
+
+        d = dstTLSMap[ i ]
+        id = len( d ) - 1
+        del d[ 1 : id ]
+        if ( len( d ) == 1 ):
+            d.append( d[ 0 ] )
 
         ind = int(classfication[i])
         ac = action[ind]
         a = [i + 1 for i in a]
         b = [i + 1 for i in b]
         c = [i + 1 for i in c]
+        d = [ i + 1 for i in d ]
 
         if ac == 0:
-            writeactionrule(p4info_helper, s1, a, b, c, "MyIngress.drop", 0)
+            writeactionrule(p4info_helper, s1, a, b, c, d, "MyIngress.drop", 0)
         else:
-            writeactionrule(p4info_helper, s1, a, b, c, "MyIngress.ipv4_forward", ac)
+            writeactionrule(p4info_helper, s1, a, b, c, d, "MyIngress.ipv4_forward", ac)
 
-    if len(proto) != 0:
-        proto.append(0)
-        proto.append(32)
-        proto.sort()
-        for i in range(len(proto) - 1):
-            writefeature1rule(p4info_helper, s1, proto[i:i + 2], i + 1)
+    if len(srcCount) != 0:
+        srcCount.append(0)
+        srcCount.append(32)
+        srcCount.sort()
+        for i in range(len(srcCount) - 1):
+            writefeature1rule(p4info_helper, s1, srcCount[i:i + 2], i + 1)
     else:
         writefeature1rule(p4info_helper, s1, [0, 32], 1)
 
-    if len(src) != 0:
-        src.append(0)
-        src.append(65535)
-        src.sort()
-        for i in range(len(src) - 1):
-            writefeature2rule(p4info_helper, s1, src[i:i + 2], i + 1)
-    if len(dst) != 0:
-        dst.append(0)
-        dst.append(65535)
-        dst.sort()
-        for i in range(len(dst) - 1):
-            writefeature3rule(p4info_helper, s1, dst[i:i + 2], i + 1)
+    if len(srcTLS) != 0:
+        srcTLS.append(0)
+        srcTLS.append(65535)
+        srcTLS.sort()
+        for i in range(len(srcTLS) - 1):
+            writefeature2rule(p4info_helper, s1, srcTLS[i:i + 2], i + 1)
 
-    # TODO Uncomment the following two lines to read table entries from s1 and s2
+    if len(dstCount) != 0:
+        dstCount.append(0)
+        dstCount.append(65535)
+        dstCount.sort()
+        for i in range(len(dstCount) - 1):
+            writefeature3rule(p4info_helper, s1, dstCount[i:i + 2], i + 1)
+
+    if len(dstTLS) != 0:
+        dstTLS.append(0)
+        dstTLS.append(65535)
+        dstTLS.sort()
+        for i in range(len(dstTLS) - 1):
+            writefeature4rule(p4info_helper, s1, dstTLS[i:i + 2], i + 1)
+
     readTableRules(p4info_helper, s1)
