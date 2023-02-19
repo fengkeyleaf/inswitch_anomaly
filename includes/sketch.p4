@@ -1,6 +1,5 @@
 
 // https://github.com/p4lang/p4c/blob/main/p4include/v1model.p4#L710
-// TODO: Add the fourth feature.
 // TODO: Define the behavior when no replacement policy applied.
 // TODO: Replacement policy: replace the last one when ties.
 // TODO: all integers are 32-bit for consistency now. And then adjust them to better ones.
