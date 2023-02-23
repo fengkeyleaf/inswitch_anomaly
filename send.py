@@ -5,6 +5,9 @@ import sys
 
 from scapy.all import IP, TCP, Ether, get_if_hwaddr, get_if_list, sendp
 
+# Refernce material: 
+# https://github.com/p4lang/tutorials
+
 
 def get_if():
     ifs=get_if_list()

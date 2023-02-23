@@ -30,8 +30,7 @@ from imports.writeRules import writeBasicForwardingRules, writeMLRules, printGrp
 
 
 inputfile = '../decision_tree/tree.txt'
-inputfile = "./config/test_tree.txt"
-inputfile = "./config/test_tree_4_features.txt"
+inputfile = "./test/test_tree_4_features.txt"
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"
 

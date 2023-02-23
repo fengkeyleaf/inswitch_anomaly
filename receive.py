@@ -4,6 +4,7 @@ import sys
 
 from scapy.all import (
     TCP,
+    Raw,
     FieldLenField,
     FieldListField,
     IntField,
@@ -14,6 +15,8 @@ from scapy.all import (
 )
 from scapy.layers.inet import _IPOption_HDR
 
+# Refernce material: 
+# https://github.com/p4lang/tutorials
 
 def get_if():
     ifs=get_if_list()
@@ -42,7 +45,12 @@ class IPOption_MRI(IPOption):
 def handle_pkt(pkt):
     if TCP in pkt and pkt[TCP].dport == 1234:
         print("got a packet")
+        # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html
         pkt.show2()
+        # https://stackoverflow.com/questions/65370305/extracting-tcp-data-with-scapy
+        # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Raw
+        print( "payload: %s" % pkt[ Raw ].load )
+        
     #    hexdump(pkt)
         sys.stdout.flush()
 

@@ -1,9 +1,0 @@
-srcCount = [1];
-srcTLS = [4];
-dstCount = [6];
-dstTLS = [10];
-  when srcCount<=1  then 0;
-  when srcCount>1 and srcTLS<=4  then 1;
-  when srcCount>1 and srcTLS>4 and dstCount<=6 and dstTLS<=10 then 0;
-  when srcCount>1 and srcTLS>4 and dstCount<=6 and dstTLS>10 then 1;
-  when srcCount>1 and srcTLS>4 and dstCount>6 then 0;
