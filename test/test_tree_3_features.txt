@@ -1,0 +1,7 @@
+proto = [1];
+src = [4];
+dst = [6];
+  when proto<=1  then 0;
+  when proto>1 and src<=4  then 1;
+  when proto>1 and src>4 and dst<=6 then 1;
+  when proto>1 and src>4 and dst>6 then 0;
