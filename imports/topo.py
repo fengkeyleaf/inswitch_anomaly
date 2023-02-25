@@ -1,12 +1,25 @@
 import json
-from typing import Dict
+from typing import Dict, List
+
+import csvparaser
+
+IP_STR = "ip"
+MAC_STR = "mac"
+COM_STR = "commands"
+HOST_STR = "hosts"
+SWITCH_STR = "switches"
+LINK_STR = "links"
+NAME_STR = "name"
+PKT_STR = "pkts"
 
 
-def get_host_json( n: str, i: str, m: str, c:str ) -> Dict:
+def get_host_json( 
+    n: str, i: str, m: str, c:List[ str ]
+) -> Dict:
     return ( n, {
-        "ip": i,
-        "mac": m,
-        "commands": c
+        IP_STR: i,
+        MAC_STR: m,
+        COM_STR: c
     } )
 
 
@@ -30,32 +43,138 @@ def write_to_file( topo, fp ):
         f.write( topo )
 
 
-def get_hosts_json( H: Dict[ str, Dict ] ):
-    d = {}
-    for k in H.keys():
-        
-        pass
+def add_pkt( h:Dict, da:str, dm:str, id:str ):
+    assert h[ PKT_STR ].get( id ) is None
+
+    h[ PKT_STR ][ id ] = {
+        "dstAddr": da,
+        "dstMac": dm
+    }
+
+
+def add_host( H:Dict[ str, Dict ], L:List, id:str, a:str, m:str ) -> Dict:
+    hn:str = "h" + str( id ) # host name
+    # Initi host
+    h:Dict = {
+        NAME_STR: hn,
+        IP_STR: a,
+        MAC_STR: m,
+        COM_STR: [ "route add default gw " + a + " dev eth0" ],
+        PKT_STR: {}
+    }
+
+    # Add link
+    L.append( [ hn, "s1-p" + str( id) ] )
+
+    H[ a ] = h
+    return h
+
+
+def add_host_pkt( 
+    H:Dict, L:List, idh:str, sa:str, da:str, sm:str, dm:str, idp:str 
+) -> None:
+    add_pkt( add_host( H, L, idh, sa, sm ), da, dm, idp )
+
+
+def convert( H:Dict ) -> Dict:
+    P = {}
+    for v in H.values():
+        P[ v[ NAME_STR ] ] = {
+            IP_STR: v[ IP_STR ],
+            MAC_STR: v[ MAC_STR ],
+            COM_STR: v[ COM_STR ],
+            PKT_STR: v[ PKT_STR ]
+        }
+    
+    return P
+
+
+def get_topo_json( 
+    P: Dict[ str, Dict ], f:str 
+) -> None:
+    """
+    {
+        "hosts": {
+            "host_name": {
+                    "ip": str,
+                    "mac": str,
+                    "commands": [ str ],
+                    "pkts": {
+                        "id": {
+                            "dstAddr": str,
+                            "dstMac": str,
+                            "payload": str
+                        }
+                    }
+            }
+        },
+        "switches": {
+            "switch_name": {}
+        },
+        "links": [ 
+            [ "host_name", "switch_port_of_host" ]
+        ]
+    }
+    """
+    H:Dict[ str, Dict ] = {}
+    id:int = 1 # host id
+    S = { "s1": {} }
+    L:List[ List ] = []
+
+    M = { "192.168.137.5": "08:00:00:00:01:11", "192.168.137.249": "08:00:00:00:02:22" }
+
+    # k -> pkt id
+    for k in P.keys():
+        v:Dict[ str, str ] = P.get( k )
+        sa:str = v.get( csvparaser.SRC_ADDR_STR ) # src addr
+        sm:str = M[ sa ]
+        da:str = v.get( csvparaser.DST_ADDR_STR ) # dst addr
+        dm:str = M[ da ]
+
+        assert sa is not da
+        assert sm is not dm
+
+        if H.get( sa ) is None:
+            add_host_pkt( H, L, id, sa, da, sm, dm, k )
+            id = id + 1
+        else:
+            add_pkt( H[ sa ], da, dm, k )
+
+        if H.get( da ) is None:
+            add_host( H, L, id, da, dm )
+            id = id + 1
+
+    write_to_file( generate_topo_json( convert( H ), S, L ), f )
+
+
+class Tester:
+    def test1( self ) -> None:
+        H = {}
+        S = {}
+        L = []
+        ( hn, hc ) = get_host_json( "h1", "10.0.1.1/24", "08:00:00:00:01:11", ["route add default gw 10.0.1.10 dev eth0"] )
+        H[ hn ] = hc
+        ( hn, hc ) = get_host_json( "h2", "10.0.2.2/24", "08:00:00:00:02:22", ["route add default gw 10.0.2.20 dev eth0"] )
+        H[ hn ] = hc
+        ( hn, hc ) = get_host_json( "h3", "10.0.3.3/24", "08:00:00:00:03:33", ["route add default gw 10.0.3.30 dev eth0"] )
+        H[ hn ] = hc
+        ( hn, hc ) = get_host_json( "h4", "10.0.4.4/24", "08:00:00:00:04:44", ["route add default gw 10.0.4.40 dev eth0"] )
+        H[ hn ] = hc
+        S[ "s1" ] = {}
+        L.append( ["h1", "s1-p1"] )
+        L.append( ["h2", "s1-p2"] )
+        L.append( ["h3", "s1-p3"] )
+        L.append( ["h4", "s1-p4"] )
+        print( generate_topo_json( H, S, L ) )
+        write_to_file( generate_topo_json( H, S, L ), "../pod-topo/topology.json" )
+
+
+    def test2( self ) -> None:
+        P = csvparaser.parse( "../test/test_csv1_small.csv" )
+        get_topo_json( P, "../pod-topo/topology.json" )
+
 
 if __name__ == '__main__':
-    H = {}
-    S = {}
-    L = []
-    ( hn, hc ) = get_host_json( "h1", "10.0.1.1/24", "08:00:00:00:01:11", ["route add default gw 10.0.1.10 dev eth0",
-                           "arp -i eth0 -s 10.0.1.10 08:00:00:00:01:00"] )
-    H[ hn ] = hc
-    ( hn, hc ) = get_host_json( "h2", "10.0.2.2/24", "08:00:00:00:02:22", ["route add default gw 10.0.2.20 dev eth0",
-                           "arp -i eth0 -s 10.0.2.20 08:00:00:00:02:00"] )
-    H[ hn ] = hc
-    ( hn, hc ) = get_host_json( "h3", "10.0.3.3/24", "08:00:00:00:03:33", ["route add default gw 10.0.3.30 dev eth0",
-                           "arp -i eth0 -s 10.0.3.30 08:00:00:00:03:00"] )
-    H[ hn ] = hc
-    ( hn, hc ) = get_host_json( "h4", "10.0.4.4/24", "08:00:00:00:04:44", ["route add default gw 10.0.4.40 dev eth0",
-                           "arp -i eth0 -s 10.0.4.40 08:00:00:00:04:00"] )
-    H[ hn ] = hc
-    S[ "s1" ] = {}
-    L.append( ["h1", "s1-p1"] )
-    L.append( ["h2", "s1-p2"] )
-    L.append( ["h3", "s1-p3"] )
-    L.append( ["h4", "s1-p4"] )
-    print( generate_topo_json( H, S, L ) )
-    write_to_file( generate_topo_json( H, S, L ), "../pod-topo/topology.json" )
+    # Tester().test1()
+    Tester().test2()
+    pass
