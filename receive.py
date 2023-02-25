@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import os
 import sys
+import json
+from typing import Dict
 
 from scapy.all import (
     TCP,
@@ -42,15 +44,16 @@ class IPOption_MRI(IPOption):
                                    [],
                                    IntField("", 0),
                                    length_from=lambda pkt:pkt.count*4) ]
-def handle_pkt(pkt):
+def handle_pkt( pkt, dic:Dict ):
     if TCP in pkt and pkt[TCP].dport == 1234:
         print("got a packet")
         # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html
         pkt.show2()
         # https://stackoverflow.com/questions/65370305/extracting-tcp-data-with-scapy
         # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Raw
-        print( "payload: %s" % pkt[ Raw ].load )
-        
+        # print( "payload: %s" % pkt[ Raw ].load )
+        # https://www.geeksforgeeks.org/how-to-convert-bytes-to-string-in-python/
+        dic[ pkt[ Raw ].load.decode() ] = ""
     #    hexdump(pkt)
         sys.stdout.flush()
 
@@ -60,8 +63,14 @@ def main():
     iface = ifaces[0]
     print("sniffing on %s" % iface)
     sys.stdout.flush()
+    dic:Dict = {}
+    # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sniff
     sniff(iface = iface,
-          prn = lambda x: handle_pkt(x))
+          timeout = 5,
+          prn = lambda x: handle_pkt(x, dic))
+
+    with open( "./output.json", "w" ) as f:
+        f.write( json.dumps( dic, indent = 4 ) )
 
 if __name__ == '__main__':
     main()

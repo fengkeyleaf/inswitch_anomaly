@@ -18,7 +18,8 @@ def parse( f:str ) -> Dict[ str, Dict ]:
         }
     }
     """
-    dic = {}
+    dic:Dict = {}
+    id:int = 0
     # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
     # https://pandas.pydata.org/docs/reference/frame.html
     # https://www.geeksforgeeks.org/python-next-method/
@@ -26,9 +27,11 @@ def parse( f:str ) -> Dict[ str, Dict ]:
     for r in pd.read_csv( f ).iterrows():
         s = r[ 1 ];
         assert dic.get( s[ ID_STR ] ) is None, "Already seen this ID before."
+        id = id + 1
         if ( s[ ID_STR ] == 1 ):
             continue
-
+        
+        assert id == int( s[ ID_STR ] ) # Consistent incremental id garaunteed
         # print( "s=%s, d=%s" % ( s[ "Source" ], s[ "Destination" ] ) )
         dic[ s[ ID_STR ] ] = {
             SRC_ADDR_STR: s[ SRC_ADDR_STR ],
