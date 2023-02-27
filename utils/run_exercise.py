@@ -186,15 +186,21 @@ class ExerciseRunner:
         self.switch_json = switch_json
         self.bmv2_exe = bmv2_exe
 
-    def __listening( self, h:str ):
+    def __listening( self, h:str ) -> None:
         print( "Listening on %s" % ( self.net.get( h ) ) )
         print( self.net.get( h ).cmd( "./receive.py" ) )
 
-    def __sending_pkts( self ):
+    def __sending_pkts( self ) -> None:
+        print( "Sending pkts" )
+
         for hn in self.hosts.keys():
             h = self.hosts[ hn ]
             for ( pid, info ) in h[ "pkts" ].items():
-                print( self.net.get( hn ).cmdPrint( "./send.py %s %s" % ( info[ "dstAddr" ], pid ) ) )
+                print( 
+                    self.net.get( hn ).cmdPrint( 
+                        "./send.py %s %s" % ( info[ "dstAddr" ], pid )
+                    )
+                )
 
     def run_exercise(self):
         """ 
@@ -219,15 +225,9 @@ class ExerciseRunner:
         # https://www.geeksforgeeks.org/multithreading-python-set-1/
         # https://docs.python.org/3.8/library/threading.html
         t1 = threading.Thread( target = self.__listening, args = ( "h1", ) )
-        # print( self.net.get( "h1" ).cmdPrint( "./receive.py" ) )
         t1.start()
 
-        # print( self.net.get( "h2" ).cmdPrint( "./receive.py" ) )
         sleep( 2 )
-        # print( self.net.get( "h1" ).cmdPrint( "ifconfig" ) )
-        print( "Sending pkts" )
-        # print( self.net.get( "h1" ).cmd( "ifconfig" ) )
-        # print( self.net.get( "h2" ).cmdPrint( "./send.py 10.0.1.1 Hello" ) )
         self.__sending_pkts()
 
         sleep( 8 )
@@ -237,9 +237,10 @@ class ExerciseRunner:
 
 
     def parse_links(self, unparsed_links):
-        """ Given a list of links descriptions of the form [node1, node2, latency, bandwidth]
-            with the latency and bandwidth being optional, parses these descriptions
-            into dictionaries and store them as self.links
+        """ 
+        Given a list of links descriptions of the form [node1, node2, latency, bandwidth]
+        with the latency and bandwidth being optional, parses these descriptions
+        into dictionaries and store them as self.links
         """
         links = []
         for link in unparsed_links:

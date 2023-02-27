@@ -1,7 +1,14 @@
 import json
 from typing import Dict, List
 
-import csvparaser
+"""
+file: topo.py
+description:
+language: python3 3.8.10
+author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+"""
+
+from . import csvparaser
 
 IP_STR = "ip"
 MAC_STR = "mac"
@@ -17,7 +24,7 @@ PKT_STR = "pkts"
 # https://www.geeksforgeeks.org/access-modifiers-in-python-public-private-and-protected/
 class CSVParaser:
     # https://pythonexamples.org/python-write-json-to-file/
-    def __generate_topo_json( self, H, S, L ):
+    def __generate_topo_json( self, H:Dict, S:Dict, L:List ) -> str:
         """
         :param I: List of hosts and their configurations.
         :param S: List of swtiches and their configurations.
@@ -117,7 +124,12 @@ class CSVParaser:
         S = { "s1": {} }
         L:List[ List ] = []
 
-        M = { "192.168.137.5": "08:00:00:00:01:11", "192.168.137.249": "08:00:00:00:02:22" }
+        M = { 
+            "192.168.137.5": "08:00:00:00:01:11", 
+            "192.168.137.249": "08:00:00:00:02:22"
+        }
+
+        self.__add_host( H, L, id, "10.230.195.161", "A0:36:BC:D1:8D:82" )
 
         # k -> pkt id
         for k in P.keys():
@@ -131,14 +143,14 @@ class CSVParaser:
             assert sm is not dm
 
             if H.get( sa ) is None:
-                self.__add_host_pkt( H, L, id, sa, da, sm, dm, k )
                 id = id + 1
+                self.__add_host_pkt( H, L, id, sa, da, sm, dm, k )
             else:
                 self.__add_pkt( H[ sa ], da, dm, k )
 
             if H.get( da ) is None:
-                self.__add_host( H, L, id, da, dm )
                 id = id + 1
+                self.__add_host( H, L, id, da, dm )
 
         self.__write_to_file( self.__generate_topo_json( self.__convert( H ), S, L ), f )
 

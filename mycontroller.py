@@ -6,6 +6,13 @@ from time import sleep
 import json
 import grpc
 
+"""
+file: mycontroller.py
+description:
+language: python3 3.8.10
+author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+"""
+
 # Reference material about basic decision-tree combing packet re-forwading:
 # https://github.com/cucl-srg/IIsy
 # Reference material about basic p4 inswitch anomaly detection:

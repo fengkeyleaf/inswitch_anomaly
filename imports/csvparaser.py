@@ -1,6 +1,13 @@
 import pandas as pd
 from typing import Dict
 
+"""
+file: csvparaser.py
+description:
+language: python3 3.8.10
+author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+"""
+
 ID_STR = "No."
 SRC_ADDR_STR = "Source"
 SRC_MAC_STR = "SrcMac"

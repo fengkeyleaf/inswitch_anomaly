@@ -1,24 +1,61 @@
 import sys
+import json
+from typing import Dict, List
+import re
+
+"""
+file: writeRules.py
+description:
+language: python3 3.8.10
+author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+"""
+
+from . import topo
+
+# Reference material about basic decision-tree combing packet re-forwading:
+# https://github.com/cucl-srg/IIsy
 
 #######################
 # Add match-table units.
 #######################
 
-# Ipv4 forwarding rules.
-def get_actionpara(action):
-    para = {}
-    if action == 0:
-        para = {}
-    elif action == 1:
-        para = { "dstAddr": "08:00:00:00:01:00", "port": 1 }
-    elif action == 2:
-        para = { "dstAddr": "08:00:00:00:02:22", "port": 2 }
-    elif action == 3:
-        para = { "dstAddr": "08:00:00:00:03:33", "port": 3 }
-    elif action == 4:
-        para = { "dstAddr": "08:00:00:00:04:44", "port": 4 }
-
+def get_paras( fp:str ) -> Dict:
+    para:Dict[ int, Dict ] = { 0: {} }
+    with open( fp, "r" ) as f:
+        H:Dict = json.load( f )[ "hosts" ]
+        for k in H.keys():
+            assert re.match( r"^h\d+$", k ) is not None
+            assert para.get( int( k[ 1: ] ) ) is None
+            para[ int( k[ 1: ] ) ] = {
+                "dstAddr": H[ k ][ topo.MAC_STR ],
+                "port": int( k[ 1: ] )
+            }
+    
     return para
+
+
+# TODO: relative path( para ) to the config json file.
+# Ipv4 forwarding rules.
+def get_actionpara( action:int ) -> Dict:
+    """"
+    {
+        port_No.: { dstAddr, port_No. }
+    }
+    """
+    para = get_paras( "./pod-topo/topology.json" )
+    # if action == 0:
+    #     para = {}
+    # elif action == 1:
+    #     para = { "dstAddr": "A0:36:BC:D1:8D:82", "port": 1 }
+    # elif action == 2:
+    #     para = { "dstAddr": "08:00:00:00:01:00", "port": 2 }
+    # elif action == 3:
+    #     para = { "dstAddr": "08:00:00:00:02:22", "port": 3 }
+    # elif action == 4:
+    #     para = { "dstAddr": "08:00:00:00:04:44", "port": 4 }
+
+    assert para.get( action ) is not None, str( action ) + " | " + str( para )
+    return para[ action ]
 
 
 def writeForwardingRules( p4info_helper, sw, range, port ):

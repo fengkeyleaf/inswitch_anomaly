@@ -1,10 +1,18 @@
 import re
+from typing import List
+
+"""
+file: ml.py
+description:
+language: python3 3.8.10
+author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+"""
 
 #######################
 # Paraphrase the decision tree txt file.
 #######################
 
-def find_action(textfile):
+def find_action( textfile:str ) -> List[ int ]:
     action = []
     f = open(textfile)
     for line in f:
