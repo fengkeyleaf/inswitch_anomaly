@@ -35,7 +35,7 @@ def parse( f:str ) -> Dict[ str, Dict ]:
         s = r[ 1 ];
         assert dic.get( s[ ID_STR ] ) is None, "Already seen this ID before."
         id = id + 1
-        if ( s[ ID_STR ] == 1 ):
+        if ( s[ ID_STR ] == 1 or s[ ID_STR ] == 2006 or s[ ID_STR ] == 2007 ):
             continue
         
         assert id == int( s[ ID_STR ] ) # Consistent incremental id garaunteed

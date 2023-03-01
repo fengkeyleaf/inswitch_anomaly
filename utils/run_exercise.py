@@ -188,19 +188,36 @@ class ExerciseRunner:
 
     def __listening( self, h:str ) -> None:
         print( "Listening on %s" % ( self.net.get( h ) ) )
-        print( self.net.get( h ).cmd( "./receive.py" ) )
+        # print( self.net.get( h ).cmd( "./receive.py" ) )
+        self.net.get( h ).cmd( "./receive.py -c %s" % 0 )
+
+    def __get_sum_pkts( self ) -> int:
+        c:int = 0
+        for hn in self.hosts.keys():
+            c = c + len( self.hosts[ hn ][ "pkts" ] )
+
+        return c
 
     def __sending_pkts( self ) -> None:
         print( "Sending pkts" )
 
         for hn in self.hosts.keys():
             h = self.hosts[ hn ]
+            
             for ( pid, info ) in h[ "pkts" ].items():
-                print( 
-                    self.net.get( hn ).cmdPrint( 
-                        "./send.py %s %s" % ( info[ "dstAddr" ], pid )
-                    )
+                # print( 
+                #     self.net.get( hn ).cmdPrint( 
+                #         "./send.py %s %s" % ( info[ "dstAddr" ], pid )
+                #     )
+                # )
+                self.net.get( hn ).cmdPrint( 
+                    "./send.py %s %s" % ( info[ "dstAddr" ], pid )
                 )
+
+        print( "Done with sending %d pkts" % self.__get_sum_pkts() )
+        print( "Killing the listening host, h1" )
+        # https://github.com/mininet/mininet/blob/master/mininet/node.py#L328
+        self.net.get( "h1" ).sendInt()
 
     def run_exercise(self):
         """ 

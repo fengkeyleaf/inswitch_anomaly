@@ -3,7 +3,6 @@ import argparse
 import os
 import sys
 from time import sleep
-import json
 import grpc
 
 """

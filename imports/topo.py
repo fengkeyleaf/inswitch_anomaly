@@ -179,6 +179,7 @@ class Tester:
 
     def test2( self ) -> None:
         cf:str = "../test/test_csv1_small.csv"
+        cf = "../test/test_csv1.csv"
         # cf = "../test/test_csv1_small_one_side_sending.csv"
         P:Dict = csvparaser.parse( cf )
         CSVParaser().get_topo_json( P, "../pod-topo/topology.json" )

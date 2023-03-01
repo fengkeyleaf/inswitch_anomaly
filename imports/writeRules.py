@@ -43,22 +43,12 @@ def get_actionpara( action:int ) -> Dict:
     }
     """
     para = get_paras( "./pod-topo/topology.json" )
-    # if action == 0:
-    #     para = {}
-    # elif action == 1:
-    #     para = { "dstAddr": "A0:36:BC:D1:8D:82", "port": 1 }
-    # elif action == 2:
-    #     para = { "dstAddr": "08:00:00:00:01:00", "port": 2 }
-    # elif action == 3:
-    #     para = { "dstAddr": "08:00:00:00:02:22", "port": 3 }
-    # elif action == 4:
-    #     para = { "dstAddr": "08:00:00:00:04:44", "port": 4 }
 
     assert para.get( action ) is not None, str( action ) + " | " + str( para )
     return para[ action ]
 
 
-def writeForwardingRules( p4info_helper, sw, range, port ):
+def writeForwardingRules( p4info_helper, sw, range, port ) -> None:
     para = get_actionpara( port )
     print( range, para )
     table_entry = p4info_helper.buildTableEntry(
