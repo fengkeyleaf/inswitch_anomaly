@@ -8,6 +8,9 @@ language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
+# Reference material about basic decision-tree combing packet re-forwading:
+# https://github.com/cucl-srg/IIsy
+
 #######################
 # Paraphrase the decision tree txt file.
 #######################

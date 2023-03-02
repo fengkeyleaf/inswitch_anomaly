@@ -27,7 +27,7 @@ import p4runtime_lib.helper
 from p4runtime_lib.switch import ShutdownAllSwitchConnections
 
 from imports.ml import find_action, find_classification, find_feature
-from imports.writeRules import writeBasicForwardingRules, writeMLRules, printGrpcError
+from imports.write_rules import writeBasicForwardingRules, writeMLRules, printGrpcError
 
 
 #######################

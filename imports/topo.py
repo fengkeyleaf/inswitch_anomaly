@@ -6,9 +6,11 @@ file: topo.py
 description:
 language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+        Personal website: https://fengkeyleaf.com
 """
 
 from . import csvparaser
+from .com.fengkeyleaf.io import my_writer as writer
 
 IP_STR = "ip"
 MAC_STR = "mac"
@@ -18,6 +20,8 @@ SWITCH_STR = "switches"
 LINK_STR = "links"
 NAME_STR = "name"
 PKT_STR = "pkts"
+DST_IP_STR = "dstAddr"
+DST_MAC_STR = "dstMac"
 
 # https://www.geeksforgeeks.org/python-classes-and-objects/
 # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
@@ -45,8 +49,8 @@ class CSVParaser:
         assert h[ PKT_STR ].get( id ) is None
 
         h[ PKT_STR ][ id ] = {
-            "dstAddr": da,
-            "dstMac": dm
+            DST_IP_STR: da,
+            DST_MAC_STR: dm
         }
 
     def __add_host( self, H:Dict[ str, Dict ], L:List, id:str, a:str, m:str ) -> Dict:
@@ -152,10 +156,17 @@ class CSVParaser:
                 id = id + 1
                 self.__add_host( H, L, id, da, dm )
 
-        self.__write_to_file( self.__generate_topo_json( self.__convert( H ), S, L ), f )
+
+        res:Dict = {
+            HOST_STR: self.__convert( H ),
+            SWITCH_STR: S,
+            LINK_STR: L
+        }
+        writer.write_to_file( f, json.dumps( res, indent = 4 ) )
+        return res
 
 
-class Tester:
+class _Tester:
     def test1( self ) -> None:
         H = {}
         S = {}
@@ -186,6 +197,6 @@ class Tester:
 
 
 if __name__ == '__main__':
-    # Tester().test1()
-    Tester().test2()
+    # _Tester().test1()
+    _Tester().test2()
     pass

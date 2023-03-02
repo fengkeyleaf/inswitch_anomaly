@@ -202,17 +202,23 @@ class ExerciseRunner:
         print( "Sending pkts" )
 
         for hn in self.hosts.keys():
+            if ( hn == "h1" ):
+                continue
             h = self.hosts[ hn ]
             
-            for ( pid, info ) in h[ "pkts" ].items():
-                # print( 
-                #     self.net.get( hn ).cmdPrint( 
-                #         "./send.py %s %s" % ( info[ "dstAddr" ], pid )
-                #     )
-                # )
-                self.net.get( hn ).cmdPrint( 
-                    "./send.py %s %s" % ( info[ "dstAddr" ], pid )
-                )
+            self.net.get( hn ).cmdPrint( 
+                "./send.py -hj ./pod-topo/%s.json" % ( hn )
+            )
+            
+            # for ( pid, info ) in h[ "pkts" ].items():
+            #     # print( 
+            #     #     self.net.get( hn ).cmdPrint( 
+            #     #         "./send.py %s %s" % ( info[ "dstAddr" ], pid )
+            #     #     )
+            #     # )
+            #     self.net.get( hn ).cmdPrint( 
+            #         "./send.py %s %s" % ( info[ "dstAddr" ], pid )
+            #     )
 
         print( "Done with sending %d pkts" % self.__get_sum_pkts() )
         print( "Killing the listening host, h1" )
@@ -228,7 +234,7 @@ class ExerciseRunner:
         # Initialize mininet with the topology specified by the config
         self.create_network()
         self.net.start()
-        sleep(1)
+        sleep( 1 )
 
         # some programming that must happen after the net has started
         self.program_hosts()
@@ -248,7 +254,7 @@ class ExerciseRunner:
         self.__sending_pkts()
 
         sleep( 8 )
-        # self.do_net_cli()
+        self.do_net_cli()
         # stop right after the CLI is exited
         self.net.stop()
 
@@ -408,9 +414,11 @@ class ExerciseRunner:
 
 
 def get_args():
+    # https://www.geeksforgeeks.org/python-os-getcwd-method/
     cwd = os.getcwd()
     default_logs = os.path.join(cwd, 'logs')
     default_pcaps = os.path.join(cwd, 'pcaps')
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', help='Suppress log messages.',
                         action='store_true', required=False, default=False)
@@ -429,8 +437,8 @@ if __name__ == '__main__':
     # setLogLevel("info")
 
     args = get_args()
-    exercise = ExerciseRunner(args.topo, args.log_dir, args.pcap_dir,
-                              args.switch_json, args.behavioral_exe, args.quiet)
+    exercise = ExerciseRunner( args.topo, args.log_dir, args.pcap_dir,
+                              args.switch_json, args.behavioral_exe, args.quiet )
 
     exercise.run_exercise()
 

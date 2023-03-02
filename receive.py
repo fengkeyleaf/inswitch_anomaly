@@ -10,6 +10,14 @@ from datetime import (
     datetime
 )
 
+"""
+file:
+description:
+language: python3 3.8.10
+author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+        Personal website: https://fengkeyleaf.com
+"""
+
 from scapy.all import (
     TCP,
     Raw,
@@ -72,12 +80,13 @@ def main():
     iface = ifaces[0]
     print("sniffing on %s" % iface)
     sys.stdout.flush()
+
     dic:Dict = { "now":  datetime.now().strftime( "%d/%m/%Y %H:%M:%S" ) }
     # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sniff
-    sniff(iface = iface,
+    sniff( iface = iface,
         #   count = parser.parse_args().count,
         #   timeout = 10,
-          prn = lambda x: handle_pkt(x, dic))
+          prn = lambda x: handle_pkt( x, dic ) )
 
     print( "Finish sniffing, write result to the file" )
     with open( "./output.json", "w" ) as f:

@@ -252,6 +252,7 @@ def writeMLRules(
     else:
         writefeature1rule(p4info_helper, s1, [0, 32], 1)
 
+    # TODO: min amd max values.
     if len(srcTLS) != 0:
         srcTLS.append(0)
         srcTLS.append(65535)
