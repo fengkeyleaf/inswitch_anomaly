@@ -34,6 +34,8 @@ from scapy.layers.inet import _IPOption_HDR
 # Refernce material: 
 # https://github.com/p4lang/tutorials
 
+RESULT_STR = "result"
+
 def get_if():
     ifs=get_if_list()
     iface=None
@@ -67,7 +69,7 @@ def handle_pkt( pkt, dic:Dict ):
         # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Raw
         # print( "payload: %s" % pkt[ Raw ].load )
         # https://www.geeksforgeeks.org/how-to-convert-bytes-to-string-in-python/
-        dic[ pkt[ Raw ].load.decode() ] = ""
+        dic[ RESULT_STR ][ pkt[ Raw ].load.decode() ] = ""
     #    hexdump(pkt)
         sys.stdout.flush()
 
@@ -81,7 +83,7 @@ def main():
     print("sniffing on %s" % iface)
     sys.stdout.flush()
 
-    dic:Dict = { "now":  datetime.now().strftime( "%d/%m/%Y %H:%M:%S" ) }
+    dic:Dict = { "now":  datetime.now().strftime( "%d/%m/%Y %H:%M:%S" ), RESULT_STR: {} }
     # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sniff
     sniff( iface = iface,
         #   count = parser.parse_args().count,

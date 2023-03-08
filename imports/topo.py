@@ -27,6 +27,13 @@ DST_MAC_STR = "dstMac"
 # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
 # https://www.geeksforgeeks.org/access-modifiers-in-python-public-private-and-protected/
 class CSVParaser:
+    def __init__( self ) -> None:
+        self.h1:Dict = {
+            NAME_STR: "h1",
+            IP_STR: "10.230.195.161",
+            MAC_STR: "A0:36:BC:D1:8D:82"
+        }
+
     # https://pythonexamples.org/python-write-json-to-file/
     def __generate_topo_json( self, H:Dict, S:Dict, L:List ) -> str:
         """
@@ -80,8 +87,21 @@ class CSVParaser:
         } )
 
     def __add_host_pkt( 
-        self, H:Dict, L:List, idh:str, sa:str, da:str, sm:str, dm:str, idp:str 
+        self, H:Dict, L:List,
+        idh:str, sa:str,
+        da:str, sm:str,
+        dm:str, idp:str 
     ) -> None:
+        """
+        :param H: hosts in a dict.
+        :param L: list of links.
+        :param idh: id of host. 
+        :param sa: src addr 
+        :param da: dst addr 
+        :param sm: src mac 
+        :param dm: dst mac
+        :param idp: id of pkt
+        """
         self.__add_pkt( self.__add_host( H, L, idh, sa, sm ), da, dm, idp )
     
     def __convert( self, H:Dict ) -> Dict:
@@ -95,6 +115,11 @@ class CSVParaser:
             }
         
         return P
+    
+    def __is_not_terminator_host( self, a:str, m:str ) -> bool:
+        assert self.h1[ IP_STR ] != a
+        assert self.h1[ MAC_STR ] != m
+        return True
 
     def get_topo_json( 
         self, P: Dict[ str, Dict ], f:str 
@@ -110,6 +135,7 @@ class CSVParaser:
                             "id": {
                                 "dstAddr": str,
                                 "dstMac": str,
+                                "label": Number( 0 or 1 )
                                 "payload": str
                             }
                         }
@@ -133,18 +159,19 @@ class CSVParaser:
             "192.168.137.249": "08:00:00:00:02:22"
         }
 
-        self.__add_host( H, L, id, "10.230.195.161", "A0:36:BC:D1:8D:82" )
+        self.__add_host( H, L, id, self.h1[ IP_STR ], self.h1[ MAC_STR ] )
 
         # k -> pkt id
         for k in P.keys():
             v:Dict[ str, str ] = P.get( k )
-            sa:str = v.get( csvparaser.SRC_ADDR_STR ) # src addr
-            sm:str = M[ sa ]
-            da:str = v.get( csvparaser.DST_ADDR_STR ) # dst addr
-            dm:str = M[ da ]
+            sa:str = v[ csvparaser.SRC_ADDR_STR ] # src addr
+            sm:str = v[ csvparaser.SRC_MAC_STR ]
+            da:str = v[ csvparaser.DST_ADDR_STR ] # dst addr
+            dm:str = v[ csvparaser.DST_MAC_STR ]
 
             assert sa is not da
             assert sm is not dm
+            assert self.__is_not_terminator_host( sa, sm ) and self.__is_not_terminator_host( da, dm )
 
             if H.get( sa ) is None:
                 id = id + 1

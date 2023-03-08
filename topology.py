@@ -9,7 +9,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-import imports.csvparaser as csvparaser
+from imports.csvparaser import Parser
 import imports.topo as topo
 from imports.com.fengkeyleaf.io import my_writer as writer
 
@@ -26,7 +26,8 @@ def __get_host_json( d:Dict ) -> None:
 if __name__ == '__main__':
     cf:str = "./test/test_csv1_small.csv"
     # cf = "../test/test_csv1_small_one_side_sending.csv"
-    cf = "./test/test_csv1.csv"
+    # cf = "./test/test_csv1.csv"
+    cf = "./test/result.csv"
     
-    P:Dict = csvparaser.parse( cf )
+    P:Dict = Parser().parse( cf )
     __get_host_json( topo.CSVParaser().get_topo_json( P, "./pod-topo/topology.json" ) )
