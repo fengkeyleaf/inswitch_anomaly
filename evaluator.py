@@ -36,13 +36,17 @@ class Evalutor:
 
     def __evaluate( self ) -> None:
         c: int = 0
+        ct: int = 0
         for k in self.P: # k: pkt ID number
+            if self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.GOOD_LABEL_STR ):
+                ct = my_math.add_one( ct )
             # https://www.geeksforgeeks.org/python-check-whether-given-key-already-exists-in-a-dictionary/
             if self.__is_correct( k ):
                 c = my_math.add_one( c )
 
         # https://java2blog.com/python-print-percentage-sign/
         print( "%d out of total %d pkts, accuracy = %f%%" % ( c, len( self.P ), c / len( self.P ) ) )
+        print( "Data set: %d out of %d are good pkts." % ( ct, len( self.P ) ) )
 
     def evaluate( self, f: str ) -> None:
         """
@@ -56,4 +60,5 @@ class Evalutor:
 
 if __name__ == '__main__':
     Evalutor().evaluate( "./test/result.csv" )
+    # Evalutor().evaluate( "./test/test_csv1_small.csv" )
 

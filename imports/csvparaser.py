@@ -15,8 +15,8 @@ SRC_MAC_STR = "srcMAC"
 DST_ADDR_STR = "Destination"
 DST_MAC_STR = "dstMAC"
 LABEL_STR = "Label"
-GOOD_LABEL_STR = "1"
-BAD_LABEL_STR = "0"
+GOOD_LABEL_STR = "0"
+BAD_LABEL_STR = "1" # attack pkt
 
 
 class Parser:

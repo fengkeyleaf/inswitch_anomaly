@@ -24,7 +24,6 @@ import json
 import os
 import subprocess
 from time import sleep
-import threading
 
 import p4runtime_lib.simple_controller
 from mininet.cli import CLI
@@ -33,7 +32,7 @@ from mininet.net import Mininet
 from mininet.topo import Topo
 from p4_mininet import P4Host, P4Switch
 from p4runtime_switch import P4RuntimeSwitch
-
+import Supervisor
 
 def configureP4Switch(**switch_args):
     """ Helper class that is called by mininet to initialize
@@ -247,11 +246,13 @@ class ExerciseRunner:
         # http://mininet.org/api/classmininet_1_1node_1_1Node.html#a6e1338af3c4a0348963a257ac548153b
         # https://www.geeksforgeeks.org/multithreading-python-set-1/
         # https://docs.python.org/3.8/library/threading.html
-        t1 = threading.Thread( target = self.__listening, args = ( "h1", ) )
-        t1.start()
+        # t1 = threading.Thread( target = self.__listening, args = ( "h1", ) )
+        # t1.start()
 
-        sleep( 2 )
-        self.__sending_pkts()
+        # sleep( 2 )
+        # self.__sending_pkts()
+
+        Supervisor.Supervisor( self.net, self.hosts ).send()
 
         sleep( 8 )
         self.do_net_cli()

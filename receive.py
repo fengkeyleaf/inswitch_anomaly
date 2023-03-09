@@ -36,6 +36,7 @@ from scapy.layers.inet import _IPOption_HDR
 
 RESULT_STR = "result"
 
+
 def get_if():
     ifs=get_if_list()
     iface=None
@@ -47,6 +48,7 @@ def get_if():
         print("Cannot find eth0 interface")
         exit(1)
     return iface
+
 
 class IPOption_MRI(IPOption):
     name = "MRI"
@@ -60,6 +62,8 @@ class IPOption_MRI(IPOption):
                                    [],
                                    IntField("", 0),
                                    length_from=lambda pkt:pkt.count*4) ]
+
+
 def handle_pkt( pkt, dic:Dict ):
     if TCP in pkt and pkt[TCP].dport == 1234:
         print("got a packet")
@@ -72,6 +76,7 @@ def handle_pkt( pkt, dic:Dict ):
         dic[ RESULT_STR ][ pkt[ Raw ].load.decode() ] = ""
     #    hexdump(pkt)
         sys.stdout.flush()
+
 
 #  "01/03/2023 03:09:23"
 def main():
