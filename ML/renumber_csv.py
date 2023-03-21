@@ -1,13 +1,12 @@
 ###
-# Label input file as malicious traffic
-# Riley Mcginn
-###
+# Renumbers the given .csv so each pkt has a unique identifier
+# Riley McGinn
 
 import csv
 import sys
 import os
 
-def label(csv_path: str):
+def renumber(csv_path):
     temp_path = os.path.join(os.getcwd(), 'temp.csv')
     input = open(csv_path)
     temp = open(temp_path, "w", newline="")
@@ -15,13 +14,14 @@ def label(csv_path: str):
     writer = csv.writer(temp)
 
     # write header to new file
-    headers = next(reader)
-    headers.append("Label")
-    writer.writerow(headers)
+    header = next(reader)
+    writer.writerow(header)
 
-    # label packets as benign (0)
+    # iterate, renumbering packets
+    count = 0
     for packet in reader:
-        packet.append("1")
+        count = count + 1
+        packet[0] = count
         writer.writerow(packet)
 
     # copy from temp to output
@@ -33,11 +33,11 @@ def label(csv_path: str):
     writer = csv.writer(output)
     for packet in reader:
         writer.writerow(packet)
-
-    # file cleanup
     temp.close()
-    os.remove(temp_path)
     output.close()
 
+    # file cleanup
+    os.remove(temp_path)
+
 if __name__ == '__main__':
-    label(sys.argv[1])
+    renumber(sys.argv[1])

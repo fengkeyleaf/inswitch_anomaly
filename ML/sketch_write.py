@@ -223,7 +223,7 @@ for row in reader:
      
      data.append(list(tmp))
      
-     labels.append(row[len(row)-1])
+     labels.append(row[len(row)-3])
 
 
 """

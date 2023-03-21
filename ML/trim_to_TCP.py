@@ -1,13 +1,13 @@
 ###
-# Label input file as malicious traffic
-# Riley Mcginn
-###
+# Trims .csv input file to only include rows where
+#   protocol = 'TCP'
+# Riley McGinn
 
 import csv
 import sys
 import os
 
-def label(csv_path: str):
+def trim(csv_path):
     temp_path = os.path.join(os.getcwd(), 'temp.csv')
     input = open(csv_path)
     temp = open(temp_path, "w", newline="")
@@ -15,18 +15,17 @@ def label(csv_path: str):
     writer = csv.writer(temp)
 
     # write header to new file
-    headers = next(reader)
-    headers.append("Label")
-    writer.writerow(headers)
+    header = next(reader)
+    writer.writerow(header)
 
-    # label packets as benign (0)
+    # write over packets if protocol = TCP
     for packet in reader:
-        packet.append("1")
-        writer.writerow(packet)
+        if(packet[4] == "TCP"):
+            writer.writerow(packet)
 
     # copy from temp to output
     temp.close()
-    temp = open(temp_path) # reopen in read mode
+    temp  = open(temp_path) # reopen in read mode
     reader = csv.reader(temp)
     input.close()
     output = open(csv_path, "w", newline="") # reopen in write mode
@@ -40,4 +39,4 @@ def label(csv_path: str):
     output.close()
 
 if __name__ == '__main__':
-    label(sys.argv[1])
+    trim(sys.argv[1])

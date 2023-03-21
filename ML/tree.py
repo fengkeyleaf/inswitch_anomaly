@@ -49,9 +49,22 @@ the data comprises everything except for the last index of the data array
 
 the last index of data is actually the label
 """
+
+decision_tree = tree.DecisionTreeClassifier()
+decision_tree = decision_tree.fit(data, labels)
+
+r = tree.export_text(decision_tree, feature_names=['srcCount', 'srcTLS', 'dstCount', 'dstTLS'])
+
+tree.plot_tree(decision_tree)
+plt.show()
+
+print(r)
+
+"""
 clf = tree.DecisionTreeClassifier()
 
 clf.fit(data,labels)
 tree.plot_tree(clf)
 plt.savefig(sys.argv[2],format="png",dpi=1200)
 plt.show()
+"""
