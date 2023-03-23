@@ -50,15 +50,108 @@ the data comprises everything except for the last index of the data array
 the last index of data is actually the label
 """
 
+def get_lineage(tree, feature_names, file):
+    srcCount = []
+    dstCount = []
+    srcTLS = []
+    dstTLS = []
+    left = tree.tree_.children_left
+    right = tree.tree_.children_right
+    threshold = tree.tree_.threshold
+    features = [feature_names[i] for i in tree.tree_.feature]
+    value = tree.tree_.value
+    le = '<='
+    g = '>'
+    # get ids of child nodes
+    idx = np.argwhere(left == -1)[:, 0]
+
+    # traverse the tree and get the node information
+    def recurse(left, right, child, lineage=None):
+        if lineage is None:
+            lineage = [child]
+        if child in left:
+            parent = np.where(left == child)[0].item()
+            split = 'l'
+        else:
+            parent = np.where(right == child)[0].item()
+            split = 'r'
+        
+        lineage.append((parent, split, threshold[parent], features[parent]))
+        if parent == 0:
+            lineage.reverse()
+            return lineage
+        else:
+            return recurse(left, right, parent, lineage)
+    
+    for j, child in enumerate(idx):
+        clause = ' when '
+        for node in recurse(left, right, child):
+            if len(str(node)) < 3:
+                continue
+            i = node
+
+            if i[1] == 'l':
+                sign = le
+            else:
+                sign = g
+            clause = clause + i[3] + sign + str(i[2]) + ' and '
+    
+    # write the node information into text file
+        a = list(value[node][0])
+        ind = a.index(max(a))
+        clause = clause[:-4] + ' then ' + str(ind)
+        file.write(clause)
+        file.write(";\n")
+
+
 decision_tree = tree.DecisionTreeClassifier()
 decision_tree = decision_tree.fit(data, labels)
 
-r = tree.export_text(decision_tree, feature_names=['srcCount', 'srcTLS', 'dstCount', 'dstTLS'])
+feature_names = ["srcCount", "dstCount", "srcTLS", "dstTLS"]
 
-tree.plot_tree(decision_tree)
-plt.show()
+threshold = decision_tree.tree_.threshold
+features = [feature_names[i] for i in decision_tree.tree_.feature]
 
-print(r)
+srcCount = []
+dstCount = []
+srcTLS = []
+dstTLS = []
+
+for i, fe in enumerate(features):
+    if fe == 'srcCount':
+        srcCount.append(threshold[i])
+    elif fe =='dstCount':
+        dstCount.append(threshold[i])
+    elif fe == 'srcTLS':
+        srcTLS.append(threshold[i])
+    else:
+        dstTLS.append(threshold[i])
+
+srcCount = [int(i) for i in srcCount]
+dstCount = [int(i) for i in dstCount]
+srcTLS = [int(i) for i in srcTLS]
+dstTLS = [int(i) for i in dstTLS]
+
+srcCount.sort()
+dstCount.sort()
+srcTLS.sort()
+dstTLS.sort()
+
+output = open(sys.argv[2], "w+")
+output.write("srcCount = ")
+output.write(str(srcCount))
+output.write(";\n")
+output.write("dstCount = ")
+output.write(str(dstCount))
+output.write(";\n")
+output.write("srcTLS = ")
+output.write(str(srcTLS))
+output.write(";\n")
+output.write("dstTLS = ")
+output.write(str(dstTLS))
+output.write(";\n")
+get_lineage(decision_tree, feature_names, output)
+output.close()
 
 """
 clf = tree.DecisionTreeClassifier()
