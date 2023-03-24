@@ -10,8 +10,14 @@ from csv import reader
 import random as rd
 import numpy as np
 from matplotlib import pyplot as plt
+from typing import (
+    List
+)
 
 from sklearn import tree
+from sklearn.tree import (
+    DecisionTreeClassifier
+)
 
 """
 load data in from csv file
@@ -104,8 +110,31 @@ def get_lineage(tree, feature_names, file):
         file.write(";\n")
 
 
+class Evaluator:
+    def __init__( self, X: List, y: List, t: DecisionTreeClassifier ) -> None:
+        """
+        :param X: array-like of shape (n_samples, n_features)
+        :param y: array-like of shape (n_samples,) or (n_samples, n_outputs)
+        :param t: decisoin tree
+        """
+        self.X = X
+        self.t = t
+        self.y = y
+
+    # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
+    def evaluate( self ) -> None:
+        # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
+        # print( self.t.predict( self.X ) )
+        # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
+        print( "Accuracy of this tree: %.2f" % ( self.t.score( self.X, self.y ) * 100 ) )
+
+
 decision_tree = tree.DecisionTreeClassifier()
+# https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.fit
 decision_tree = decision_tree.fit(data, labels)
+
+# Evaluate the tree
+Evaluator( data, labels, decision_tree ).evaluate()
 
 feature_names = ["srcCount", "dstCount", "srcTLS", "dstTLS"]
 
