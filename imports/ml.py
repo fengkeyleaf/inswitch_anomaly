@@ -39,6 +39,7 @@ def find_feature( tf, n ):
         for _ in range( n ):
             F.append( re.findall( '\d+', f.readline() ) )
 
+    # print( F )
     # https://docs.python.org/3.8/library/functions.html#map
     # https://www.geeksforgeeks.org/python-map-function/
     r = map( lambda l : [ int( i ) for i in l ], F )
@@ -64,18 +65,23 @@ def find_classification( tf, F, FS, fr ):
                 sign.append( re.findall( r"(<=|>)", line ) )
                 num.append( re.findall( r"\d+\.?\d*", line ) )
 
+
     FL = [ [] for _ in range( len( F ) + 1 ) ]
 
+    # print( "fea=%s\nsign=%s\nnum=%s\nFL=%s\nFS=%s" % ( fea, sign, num, FL, FS ) )
     for i in range( len( fea ) ):
         FLT = [ [ k for k in range( len( f ) + 1 ) ] for f in F ]
         assert len( FLT ) == len( FS ), str( len( FLT ) ) + " " + str( len( FS ) )
         assert len( FS ) == len( F )
 
+        # print( fea[ i ] )
         for j, feature in enumerate( fea[ i ] ):
-            for k in range( len( FS )):
+            # print( str( j ) + " " + str( feature ) )
+            for k in range( len( FS ) ):
                 if feature == FS[ k ]:
                     sig = sign[ i ][ j ]
                     thres = int( float( num[ i ][ j ] ) )
+                    # print( str( num[ i ][ j ] ) + " " + str( F[ k ] ) + " " + str( thres ) )
                     id = F[ k ].index( thres )
                     if sig == "<=":
                         while id < len( F[ k ] ):

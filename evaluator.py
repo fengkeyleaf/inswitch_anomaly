@@ -17,7 +17,7 @@ import receive as rec
 RESULT_FILE = "./output.json" # result file path
 
 
-class Evalutor:
+class Evaluator:
     def __init__( self ) -> None:
         self.P: Dict = None
         self.R: Dict = None
@@ -45,7 +45,7 @@ class Evalutor:
                 c = my_math.add_one( c )
 
         # https://java2blog.com/python-print-percentage-sign/
-        print( "%d out of total %d pkts, accuracy = %f%%" % ( c, len( self.P ), c / len( self.P ) ) )
+        print( "%d out of total %d pkts, accuracy = %.2f%%" % ( c, len( self.P ), ( c / len( self.P ) ) * 100 ) )
         print( "Data set: %d out of %d are good pkts." % ( ct, len( self.P ) ) )
 
     def evaluate( self, f: str ) -> None:
@@ -59,6 +59,6 @@ class Evalutor:
 
 
 if __name__ == '__main__':
-    # Evalutor().evaluate( "./test/result.csv" )
-    Evalutor().evaluate( "./test/test_csv1_small.csv" )
+    Evaluator().evaluate( "./test/result.csv" )
+    # Evalutor().evaluate( "./test/test_csv1_small.csv" )
 

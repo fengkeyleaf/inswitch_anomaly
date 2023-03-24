@@ -165,8 +165,6 @@ def readTableRules(p4info_helper, sw):
     for response in sw.ReadTableEntries():
         for entity in response.entities:
             entry = entity.table_entry
-            # TODO For extra credit, you can use the p4info_helper to translate
-            #      the IDs in the entry to names
             table_name = p4info_helper.get_tables_name(entry.table_id)
             print('%s: ' % table_name, end=' ')
             for m in entry.match:
@@ -202,7 +200,7 @@ def writeBasicForwardingRules( p4info_helper, s1 ):
         writeForwardingRules( p4info_helper, s1, R[ i ], P[ i ] )
 
 
-def writeMLRules( 
+def writeMLRules(
     dstTLS, srcCount, srcTLS, dstCount,
     srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, 
     classfication, action, s1, p4info_helper
@@ -244,9 +242,10 @@ def writeMLRules(
         else:
             writeactionrule(p4info_helper, s1, a, b, c, d, "MyIngress.ipv4_forward", ac)
 
+    m: int = pow( 2, 31 )
     if len(srcCount) != 0:
         srcCount.append(0)
-        srcCount.append(32)
+        srcCount.append( m )
         srcCount.sort()
         for i in range(len(srcCount) - 1):
             writefeature1rule(p4info_helper, s1, srcCount[i:i + 2], i + 1)
@@ -255,22 +254,22 @@ def writeMLRules(
 
     # TODO: min amd max values.
     if len(srcTLS) != 0:
-        srcTLS.append(0)
-        srcTLS.append(65535)
+        # srcTLS.append(0)
+        srcTLS.append( m )
         srcTLS.sort()
         for i in range(len(srcTLS) - 1):
             writefeature2rule(p4info_helper, s1, srcTLS[i:i + 2], i + 1)
 
     if len(dstCount) != 0:
         dstCount.append(0)
-        dstCount.append(65535)
+        dstCount.append( m )
         dstCount.sort()
         for i in range(len(dstCount) - 1):
             writefeature3rule(p4info_helper, s1, dstCount[i:i + 2], i + 1)
 
     if len(dstTLS) != 0:
         dstTLS.append(0)
-        dstTLS.append(65535)
+        dstTLS.append( m )
         dstTLS.sort()
         for i in range(len(dstTLS) - 1):
             writefeature4rule(p4info_helper, s1, dstTLS[i:i + 2], i + 1)
