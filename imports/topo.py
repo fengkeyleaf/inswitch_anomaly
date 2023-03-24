@@ -122,8 +122,8 @@ class CSVParaser:
         return True
 
     def get_topo_json( 
-        self, P: Dict[ str, Dict ], f:str 
-    ) -> None:
+        self, P: Dict[ str, Dict ], f: str
+    ) -> Dict:
         """
         {
             "hosts": {
@@ -184,7 +184,7 @@ class CSVParaser:
                 self.__add_host( H, L, id, da, dm )
 
 
-        res:Dict = {
+        res: Dict = {
             HOST_STR: self.__convert( H ),
             SWITCH_STR: S,
             LINK_STR: L

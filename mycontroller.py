@@ -6,10 +6,11 @@ from time import sleep
 import grpc
 
 """
-file: mycontroller.py
+file: 
 description:
 language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+        Personal website: https://fengkeyleaf.com
 """
 
 # Reference material about basic decision-tree combing packet re-forwading:
@@ -19,16 +20,16 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 # Import P4Runtime lib from parent utils dir
 # Probably there's a better way of doing this.
-sys.path.append(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                 '../../utils/'))
-import p4runtime_lib.bmv2
-import p4runtime_lib.helper
-from p4runtime_lib.switch import ShutdownAllSwitchConnections
+# sys.path.append(
+#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+#                  './utils/'))
+
+import utils.p4runtime_lib.bmv2 as bmv2
+import utils.p4runtime_lib.helper as helper
+from utils.p4runtime_lib.switch import ShutdownAllSwitchConnections
 
 from imports.ml import find_action, find_classification, find_feature
 from imports.write_rules import writeBasicForwardingRules, writeMLRules, printGrpcError
-
 
 #######################
 # Paraphrase ML model.
@@ -58,13 +59,13 @@ print( "Action: %s" % ( action ) )
 
 def main(p4info_file_path, bmv2_file_path):
     # Instantiate a P4Runtime helper from the p4info file
-    p4info_helper = p4runtime_lib.helper.P4InfoHelper(p4info_file_path)
+    p4info_helper = helper.P4InfoHelper(p4info_file_path)
 
     try:
         # Create a switch connection object for s1 and s2;
         # this is backed by a P4Runtime gRPC connection.
         # Also, dump all P4Runtime messages sent to switch to given txt files.
-        s1 = p4runtime_lib.bmv2.Bmv2SwitchConnection(
+        s1 = bmv2.Bmv2SwitchConnection(
             name='s1',
             address='127.0.0.1:50051',
             device_id=0,

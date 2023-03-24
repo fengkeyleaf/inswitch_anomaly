@@ -181,6 +181,7 @@ class ExerciseRunner:
                     raise Exception("'%s' exists and is not a directory!" % dir_name)
                 os.mkdir(dir_name)
         self.log_dir = log_dir
+        self.log_dir = ""
         self.pcap_dir = pcap_dir
         self.switch_json = switch_json
         self.bmv2_exe = bmv2_exe

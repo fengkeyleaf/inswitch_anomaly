@@ -59,6 +59,6 @@ class Evalutor:
 
 
 if __name__ == '__main__':
-    Evalutor().evaluate( "./test/result.csv" )
-    # Evalutor().evaluate( "./test/test_csv1_small.csv" )
+    # Evalutor().evaluate( "./test/result.csv" )
+    Evalutor().evaluate( "./test/test_csv1_small.csv" )
 
