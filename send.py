@@ -47,7 +47,7 @@ def main():
     # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
     parser.add_argument( "-hj", "--host_json", type = str, help="Path to host json", required = False, default = "" )
 
-    args:Dict = parser.parse_args()
+    args = parser.parse_args()
 
     # addr = socket.gethostbyname( args.dst )
     iface = get_if()

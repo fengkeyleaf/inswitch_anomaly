@@ -65,3 +65,9 @@ Test cases:
 6. Highest TLS: Four pkts;
 7. Smallest TLS: Four pkts;
 8. No replacement: Four pkts;
+
+# 4. Generating data set
+
+1. create_dataset.py attack_data benign_data result.csv ( Optionally )
+2. sketch_write.py result.csv sketch.csv
+3. tree.py sketch.csv tree.txt

@@ -7,9 +7,7 @@ sean bergen
 
 import sys
 from csv import reader
-import random as rd
 import numpy as np
-from matplotlib import pyplot as plt
 from typing import (
     List
 )
