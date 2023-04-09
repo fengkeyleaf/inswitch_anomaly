@@ -75,10 +75,10 @@ def create_dataset(attack_dir: str, benign_dir: str, output_path: str):
                 temp_bad.close()
                 first = False
             else:
-                append_csv.append(os.path.join(subdir, file), temp_bad_path, temp_bad_path)
+                append_csv.append( os.path.join( subdir, file ), temp_bad_path, temp_bad_path )
 
     # label attack data as bad
-    label_bad.label(temp_bad_path)
+    label_bad.label( temp_bad_path )
 
     # combine all benign data
     first = True
@@ -95,18 +95,18 @@ def create_dataset(attack_dir: str, benign_dir: str, output_path: str):
                 temp_good.close()
                 first = False
             else:
-                append_csv.append(os.path.join(subdir, file), temp_good_path, temp_good_path)
+                append_csv.append( os.path.join( subdir, file ), temp_good_path, temp_good_path )
     
     # label benign data as good
-    label_good.label(temp_good_path)
+    label_good.label( temp_good_path )
 
     # interlace good & bad data
-    rand_interlace_csv.interlace(temp_good_path, temp_bad_path, output_path)
+    rand_interlace_csv.interlace( temp_good_path, temp_bad_path, output_path )
 
     # trim to TCP, spoof MAC addresses, and renumber
-    trim_to_TCP.trim(output_path)
-    spoof_MACs.spoof_MACs(output_path)
-    renumber_csv.renumber(output_path)
+    trim_to_TCP.trim( output_path )
+    spoof_MACs.spoof_MACs( output_path )
+    renumber_csv.renumber( output_path )
 
     # file cleanup
     os.remove(temp_good_path)
