@@ -8,11 +8,16 @@ sean bergen
 import csv
 import sys
 import random as rd
-
+from typing import (
+    List
+)
 import pandas
 from pandas import (
     DataFrame
 )
+
+sys.path.append( "../" )
+import csvparaser
 
 """
 functions to update the sketch
@@ -156,44 +161,46 @@ def low_score( IP, sketch ):
 #
 # r is a random integer between [0,3] (both inclusive) and determines
 # the policy we update the sketch with
-def update_sketch( sketch, row, r ):
+def update_sketch( si: str, di: str, sketch: List, r: int ) -> None:
     if r == 0:
-        lowest_count( row[ 1 ], sketch[ 0 ] )
-        lowest_count( row[ 2 ], sketch[ 1 ] )
+        lowest_count( si, sketch[ 0 ] )
+        lowest_count( di, sketch[ 1 ] )
     if r == 1:
-        highest_tls( row[ 1 ], sketch[ 0 ] )
-        highest_tls( row[ 2 ], sketch[ 1 ] )
+        highest_tls( si, sketch[ 0 ] )
+        highest_tls( di, sketch[ 1 ] )
     if r == 2:
-        no_replace( row[ 1 ], sketch[ 0 ] )
-        no_replace( row[ 2 ], sketch[ 1 ] )
+        no_replace( si, sketch[ 0 ] )
+        no_replace( di, sketch[ 1 ] )
     if r == 3:
-        low_score( row[ 1 ], sketch[ 0 ] )
-        low_score( row[ 2 ], sketch[ 1 ] )
+        low_score( si, sketch[ 0 ] )
+        low_score( di, sketch[ 1 ] )
 
 
 """
 read in label data
 """
-file = open( sys.argv[ 1 ] )
-reader = csv.reader( file )
+# file = open( sys.argv[ 1 ] )
+# reader = csv.reader( file )
 # TODO: use pandas
-f: DataFrame = pandas.read_csv( sys.argv[ 1 ] )
+df: DataFrame = pandas.read_csv( sys.argv[ 1 ] )
 
 """
 build the sketch
 """
-data = [ ]
-labels = [ ]
+data: List = [ ]
+labels: List = [ ]
 
-header = next( reader )
+# header = next( reader )
 # counter to reset the sketch every 1000 packets
-counter = 0
-sketch = [ [ [ None, None, None ] ] * 8, [ [ None, None, None ] ] * 8 ]
-for row in reader:
+counter: int = 0
+sketch: List = [ [ [ None, None, None ] ] * 8, [ [ None, None, None ] ] * 8 ]
+# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
+for ( i, d ) in df.iterrows():
     # reset the sketch every 1000 packets
     if counter % 100 == 0:
         # just to see
-        print( sketch )
+        # print( sketch )
+        pass
         # sketch = [[[None,None,None]]*8,[[None,None,None]]*8]
     counter = counter + 1
 
@@ -204,14 +211,17 @@ for row in reader:
     #    lowest_ttl
     #    no_replace
     #    low_score
-    r = rd.randrange( 4 )
+    r: int = rd.randrange( 4 )
 
     # we pass the data into the tree classifier as follows:
     #       0,1000 if not in sketch, ct,tls if in
-    tmp = [ ]
-    ind = -1
+    tmp: List = []
+    ind: int = -1
+
+    si: str = df.at[ i, csvparaser.SRC_ADDR_STR ]
+    di: str = df.at[ i, csvparaser.DST_ADDR_STR ]
     for i in range( len( sketch[ 0 ] ) ):
-        if row[ 1 ] == sketch[ 0 ][ i ][ 0 ]:
+        if si == sketch[ 0 ][ i ][ 0 ]:
             ind = i
     if ind >= 0:
         tmp = [ sketch[ 0 ][ ind ][ 1 ], sketch[ 0 ][ ind ][ 2 ] ]
@@ -221,7 +231,7 @@ for row in reader:
         # tmp = [0,1000]
     ind = -1
     for i in range( len( sketch[ 1 ] ) ):
-        if row[ 2 ] == sketch[ 1 ][ i ][ 0 ]:
+        if di == sketch[ 1 ][ i ][ 0 ]:
             ind = i
     if ind >= 0:
         tmp.append( sketch[ 1 ][ ind ][ 1 ] )
@@ -230,21 +240,32 @@ for row in reader:
         tmp.append( 0 )
         tmp.append( 1000 )
     # update sketch afterwards
-    update_sketch( sketch, row, r )
+    update_sketch( si, di, sketch, r )
 
     data.append( list( tmp ) )
-
-    labels.append( row[ len( row ) - 3 ] )
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
+    labels.append( df.at[ i, csvparaser.LABEL_STR ] )
 
 """
 write the sketches with labels to a file
 """
 
-output = open( sys.argv[ 2 ], "w", newline = "" )
-writer = csv.writer( output )
+# output = open( sys.argv[ 2 ], "w", newline = "" )
+# writer = csv.writer( output )
+#
+# for i in range( len( data ) ):
+#     temp = [ ]
+#     temp.append( data[ i ] )
+#     temp.append( labels[ i ] )
+#     writer.writerow( temp )
 
-for i in range( len( data ) ):
-    temp = [ ]
-    temp.append( data[ i ] )
-    temp.append( labels[ i ] )
-    writer.writerow( temp )
+RANGE_STR = "range"
+
+# https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
+pandas.DataFrame( {
+    RANGE_STR: data,
+    csvparaser.LABEL_STR: labels
+} ).to_csv(
+    sys.argv[ 2 ], index = False
+)
+

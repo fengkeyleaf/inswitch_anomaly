@@ -44,8 +44,8 @@ class Proprocessor:
         "attack": csvparaser.LABEL_STR # UNSW_2018_IoT
     }
 
-    folder_name = "/re-formatted/"
-    signature = "_reformatted.csv"
+    FOLDER_NAME = "/re-formatted/"
+    SIGNATURE = "_reformatted.csv"
 
     def __init__( self, d: str, h: str ) -> None:
         assert d is not None
@@ -92,13 +92,13 @@ class Proprocessor:
             # https://note.nkmk.me/en/python-os-basename-dirname-split-splitext/
             fp: str = os.path.dirname( self.F[ i ] )
             fn: str = os.path.splitext( os.path.basename( self.F[ i ] ) )[ 0 ]
-            print( fp + "/" + fn + Proprocessor.signature )
-            d: str = fp + Proprocessor.folder_name
+            print( fp + "/" + fn + Proprocessor.SIGNATURE )
+            d: str = fp + Proprocessor.FOLDER_NAME
             # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
             if not os.path.isdir( d ):
                 os.mkdir( d )
 
-            D[ i ].to_csv( d + fn + Proprocessor.signature, index = False )
+            D[ i ].to_csv( d + fn + Proprocessor.SIGNATURE, index = False )
 
     def add_header( self ) -> List[ DataFrame ]:
         # https://www.geeksforgeeks.org/how-to-append-a-new-row-to-an-existing-csv-file/
