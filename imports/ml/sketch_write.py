@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-"""
-file to do sketch building and write results to a csv file
 
-sean bergen
+"""
+file:
+description: file to do sketch building and write results to a csv file
+language: python3 3.11.3
+author: @sean bergen,
+        @Xiaoyu Tongyang, fengkeyleaf@gmail.com
+        Personal website: https://fengkeyleaf.com
 """
 
-import csv
 import sys
 import random as rd
 from typing import (
     List
+)
+from argparse import (
+    ArgumentParser
 )
 import pandas
 from pandas import (
@@ -18,6 +24,7 @@ from pandas import (
 
 sys.path.append( "../" )
 import csvparaser
+
 
 """
 functions to update the sketch
@@ -155,117 +162,121 @@ def low_score( IP, sketch ):
             sketch[ i ][ 2 ] = sketch[ i ][ 2 ] + 1
 
 
-# sketch is size 2 list containing sources sketch and dest sketch
-#
-# row is the current packet we are looking at, [1] = src.ip, [2] = dst.ip
-#
-# r is a random integer between [0,3] (both inclusive) and determines
-# the policy we update the sketch with
 def update_sketch( si: str, di: str, sketch: List, r: int ) -> None:
+    """
+    sketch is size 2 list containing sources sketch and dest sketch
+    row is the current packet we are looking at, [1] = src.ip, [2] = dst.ip
+    r is a random integer between [0,3] (both inclusive) and determines
+    the policy we update the sketch with
+    @param si: src ip
+    @param di: dst ip
+    @param sketch:
+    @param r:
+    """
     if r == 0:
         lowest_count( si, sketch[ 0 ] )
         lowest_count( di, sketch[ 1 ] )
-    if r == 1:
+    elif r == 1:
         highest_tls( si, sketch[ 0 ] )
         highest_tls( di, sketch[ 1 ] )
-    if r == 2:
+    elif r == 2:
         no_replace( si, sketch[ 0 ] )
         no_replace( di, sketch[ 1 ] )
-    if r == 3:
+    elif r == 3:
         low_score( si, sketch[ 0 ] )
         low_score( di, sketch[ 1 ] )
-
-
-"""
-read in label data
-"""
-# file = open( sys.argv[ 1 ] )
-# reader = csv.reader( file )
-# TODO: use pandas
-df: DataFrame = pandas.read_csv( sys.argv[ 1 ] )
-
-"""
-build the sketch
-"""
-data: List = [ ]
-labels: List = [ ]
-
-# header = next( reader )
-# counter to reset the sketch every 1000 packets
-counter: int = 0
-sketch: List = [ [ [ None, None, None ] ] * 8, [ [ None, None, None ] ] * 8 ]
-# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
-for ( i, d ) in df.iterrows():
-    # reset the sketch every 1000 packets
-    if counter % 100 == 0:
-        # just to see
-        # print( sketch )
-        pass
-        # sketch = [[[None,None,None]]*8,[[None,None,None]]*8]
-    counter = counter + 1
-
-    # assuming we have labled data as our file
-
-    # current policies:
-    #    lowest_count
-    #    lowest_ttl
-    #    no_replace
-    #    low_score
-    r: int = rd.randrange( 4 )
-
-    # we pass the data into the tree classifier as follows:
-    #       0,1000 if not in sketch, ct,tls if in
-    tmp: List = []
-    ind: int = -1
-
-    si: str = df.at[ i, csvparaser.SRC_ADDR_STR ]
-    di: str = df.at[ i, csvparaser.DST_ADDR_STR ]
-    for i in range( len( sketch[ 0 ] ) ):
-        if si == sketch[ 0 ][ i ][ 0 ]:
-            ind = i
-    if ind >= 0:
-        tmp = [ sketch[ 0 ][ ind ][ 1 ], sketch[ 0 ][ ind ][ 2 ] ]
-        # tmp = [sketch[0][ind][1],sketch[0][ind][2]]
     else:
-        tmp = [ 0, 1000 ]
-        # tmp = [0,1000]
-    ind = -1
-    for i in range( len( sketch[ 1 ] ) ):
-        if di == sketch[ 1 ][ i ][ 0 ]:
-            ind = i
-    if ind >= 0:
-        tmp.append( sketch[ 1 ][ ind ][ 1 ] )
-        tmp.append( sketch[ 1 ][ ind ][ 2 ] )
-    else:
-        tmp.append( 0 )
-        tmp.append( 1000 )
-    # update sketch afterwards
-    update_sketch( si, di, sketch, r )
+        assert False
 
-    data.append( list( tmp ) )
-    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
-    labels.append( df.at[ i, csvparaser.LABEL_STR ] )
-
-"""
-write the sketches with labels to a file
-"""
-
-# output = open( sys.argv[ 2 ], "w", newline = "" )
-# writer = csv.writer( output )
-#
-# for i in range( len( data ) ):
-#     temp = [ ]
-#     temp.append( data[ i ] )
-#     temp.append( labels[ i ] )
-#     writer.writerow( temp )
 
 RANGE_STR = "range"
 
-# https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
-pandas.DataFrame( {
-    RANGE_STR: data,
-    csvparaser.LABEL_STR: labels
-} ).to_csv(
-    sys.argv[ 2 ], index = False
-)
 
+class SketchWriter:
+    def __init__( self, d: str, s: str ) -> None:
+        # read in label data
+        self.df: DataFrame = pandas.read_csv( d )
+        # build the sketch
+        self.data: List = [ ]
+        self.labels: List = [ ]
+        self.process()
+        self.write( s )
+
+    def process( self ) -> None:
+        # counter to reset the sketch every 1000 packets
+        counter: int = 0
+        sketch: List = [ [ [ None, None, None ] ] * 8, [ [ None, None, None ] ] * 8 ]
+        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
+        for ( idx, d ) in self.df.iterrows():
+            # reset the sketch every 1000 packets
+            if counter % 100 == 0:
+                # just to see
+                # print( sketch )
+                pass
+                # sketch = [[[None,None,None]]*8,[[None,None,None]]*8]
+            counter = counter + 1
+
+            # assuming we have labled data as our file
+
+            # current policies:
+            #    lowest_count
+            #    lowest_ttl
+            #    no_replace
+            #    low_score
+            r: int = rd.randrange( 4 )
+
+            # we pass the data into the tree classifier as follows:
+            #       0,1000 if not in sketch, ct,tls if in
+            tmp: List = [ ]
+            ind: int = -1
+
+            si: str = self.df.at[ idx, csvparaser.SRC_ADDR_STR ]
+            di: str = self.df.at[ idx, csvparaser.DST_ADDR_STR ]
+            for i in range( len( sketch[ 0 ] ) ):
+                if si == sketch[ 0 ][ i ][ 0 ]:
+                    ind = i
+            if ind >= 0:
+                tmp = [ sketch[ 0 ][ ind ][ 1 ], sketch[ 0 ][ ind ][ 2 ] ]
+                # tmp = [sketch[0][ind][1],sketch[0][ind][2]]
+            else:
+                tmp = [ 0, 1000 ]
+                # tmp = [0,1000]
+            ind = -1
+            for i in range( len( sketch[ 1 ] ) ):
+                if di == sketch[ 1 ][ i ][ 0 ]:
+                    ind = i
+            if ind >= 0:
+                tmp.append( sketch[ 1 ][ ind ][ 1 ] )
+                tmp.append( sketch[ 1 ][ ind ][ 2 ] )
+            else:
+                tmp.append( 0 )
+                tmp.append( 1000 )
+            # update sketch afterwards
+            update_sketch( si, di, sketch, r )
+
+            self.data.append( list( tmp ) )
+            # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
+            self.labels.append( self.df.at[ idx, csvparaser.LABEL_STR ] )
+
+    def write( self, s: str ) -> None:
+        """
+        write the sketches with labels to a file
+        @param s:
+        """
+        # https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
+        pandas.DataFrame( {
+            RANGE_STR: self.data,
+            csvparaser.LABEL_STR: self.labels
+        } ).to_csv(
+            s, index = False
+        )
+
+
+if __name__ == '__main__':
+    parser:ArgumentParser = ArgumentParser()
+    # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
+    parser.add_argument( "-d", "--data", type = str, help="Path to pkt csv file", required = True )
+    parser.add_argument( "-s", "--sketch", type = str, help="Path to sketch csv file", required = True )
+
+    args = parser.parse_args()
+    SketchWriter( args.data, args.sketch )

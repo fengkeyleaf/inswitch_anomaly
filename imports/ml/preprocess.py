@@ -8,7 +8,9 @@ from typing import (
 import sys
 
 import pandas
-from pandas import ( DataFrame )
+from pandas import (
+    DataFrame
+)
 
 """
 file:
@@ -58,6 +60,7 @@ class Proprocessor:
     def get_files( d: str, h: str ) -> Tuple[ List[ str ], str ]:
         P: List[ str ] = []
         # https://docs.python.org/3/library/os.html#os.walk
+        # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
         for s, d, F in os.walk( d ):
             # print( s )
             # print( d )
@@ -85,7 +88,7 @@ class Proprocessor:
         self.mapping( D )
         # write to file.
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
-        print( len( D ) )
+        # print( len( D ) )
         assert len( self.F ) == len( D )
         for i in range( len( D ) ):
             # https://www.geeksforgeeks.org/python-program-to-get-the-file-name-from-the-file-path/

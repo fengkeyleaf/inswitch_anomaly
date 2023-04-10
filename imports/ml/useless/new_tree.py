@@ -98,8 +98,8 @@ def get_lineage(tree, feature_names, file):
         a = list(value[node][0])
         ind = a.index(max(a))
         clause = clause[:-4] + ' then ' + str(ind)
-        file.write(clause)
-        file.write(";\n")
+        file.write( s )
+        file.write( s )
 
 
 # Training set X and Y
