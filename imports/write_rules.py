@@ -244,8 +244,8 @@ def writeMLRules(
 
     m: int = pow( 2, 31 )
     if len(srcCount) != 0:
-        srcCount.append(0)
-        srcCount.append( m )
+        # srcCount.append(0)
+        # srcCount.append( m )
         srcCount.sort()
         for i in range(len(srcCount) - 1):
             writefeature1rule(p4info_helper, s1, srcCount[i:i + 2], i + 1)
@@ -255,21 +255,21 @@ def writeMLRules(
     # TODO: min amd max values.
     if len(srcTLS) != 0:
         # srcTLS.append(0)
-        srcTLS.append( m )
+        # srcTLS.append( m )
         srcTLS.sort()
         for i in range(len(srcTLS) - 1):
             writefeature2rule(p4info_helper, s1, srcTLS[i:i + 2], i + 1)
 
     if len(dstCount) != 0:
-        dstCount.append(0)
-        dstCount.append( m )
+        # dstCount.append(0)
+        # dstCount.append( m )
         dstCount.sort()
         for i in range(len(dstCount) - 1):
             writefeature3rule(p4info_helper, s1, dstCount[i:i + 2], i + 1)
 
     if len(dstTLS) != 0:
-        dstTLS.append(0)
-        dstTLS.append( m )
+        # dstTLS.append(0)
+        # dstTLS.append( m )
         dstTLS.sort()
         for i in range(len(dstTLS) - 1):
             writefeature4rule(p4info_helper, s1, dstTLS[i:i + 2], i + 1)

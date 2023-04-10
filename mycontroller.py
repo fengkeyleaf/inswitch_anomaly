@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 from time import sleep
+
 import grpc
 
 """
@@ -20,9 +21,9 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 # Import P4Runtime lib from parent utils dir
 # Probably there's a better way of doing this.
-# sys.path.append(
-#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
-#                  './utils/'))
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                 './utils/'))
 
 import utils.p4runtime_lib.bmv2 as bmv2
 import utils.p4runtime_lib.helper as helper
@@ -39,6 +40,7 @@ from imports.write_rules import writeBasicForwardingRules, writeMLRules, printGr
 inputfile = '../decision_tree/tree.txt'
 inputfile = "./test/test_tree_4_features.txt"
 inputfile = "./config/tree.txt"
+inputfile = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/New folder/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_tree.txt"
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"
 
@@ -46,11 +48,14 @@ fr = r"(srcCount|srcTLS|dstCount|dstTLS)"
 FS = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
 srcCount, srcTLS, dstCount, dstTLS = find_feature( inputfile, len( FS ) )
-print( "Feature:\nsrcCount=%s, srcTLS=%s, dstCount=%s, dstTLS=%s" % ( srcCount, srcTLS, dstCount, dstTLS ) )
-srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = find_classification( inputfile, [ srcCount, srcTLS, dstCount, dstTLS ], FS, fr )
-print( "Classification:\nsrcCountMap=%s, srcTLSMap=%s, dstCountMap=%s, dstTLSMap=%s, class=%s" % ( srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication ) )
+print( "Feature:\nsrcCount=%s,\n srcTLS=%s,\n dstCount=%s,\n dstTLS=%s" % (srcCount, srcTLS, dstCount, dstTLS) )
+srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = find_classification( inputfile,
+                                                                                     [ srcCount, srcTLS, dstCount,
+                                                                                       dstTLS ], FS, fr )
+print( "Classification:\nsrcCountMap=%s,\nsrcTLSMap=%s,\ndstCountMap=%s,\ndstTLSMap=%s,\nclass=%s" % (
+srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication) )
 action = find_action( actionfile )
-print( "Action: %s" % ( action ) )
+print( "Action: %s" % (action) )
 
 
 #######################
@@ -58,19 +63,19 @@ print( "Action: %s" % ( action ) )
 #######################
 
 
-def main(p4info_file_path, bmv2_file_path):
+def main( p4info_file_path, bmv2_file_path ):
     # Instantiate a P4Runtime helper from the p4info file
-    p4info_helper = helper.P4InfoHelper(p4info_file_path)
+    p4info_helper = helper.P4InfoHelper( p4info_file_path )
 
     try:
         # Create a switch connection object for s1 and s2;
         # this is backed by a P4Runtime gRPC connection.
         # Also, dump all P4Runtime messages sent to switch to given txt files.
         s1 = bmv2.Bmv2SwitchConnection(
-            name='s1',
-            address='127.0.0.1:50051',
-            device_id=0,
-            proto_dump_file='logs/s1-p4runtime-requests.txt')
+            name = 's1',
+            address = '127.0.0.1:50051',
+            device_id = 0,
+            proto_dump_file = 'logs/s1-p4runtime-requests.txt' )
 
         # Send master arbitration update message to establish this controller as
         # master (required by P4Runtime before performing any other write operation)
@@ -78,9 +83,9 @@ def main(p4info_file_path, bmv2_file_path):
         # s2.MasterArbitrationUpdate()
 
         # Install the P4 program on the switches
-        s1.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,
-                                       bmv2_json_file_path=bmv2_file_path)
-        print("Installed P4 Program using SetForwardingPipelineConfig on s1")
+        s1.SetForwardingPipelineConfig( p4info = p4info_helper.p4info,
+                                        bmv2_json_file_path = bmv2_file_path )
+        print( "Installed P4 Program using SetForwardingPipelineConfig on s1" )
 
         # Write basic forwarding rules into switch.
         # writeBasicForwardingRules( p4info_helper, s1 )
@@ -101,30 +106,30 @@ def main(p4info_file_path, bmv2_file_path):
         )
 
     except KeyboardInterrupt:
-        print(" Shutting down.")
+        print( " Shutting down." )
     except grpc.RpcError as e:
-        printGrpcError(e)
+        printGrpcError( e )
 
     ShutdownAllSwitchConnections()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='P4Runtime Controller')
-    parser.add_argument('--p4info', help='p4info proto in text format from p4c',
-                        type=str, action="store", required=False,
-                        default='./build/inswitch_anomaly.p4.p4info.txt')
-    parser.add_argument('--bmv2-json', help='BMv2 JSON file from p4c',
-                        type=str, action="store", required=False,
-                        default='./build/inswitch_anomaly.json')
+    parser = argparse.ArgumentParser( description = 'P4Runtime Controller' )
+    parser.add_argument( '--p4info', help = 'p4info proto in text format from p4c',
+                         type = str, action = "store", required = False,
+                         default = './build/inswitch_anomaly.p4.p4info.txt' )
+    parser.add_argument( '--bmv2-json', help = 'BMv2 JSON file from p4c',
+                         type = str, action = "store", required = False,
+                         default = './build/inswitch_anomaly.json' )
     args = parser.parse_args()
 
-    if not os.path.exists(args.p4info):
+    if not os.path.exists( args.p4info ):
         parser.print_help()
-        print("\np4info file not found: %s\nHave you run 'make'?" % args.p4info)
-        parser.exit(1)
-    if not os.path.exists(args.bmv2_json):
+        print( "\np4info file not found: %s\nHave you run 'make'?" % args.p4info )
+        parser.exit( 1 )
+    if not os.path.exists( args.bmv2_json ):
         parser.print_help()
-        print("\nBMv2 JSON file not found: %s\nHave you run 'make'?" % args.bmv2_json)
-        parser.exit(1)
+        print( "\nBMv2 JSON file not found: %s\nHave you run 'make'?" % args.bmv2_json )
+        parser.exit( 1 )
 
-    main(args.p4info, args.bmv2_json)
+    main( args.p4info, args.bmv2_json )

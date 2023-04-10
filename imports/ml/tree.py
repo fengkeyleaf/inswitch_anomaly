@@ -11,9 +11,14 @@ author: @sean bergen,
 """
 
 import csv
+import math
+import sys
+from collections import OrderedDict
+
 import numpy as np
 from typing import (
-    List
+    List,
+    Dict
 )
 from argparse import (
     ArgumentParser
@@ -23,6 +28,9 @@ from sklearn import tree
 from sklearn.tree import (
     DecisionTreeClassifier
 )
+
+sys.path.append( "../com/fengkeyleaf/utils/" )
+import my_collections
 
 
 # https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/framework/Machinelearning.py
@@ -132,7 +140,7 @@ class Tree:
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
             # print( self.t.predict( self.X ) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
-            print( "Accuracy of this tree: %.2f" % (self.t.score( self.X, self.y ) * 100) )
+            print( "Accuracy of this tree: %.2f%%" % (self.t.score( self.X, self.y ) * 100) )
 
     def reformatting( self ):
         """
@@ -159,49 +167,80 @@ class Tree:
         # Evaluate the tree
         Tree.Evaluator( self.data, self.labels, decision_tree ).evaluate()
 
-        feature_names = [ "srcCount", "dstCount", "srcTLS", "dstTLS" ]
+        feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
         threshold = decision_tree.tree_.threshold
         features = [ feature_names[ i ] for i in decision_tree.tree_.feature ]
 
-        srcCount = [ ]
-        dstCount = [ ]
-        srcTLS = [ ]
-        dstTLS = [ ]
+        F: Dict[ str: List ] = { f: [] for f in feature_names }
+        # srcCount = [ ]
+        # dstCount = [ ]
+        # srcTLS = [ ]
+        # dstTLS = [ ]
 
+        # https://www.geeksforgeeks.org/enumerate-in-python/
         for i, fe in enumerate( features ):
-            if fe == 'srcCount':
-                srcCount.append( threshold[ i ] )
-            elif fe == 'dstCount':
-                dstCount.append( threshold[ i ] )
-            elif fe == 'srcTLS':
-                srcTLS.append( threshold[ i ] )
-            else:
-                dstTLS.append( threshold[ i ] )
+            F[ fe ].append( threshold[ i ] )
+            # if fe == 'srcCount':
+            #     srcCount.append( threshold[ i ] )
+            # elif fe == 'dstCount':
+            #     dstCount.append( threshold[ i ] )
+            # elif fe == 'srcTLS':
+            #     srcTLS.append( threshold[ i ] )
+            # else:
+            #     assert fe == "dstTLS"
+            #     dstTLS.append( threshold[ i ] )
 
-        srcCount = [ int( i ) for i in srcCount ]
-        dstCount = [ int( i ) for i in dstCount ]
-        srcTLS = [ int( i ) for i in srcTLS ]
-        dstTLS = [ int( i ) for i in dstTLS ]
+        for k, v in F.items():
+            v = [ int( i ) for i in v if int( i ) > 0 ]
+            # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/
+            v = list( OrderedDict.fromkeys( v ) )
+            v.sort()
+            F[ k ] = v
 
-        srcCount.sort()
-        dstCount.sort()
-        srcTLS.sort()
-        dstTLS.sort()
+            if v[ 0 ] > 0:
+                v.insert( 0, int( 0 ) )
 
+            assert v[ -1 ] < int( math.pow( 2, 31 ) )
+            v.append( int( math.pow( 2, 31 ) ) )
+
+            assert my_collections.is_monotonic( v )
+
+        # srcCount = [ int( i ) for i in srcCount if int( i ) > 0 ]
+        # dstCount = [ int( i ) for i in dstCount if int( i ) > 0 ]
+        # srcTLS = [ int( i ) for i in srcTLS if int( i ) > 0 ]
+        # dstTLS = [ int( i ) for i in dstTLS if int( i ) > 0 ]
+
+        # srcCount.sort()
+        # dstCount.sort()
+        # srcTLS.sort()
+        # dstTLS.sort()
+
+        # Write to file
+        # srcCount
+        # srcTLS
+        # dstCount
+        # dstTLS
         output = open( o, "w+" )
-        output.write( "srcCount = " )
-        output.write( str( srcCount ) )
-        output.write( ";\n" )
-        output.write( "dstCount = " )
-        output.write( str( dstCount ) )
-        output.write( ";\n" )
-        output.write( "srcTLS = " )
-        output.write( str( srcTLS ) )
-        output.write( ";\n" )
-        output.write( "dstTLS = " )
-        output.write( str( dstTLS ) )
-        output.write( ";\n" )
+        # https://www.w3schools.com/python/python_dictionaries_loop.asp
+        for k, v in F.items():
+            output.write( k + " = " )
+            output.write( str( v ) )
+            output.write( ";\n" )
+
+        # output.write( "srcCount = " )
+        # output.write( str( srcCount ) )
+        # output.write( ";\n" )
+        # output.write( "srcTLS = " )
+        # output.write( str( srcTLS ) )
+        # output.write( ";\n" )
+        # output.write( "dstCount = " )
+        # output.write( str( dstCount ) )
+        # output.write( ";\n" )
+        # output.write( "dstTLS = " )
+        # output.write( str( dstTLS ) )
+        # output.write( ";\n" )
+
         get_lineage( decision_tree, feature_names, output )
         output.close()
 
