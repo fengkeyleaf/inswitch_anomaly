@@ -20,6 +20,7 @@ from . import topo
 # Add match-table units.
 #######################
 
+# TODO: read only once
 def get_paras( fp:str ) -> Dict:
     para:Dict[ int, Dict ] = { 0: {} }
     with open( fp, "r" ) as f:

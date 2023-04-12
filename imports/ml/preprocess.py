@@ -20,10 +20,15 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+import sketch_write
+import tree
 # https://www.geeksforgeeks.org/python-import-module-from-different-directory/
 # https://www.w3docs.com/snippets/python/importing-files-from-different-folder.html
 sys.path.append( "../" )
 import csvparaser
+sys.path.append( "../com/fengkeyleaf/io/" )
+import my_writer
+
 
 class Proprocessor:
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
@@ -50,17 +55,23 @@ class Proprocessor:
     SIGNATURE = "_reformatted.csv"
 
     def __init__( self, d: str, h: str ) -> None:
+        """
+
+        @param d: Directory to data set
+        @param h: Path to features(headers)
+        """
         assert d is not None
         self.F: List[ str ] = None
         self.h: str = None
         self.F, self.h = Proprocessor.get_files( d, h )
-        self.pro_process()
+        self.fp = self.pro_process()
 
     @staticmethod
     def get_files( d: str, h: str ) -> Tuple[ List[ str ], str ]:
         P: List[ str ] = []
         # https://docs.python.org/3/library/os.html#os.walk
         # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
+        # root, dirs, files
         for s, d, F in os.walk( d ):
             # print( s )
             # print( d )
@@ -83,25 +94,26 @@ class Proprocessor:
 
         return None
 
-    def pro_process( self ) -> None:
+    def pro_process( self ) -> str:
         D: List[ DataFrame ] = self.add_header()
         self.mapping( D )
         # write to file.
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
         # print( len( D ) )
         assert len( self.F ) == len( D )
+        fp: str = ""
         for i in range( len( D ) ):
-            # https://www.geeksforgeeks.org/python-program-to-get-the-file-name-from-the-file-path/
-            # https://note.nkmk.me/en/python-os-basename-dirname-split-splitext/
-            fp: str = os.path.dirname( self.F[ i ] )
-            fn: str = os.path.splitext( os.path.basename( self.F[ i ] ) )[ 0 ]
-            print( fp + "/" + fn + Proprocessor.SIGNATURE )
+            assert fp == "" or fp == my_writer.get_dir( self.F[ i ] )
+            fp = my_writer.get_dir( self.F[ i ] )
+            fn: str = my_writer.get_filename( self.F[ i ] )
             d: str = fp + Proprocessor.FOLDER_NAME
             # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
-            if not os.path.isdir( d ):
-                os.mkdir( d )
+            my_writer.make_dir( d )
 
+            print( "pro-process: " + d + fn + Proprocessor.SIGNATURE )
             D[ i ].to_csv( d + fn + Proprocessor.SIGNATURE, index = False )
+
+        return fp
 
     def add_header( self ) -> List[ DataFrame ]:
         # https://www.geeksforgeeks.org/how-to-append-a-new-row-to-an-existing-csv-file/
@@ -143,11 +155,23 @@ class Proprocessor:
 # python .\sketch_write.py "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv" "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_sketch.csv"
 # python .\tree.py -s "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_sketch.csv" -dt "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_tree.txt"
 if __name__ == '__main__':
-    parser:ArgumentParser = ArgumentParser()
+    parser: ArgumentParser = ArgumentParser()
     # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
-    parser.add_argument( "-d", "--dir", type = str, help="directory to data set", required = True )
-    parser.add_argument( "-he", "--header", type = str, help="Path to features(headers)", required = False, default = None )
+    # TODO: dir has not sub-directory
+    parser.add_argument(
+        "-d", "--dir",
+        type = str, help = "Directory to data set", required = True
+    )
+    parser.add_argument(
+        "-he", "--header",
+        type = str, help = "Path to features(headers)", required = False, default = None
+    )
 
     args = parser.parse_args()
-    Proprocessor( args.dir, args.header )
+    # https://www.programiz.com/python-programming/methods/string/endswith
+    assert not args.dir.endswith( "/" ) or not args.dir.endswith( "\\" )
+    pd: str = Proprocessor( args.dir, args.header ).fp
+    sketch_write.SketchWriter( args.dir + Proprocessor.FOLDER_NAME, pd )
+    tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, pd )
+
 

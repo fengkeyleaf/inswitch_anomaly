@@ -8,7 +8,7 @@ author: @sean bergen,
         @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
-
+import os
 import sys
 import random as rd
 from typing import (
@@ -24,7 +24,8 @@ from pandas import (
 
 sys.path.append( "../" )
 import csvparaser
-
+sys.path.append( "../com/fengkeyleaf/io/" )
+import my_writer
 
 """
 functions to update the sketch
@@ -191,16 +192,37 @@ def update_sketch( si: str, di: str, sketch: List, r: int ) -> None:
 
 RANGE_STR = "range"
 
-
+# https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
 class SketchWriter:
-    def __init__( self, d: str, s: str ) -> None:
-        # read in label data
-        self.df: DataFrame = pandas.read_csv( d )
-        # build the sketch
-        self.data: List = [ ]
-        self.labels: List = [ ]
-        self.process()
-        self.write( s )
+    FOLDER_NAME = "/sketches/"
+    SIGNATURE = "_sketch.csv"
+
+    def __init__( self, dir: str, pdir: str ) -> None:
+        """
+
+        @param dir: Directory to re-formatted pkt csv files.
+        @param pdir: Directory to original pkt csv files.
+        """
+        self.df: DataFrame = None
+        self.data: List = []
+        self.labels: List = []
+
+        for s, d, F in os.walk( dir ):
+            for f in F:
+                # read in label data
+                self.df = pandas.read_csv( os.path.join( s, f ) )
+                # build the sketch
+                self.data = []
+                self.labels = []
+
+                self.process()
+
+                d: str = pdir + SketchWriter.FOLDER_NAME
+                my_writer.make_dir( d )
+                print( "sketch: " + d + my_writer.get_filename( f ) + SketchWriter.SIGNATURE )
+                self.write(
+                    d + my_writer.get_filename( f ) + SketchWriter.SIGNATURE
+                )
 
     def process( self ) -> None:
         # counter to reset the sketch every 1000 packets
@@ -261,7 +283,7 @@ class SketchWriter:
     def write( self, s: str ) -> None:
         """
         write the sketches with labels to a file
-        @param s:
+        @param s: file path.
         """
         # https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
         pandas.DataFrame( {
@@ -275,8 +297,10 @@ class SketchWriter:
 if __name__ == '__main__':
     parser:ArgumentParser = ArgumentParser()
     # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
-    parser.add_argument( "-d", "--data", type = str, help="Path to pkt csv file", required = True )
-    parser.add_argument( "-s", "--sketch", type = str, help="Path to sketch csv file", required = True )
+    # parser.add_argument( "-d", "--data", type = str, help="Path to pkt csv file", required = True )
+    # parser.add_argument( "-s", "--sketch", type = str, help="Path to sketch csv file", required = True )
+    # parser.add_argument( "-dir", "--dir", type = str, help="Directory to pre-processed pkt csv files", required = True )
 
     args = parser.parse_args()
-    SketchWriter( args.data, args.sketch )
+    # SketchWriter( args.dir )
+

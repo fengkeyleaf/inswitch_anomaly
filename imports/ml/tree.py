@@ -12,6 +12,7 @@ author: @sean bergen,
 
 import csv
 import math
+import os
 import sys
 from collections import OrderedDict
 
@@ -31,6 +32,8 @@ from sklearn.tree import (
 
 sys.path.append( "../com/fengkeyleaf/utils/" )
 import my_collections
+sys.path.append( "../com/fengkeyleaf/io/" )
+import my_writer
 
 
 # https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/framework/Machinelearning.py
@@ -46,10 +49,6 @@ def get_lineage( tree, feature_names, file ):
     @param file:
     @return:
     """
-    srcCount = [ ]
-    dstCount = [ ]
-    srcTLS = [ ]
-    dstTLS = [ ]
     left = tree.tree_.children_left
     right = tree.tree_.children_right
     threshold = tree.tree_.threshold
@@ -112,17 +111,39 @@ def get_lineage( tree, feature_names, file ):
         file.write( ";\n" )
 
 
+# TODO: Use pandas
 class Tree:
-    def __init__( self, f: str, o: str ) -> None:
-        # load data in from csv file
-        file = open( f )
-        self.reader = csv.reader( file )
-        # get rid of headers
-        next( self.reader )
-        self.data = [ ]
-        self.labels = [ ]
-        self.reformatting()
-        self.get_tree( o )
+    FOLDER_NAME = "/trees/"
+    SIGNATURE = "_tree.txt"
+
+    def __init__( self, d: str, pd: str ) -> None:
+        """
+
+        @param d: Directory to pkt sketch csv files.
+        @param pd: Directory to original pkt csv files.
+        """
+        self.reader = None
+        self.data = []
+        self.labels = []
+
+        for s, d, F in os.walk( d ):
+            for f in F:
+                # load data in from csv file
+                file = open( os.path.join( s, f ) )
+                self.reader = csv.reader( file )
+                # get rid of headers
+                next( self.reader )
+                self.data = []
+                self.labels = []
+
+                self.reformatting()
+
+                d: str = pd + Tree.FOLDER_NAME
+                my_writer.make_dir( d )
+                print( "tree: "  + d + my_writer.get_filename( f ) + Tree.SIGNATURE )
+                self.get_tree(
+                    d + my_writer.get_filename( f ) + Tree.SIGNATURE
+                )
 
     class Evaluator:
         def __init__( self, X: List, y: List, t: DecisionTreeClassifier ) -> None:
@@ -140,15 +161,15 @@ class Tree:
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
             # print( self.t.predict( self.X ) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
-            print( "Accuracy of this tree: %.2f%%" % (self.t.score( self.X, self.y ) * 100) )
+            print( "Accuracy of this tree: %.2f%%" % ( self.t.score( self.X, self.y ) * 100 ) )
 
     def reformatting( self ):
         """
         formatting from the csv is kinda weird so it is explained here:
-            each line looks something like:
-                "[sketch]",label
-            so, we need to unpack the sketch back into a list from a string
-            and then also make sure each part of the sketch is read in as an integer
+        each line looks something like:
+            "[sketch]",label
+        so, we need to unpack the sketch back into a list from a string
+        and then also make sure each part of the sketch is read in as an integer
         """
         for line in self.reader:
             tmp1 = line[ 0 ].strip( '][' ).split( ',' )
@@ -167,29 +188,17 @@ class Tree:
         # Evaluate the tree
         Tree.Evaluator( self.data, self.labels, decision_tree ).evaluate()
 
+        # TODO: Configuration of features.
         feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
         threshold = decision_tree.tree_.threshold
         features = [ feature_names[ i ] for i in decision_tree.tree_.feature ]
 
         F: Dict[ str: List ] = { f: [] for f in feature_names }
-        # srcCount = [ ]
-        # dstCount = [ ]
-        # srcTLS = [ ]
-        # dstTLS = [ ]
 
         # https://www.geeksforgeeks.org/enumerate-in-python/
         for i, fe in enumerate( features ):
             F[ fe ].append( threshold[ i ] )
-            # if fe == 'srcCount':
-            #     srcCount.append( threshold[ i ] )
-            # elif fe == 'dstCount':
-            #     dstCount.append( threshold[ i ] )
-            # elif fe == 'srcTLS':
-            #     srcTLS.append( threshold[ i ] )
-            # else:
-            #     assert fe == "dstTLS"
-            #     dstTLS.append( threshold[ i ] )
 
         for k, v in F.items():
             v = [ int( i ) for i in v if int( i ) > 0 ]
@@ -198,6 +207,7 @@ class Tree:
             v.sort()
             F[ k ] = v
 
+            # simplify
             if v[ 0 ] > 0:
                 v.insert( 0, int( 0 ) )
 
@@ -205,16 +215,6 @@ class Tree:
             v.append( int( math.pow( 2, 31 ) ) )
 
             assert my_collections.is_monotonic( v )
-
-        # srcCount = [ int( i ) for i in srcCount if int( i ) > 0 ]
-        # dstCount = [ int( i ) for i in dstCount if int( i ) > 0 ]
-        # srcTLS = [ int( i ) for i in srcTLS if int( i ) > 0 ]
-        # dstTLS = [ int( i ) for i in dstTLS if int( i ) > 0 ]
-
-        # srcCount.sort()
-        # dstCount.sort()
-        # srcTLS.sort()
-        # dstTLS.sort()
 
         # Write to file
         # srcCount
@@ -228,19 +228,6 @@ class Tree:
             output.write( str( v ) )
             output.write( ";\n" )
 
-        # output.write( "srcCount = " )
-        # output.write( str( srcCount ) )
-        # output.write( ";\n" )
-        # output.write( "srcTLS = " )
-        # output.write( str( srcTLS ) )
-        # output.write( ";\n" )
-        # output.write( "dstCount = " )
-        # output.write( str( dstCount ) )
-        # output.write( ";\n" )
-        # output.write( "dstTLS = " )
-        # output.write( str( dstTLS ) )
-        # output.write( ";\n" )
-
         get_lineage( decision_tree, feature_names, output )
         output.close()
 
@@ -248,8 +235,8 @@ class Tree:
 if __name__ == '__main__':
     parser:ArgumentParser = ArgumentParser()
     # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
-    parser.add_argument( "-s", "--sketch", type = str, help = "Path to sketch csv file", required = True )
-    parser.add_argument( "-dt", "--decisionTree", type = str, help = "Path to decision tree txt file", required = True )
+    # parser.add_argument( "-s", "--sketch", type = str, help = "Path to sketch csv file", required = True )
+    # parser.add_argument( "-dt", "--decisionTree", type = str, help = "Path to decision tree txt file", required = True )
 
     args = parser.parse_args()
-    Tree( args.sketch, args.decisionTree )
+    # Tree( args.sketch, args.decisionTree )
