@@ -53,7 +53,7 @@ def get_actionpara( action:int ) -> Dict:
 
 def writeForwardingRules( p4info_helper, sw, range, port ) -> None:
     para = get_actionpara( port )
-    print( range, para )
+    # print( range, para )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.ipv4_lpm",
         match_fields = {
@@ -63,14 +63,14 @@ def writeForwardingRules( p4info_helper, sw, range, port ) -> None:
         action_params = para
     )
     sw.WriteTableEntry(table_entry)
-    print("Installed forwarding rule on %s" % sw.name)
+    # print("Installed forwarding rule on %s" % sw.name)
 
 
 # Decision tree rules.
 
 def writeactionrule(p4info_helper, switch, a, b, c, d, action, port):
     para = get_actionpara(port)
-    print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
+    # print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.decision_tree",
         match_fields={
@@ -86,10 +86,10 @@ def writeactionrule(p4info_helper, switch, a, b, c, d, action, port):
         priority=1
     )
     switch.WriteTableEntry(table_entry)
-    print("Installed action rule on %s" % switch.name)
+    # print("Installed action rule on %s" % switch.name)
 
 def writefeature1rule(p4info_helper, switch, range, ind):
-    print( "F1: range=%s, ind=%s" % ( range, ind ) )
+    # print( "F1: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.s.src_count_select_t",
         match_fields={
@@ -102,11 +102,11 @@ def writefeature1rule(p4info_helper, switch, range, ind):
         priority=1
     )
     switch.WriteTableEntry(table_entry)
-    print("Installed feature1 rule on %s" % switch.name)
+    # print("Installed feature1 rule on %s" % switch.name)
 
 
 def writefeature2rule(p4info_helper, switch, range, ind):
-    print( "F2: range=%s, ind=%s" % ( range, ind ) )
+    # print( "F2: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.s.src_tls_select_t",
         match_fields={
@@ -118,11 +118,11 @@ def writefeature2rule(p4info_helper, switch, range, ind):
         priority=1
     )
     switch.WriteTableEntry(table_entry)
-    print("Installed feature2 rule on %s" % switch.name)
+    # print("Installed feature2 rule on %s" % switch.name)
 
 
 def writefeature3rule(p4info_helper, switch, range, ind):
-    print( "F3: range=%s, ind=%s" % ( range, ind ) )
+    # print( "F3: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.s.dst_count_select_t",
         match_fields={
@@ -134,11 +134,11 @@ def writefeature3rule(p4info_helper, switch, range, ind):
         priority=1
     )
     switch.WriteTableEntry(table_entry)
-    print("Installed feature3 rule on %s" % switch.name)
+    # print("Installed feature3 rule on %s" % switch.name)
 
 
 def writefeature4rule(p4info_helper, switch, range, ind):
-    print( "F4: range=%s, ind=%s" % ( range, ind ) )
+    # print( "F4: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name="MyIngress.s.dst_tls_select_t",
         match_fields={
@@ -150,7 +150,7 @@ def writefeature4rule(p4info_helper, switch, range, ind):
         priority=1
     )
     switch.WriteTableEntry(table_entry)
-    print("Installed feature4 rule on %s" % switch.name)
+    # print("Installed feature4 rule on %s" % switch.name)
 
 #
 # Print out a switch information.
@@ -276,4 +276,5 @@ def writeMLRules(
         for i in range(len(dstTLS) - 1):
             writefeature4rule(p4info_helper, s1, dstTLS[i:i + 2], i + 1)
 
-    readTableRules(p4info_helper, s1)
+    # readTableRules(p4info_helper, s1)
+    print( "Done with injecting routing rules" )

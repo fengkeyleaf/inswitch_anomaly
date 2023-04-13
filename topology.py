@@ -27,7 +27,9 @@ if __name__ == '__main__':
     # cf: str = "./test/test_csv1_small.csv"
     # cf: str = "../test/test_csv1_small_one_side_sending.csv"
     # cf: str = "./test/test_csv1.csv"
-    cf: str = "./test/result.csv"
+    # cf: str = "./test/result.csv"
+    # cf: str = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
+    cf: str = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv"
     
     P: Dict = Parser().parse( cf )
     __get_host_json( topo.CSVParaser().get_topo_json( P, "./pod-topo/topology.json" ) )

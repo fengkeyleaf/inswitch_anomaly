@@ -242,7 +242,7 @@ class ExerciseRunner:
 
         print( "Network program initialized...." )
         # wait for that to finish. Not sure how to do this better
-        sleep( 5 )
+        sleep( 10 * 60 )
 
         # http://mininet.org/api/classmininet_1_1node_1_1Node.html#a6e1338af3c4a0348963a257ac548153b
         # https://www.geeksforgeeks.org/multithreading-python-set-1/
