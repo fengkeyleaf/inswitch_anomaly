@@ -9,5 +9,5 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 
-def add_one( n:int ) -> int:
+def add_one( n: int ) -> int:
     return n + 1

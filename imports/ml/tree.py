@@ -25,10 +25,13 @@ from argparse import (
     ArgumentParser
 )
 
+import sklearn.tree
 from sklearn import tree
 from sklearn.tree import (
     DecisionTreeClassifier
 )
+from matplotlib import pyplot as plt
+
 
 sys.path.append( "../com/fengkeyleaf/utils/" )
 import my_collections
@@ -191,15 +194,30 @@ class Tree:
         # TODO: Configuration of features.
         feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
+        # tree_Tree instance
         threshold = decision_tree.tree_.threshold
+        print( threshold )
+        print( decision_tree.tree_.feature )
         features = [ feature_names[ i ] for i in decision_tree.tree_.feature ]
+        print( features )
 
         F: Dict[ str: List ] = { f: [] for f in feature_names }
 
+        # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html#sphx-glr-auto-examples-tree-plot-unveil-tree-structure-py
+        # tree.plot_tree( decision_tree )
+        # plt.show()
+        # https://towardsdatascience.com/scikit-learn-decision-trees-explained-803f3812290d
+        sklearn.tree.export_graphviz(
+            decision_tree,
+            out_file = "myTreeName.dot",
+            filled = True,
+            rounded = True
+        )
         # https://www.geeksforgeeks.org/enumerate-in-python/
         for i, fe in enumerate( features ):
             F[ fe ].append( threshold[ i ] )
 
+        print( F )
         for k, v in F.items():
             v = [ int( i ) for i in v if int( i ) > 0 ]
             # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/
@@ -207,7 +225,12 @@ class Tree:
             v.sort()
             F[ k ] = v
 
-            # simplify
+            if len( v ) <= 0:
+                print( "Warning! Empty Feature: " + o )
+                continue
+
+            assert len( v ) > 0, str( k ) + " | " + str( v )
+            # TODO: simplify
             if v[ 0 ] > 0:
                 v.insert( 0, int( 0 ) )
 

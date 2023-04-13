@@ -25,6 +25,7 @@ def get_paras( fp:str ) -> Dict:
     para:Dict[ int, Dict ] = { 0: {} }
     with open( fp, "r" ) as f:
         H:Dict = json.load( f )[ "hosts" ]
+        # TODO: check duplicate macs
         for k in H.keys():
             assert re.match( r"^h\d+$", k ) is not None
             assert para.get( int( k[ 1: ] ) ) is None

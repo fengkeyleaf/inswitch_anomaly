@@ -1,9 +1,10 @@
+import math
 import os
 from argparse import (
     ArgumentParser
 )
 from typing import (
-    Dict, List, Tuple
+    Dict, List, Tuple, Set
 )
 import sys
 
@@ -16,8 +17,9 @@ from pandas import (
 file:
 description:
 language: python3 3.11.3
-author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
+        @Riley McGinn
 """
 
 import sketch_write
@@ -28,8 +30,11 @@ sys.path.append( "../" )
 import csvparaser
 sys.path.append( "../com/fengkeyleaf/io/" )
 import my_writer
+sys.path.append( "../com/fengkeyleaf/utils/lang/" )
+import my_math
 
 
+# TODO: Verify pk ids.
 class Proprocessor:
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
     id_M: Dict[ str, str ] = {
@@ -81,22 +86,10 @@ class Proprocessor:
 
         return ( P, h )
 
-    @staticmethod
-    def look_for_targeted_header( k: str ):
-        D: List[ Dict ] = [
-            Proprocessor.id_M, Proprocessor.src_ip_M, Proprocessor.src_mac_M,
-            Proprocessor.dst_ip_M, Proprocessor.dst_mac_M, Proprocessor.label_M
-        ]
-
-        for d in D:
-            if d.get( k ) is not None:
-                return d.get( k )
-
-        return None
-
     def pro_process( self ) -> str:
         D: List[ DataFrame ] = self.add_header()
         self.mapping( D )
+        self.spoof_macs( D )
         # write to file.
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
         # print( len( D ) )
@@ -149,6 +142,62 @@ class Proprocessor:
             # d.drop( dl, axis = 1 )
             D[ i ] = d.drop( columns = dl )
 
+    @staticmethod
+    def look_for_targeted_header( k: str ):
+        D: List[ Dict ] = [
+            Proprocessor.id_M, Proprocessor.src_ip_M, Proprocessor.src_mac_M,
+            Proprocessor.dst_ip_M, Proprocessor.dst_mac_M, Proprocessor.label_M
+        ]
+
+        for d in D:
+            if d.get( k ) is not None:
+                return d.get( k )
+
+        return None
+
+    # TODO: not re-assign
+    def spoof_macs( self, D: List[ DataFrame ] ) -> None:
+        """
+        Add to input csv to add dest MAC and src MAC
+        MACs are consistent with IPs
+        @param D:
+        """
+        # Create a dict to map IPs to MACs
+        m: Dict[ str, str ] = {}
+
+        for d in D:
+            for ( i, s ) in d.iterrows():
+                si: str = d.at[ i, csvparaser.SRC_ADDR_STR ]
+                di: str = d.at[ i, csvparaser.DST_ADDR_STR ]
+                Proprocessor.create_mac( m, [ si, di ] )
+
+                # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.loc.html
+                assert m[ si ] is not None
+                d.loc[ i, csvparaser.SRC_MAC_STR ] = m[ si ]
+                assert m[ di ] is not None
+                d.loc[ i, csvparaser.DST_MAC_STR ] = m[ di ]
+
+    id: int = 0
+
+    @staticmethod
+    def create_mac( m: Dict[ str, str ], I: List[ str ] ) -> None:
+        # TODO: check duplicate macs
+        for i in I:
+            if m.get( i ) is None:
+                m[ i ] = Proprocessor.create_MAC( Proprocessor.id )
+                Proprocessor.id = my_math.add_one( Proprocessor.id )
+            else:
+                assert m[ i ] is not None and m[ i ] != ""
+
+    @staticmethod
+    def create_MAC( input: int ) -> str:
+        return \
+                "{:02d}".format( math.trunc( ( input / 10000000000 ) ) % 100 ) + ':' + \
+                "{:02d}".format( math.trunc( ( input / 100000000 ) ) % 100 ) + ':' + \
+                "{:02d}".format( math.trunc( ( input / 1000000 ) ) % 100 ) + ':' + \
+                "{:02d}".format( math.trunc( ( input / 10000 ) ) % 100 ) + ':' + \
+                "{:02d}".format( math.trunc( ( input / 100 ) % 100 ) ) + ':' + \
+                "{:02d}".format( input % 100 )
 
 
 # python .\preprocess.py -d "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
@@ -170,8 +219,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # https://www.programiz.com/python-programming/methods/string/endswith
     assert not args.dir.endswith( "/" ) or not args.dir.endswith( "\\" )
-    pd: str = Proprocessor( args.dir, args.header ).fp
-    sketch_write.SketchWriter( args.dir + Proprocessor.FOLDER_NAME, pd )
-    tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, pd )
+    # pd: str = Proprocessor( args.dir, args.header ).fp
+    # sketch_write.SketchWriter( args.dir + Proprocessor.FOLDER_NAME, pd )
+    tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, args.dir )
 
 
