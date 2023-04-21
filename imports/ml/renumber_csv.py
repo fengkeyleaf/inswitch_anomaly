@@ -6,6 +6,7 @@ import csv
 import sys
 import os
 
+# TODO: Functionality has been moved to preprocess.py
 def renumber(csv_path):
     temp_path = os.path.join(os.getcwd(), 'temp.csv')
     input = open(csv_path)

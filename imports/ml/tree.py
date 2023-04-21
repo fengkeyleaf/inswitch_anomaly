@@ -180,7 +180,8 @@ class Tree:
             for item in tmp1:
                 tmp2.append( int( item ) )
 
-            self.labels.append( int( line[ 1 ] ) )
+            self.labels.append( int( float( line[ 1 ] ) ) )
+            assert int( float( line[ 1 ] ) ) == 1 or int( float( line[ 1 ] ) ) == 0
             self.data.append( tmp2 )
 
     def get_tree( self, o: str ):
@@ -196,10 +197,10 @@ class Tree:
 
         # tree_Tree instance
         threshold = decision_tree.tree_.threshold
-        print( threshold )
-        print( decision_tree.tree_.feature )
+        # print( threshold )
+        # print( decision_tree.tree_.feature )
         features = [ feature_names[ i ] for i in decision_tree.tree_.feature ]
-        print( features )
+        # print( features )
 
         F: Dict[ str: List ] = { f: [] for f in feature_names }
 
@@ -217,7 +218,7 @@ class Tree:
         for i, fe in enumerate( features ):
             F[ fe ].append( threshold[ i ] )
 
-        print( F )
+        # print( F )
         for k, v in F.items():
             v = [ int( i ) for i in v if int( i ) > 0 ]
             # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/

@@ -278,6 +278,7 @@ class SketchWriter:
 
             self.data.append( list( tmp ) )
             # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
+            assert self.df.at[ idx, csvparaser.LABEL_STR ] == 1 or self.df.at[ idx, csvparaser.LABEL_STR ] == 0, self.df.at[ idx, csvparaser.LABEL_STR ]
             self.labels.append( self.df.at[ idx, csvparaser.LABEL_STR ] )
 
     def write( self, s: str ) -> None:
