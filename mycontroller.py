@@ -40,7 +40,7 @@ from imports.write_rules import writeBasicForwardingRules, writeMLRules, printGr
 inputfile = '../decision_tree/tree.txt'
 inputfile = "./test/test_tree_4_features.txt"
 inputfile = "./config/tree.txt"
-inputfile = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/New folder/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_tree.txt"
+inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_1_tree.txt"
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"
 

@@ -350,16 +350,16 @@ control Sketch(
         increment_tls( 3 );
         increment_tls( 4 );
         increment_tls( 5 );
-        // increment_tls( 6 );
-        // increment_tls( 7 );
-        // increment_tls( 8 );
-        // increment_tls( 9 );
-        // increment_tls( 10 );
-        // increment_tls( 11 );
-        // increment_tls( 12 );
-        // increment_tls( 13 );
-        // increment_tls( 14 );
-        // increment_tls( 15 );
+        increment_tls( 6 );
+        increment_tls( 7 );
+        increment_tls( 8 );
+        increment_tls( 9 );
+        increment_tls( 10 );
+        increment_tls( 11 );
+        increment_tls( 12 );
+        increment_tls( 13 );
+        increment_tls( 14 );
+        increment_tls( 15 );
 
         c = c + 1;
     }
@@ -376,16 +376,16 @@ control Sketch(
         reset_tls( 3 );
         reset_tls( 4 );
         reset_tls( 5 );
-        // reset_tls( 6 );
-        // reset_tls( 7 );
-        // reset_tls( 8 );
-        // reset_tls( 9 );
-        // reset_tls( 10 );
-        // reset_tls( 11 );
-        // reset_tls( 12 );
-        // reset_tls( 13 );
-        // reset_tls( 14 );
-        // reset_tls( 15 );
+        reset_tls( 6 );
+        reset_tls( 7 );
+        reset_tls( 8 );
+        reset_tls( 9 );
+        reset_tls( 10 );
+        reset_tls( 11 );
+        reset_tls( 12 );
+        reset_tls( 13 );
+        reset_tls( 14 );
+        reset_tls( 15 );
 
         c = 0;
     }
@@ -408,11 +408,11 @@ control Sketch(
             find_replace( 0, hdr.ipv4.srcAddr );
             find_replace( 1, hdr.ipv4.srcAddr );
             find_replace( 2, hdr.ipv4.srcAddr );
-            // find_replace( 3, hdr.ipv4.srcAddr );
-            // find_replace( 4, hdr.ipv4.srcAddr );
-            // find_replace( 5, hdr.ipv4.srcAddr );
-            // find_replace( 6, hdr.ipv4.srcAddr );
-            // find_replace( 7, hdr.ipv4.srcAddr );
+            find_replace( 3, hdr.ipv4.srcAddr );
+            find_replace( 4, hdr.ipv4.srcAddr );
+            find_replace( 5, hdr.ipv4.srcAddr );
+            find_replace( 6, hdr.ipv4.srcAddr );
+            find_replace( 7, hdr.ipv4.srcAddr );
 
             // Look for ie for srcAddr, index from 0 ~ 7
             // A table can only be called once, no more than one!
@@ -420,11 +420,11 @@ control Sketch(
             find_empty( 0 );
             find_empty( 1 );
             find_empty( 2 );
-            // find_empty( 3 );
-            // find_empty( 4 );
-            // find_empty( 5 );
-            // find_empty( 6 );
-            // find_empty( 7 );
+            find_empty( 3 );
+            find_empty( 4 );
+            find_empty( 5 );
+            find_empty( 6 );
+            find_empty( 7 );
 
             // 3. then SKETCH( p.header.ipv4.srcAddr )
             r = -1;
@@ -458,11 +458,11 @@ control Sketch(
                 find_lowest_count( 0, hdr.ipv4.srcAddr );
                 find_lowest_count( 1, hdr.ipv4.srcAddr );
                 find_lowest_count( 2, hdr.ipv4.srcAddr );
-                // find_lowest_count( 3, hdr.ipv4.srcAddr );
-                // find_lowest_count( 4, hdr.ipv4.srcAddr );
-                // find_lowest_count( 5, hdr.ipv4.srcAddr );
-                // find_lowest_count( 6, hdr.ipv4.srcAddr );
-                // find_lowest_count( 7, hdr.ipv4.srcAddr );
+                find_lowest_count( 3, hdr.ipv4.srcAddr );
+                find_lowest_count( 4, hdr.ipv4.srcAddr );
+                find_lowest_count( 5, hdr.ipv4.srcAddr );
+                find_lowest_count( 6, hdr.ipv4.srcAddr );
+                find_lowest_count( 7, hdr.ipv4.srcAddr );
 
                 // Replace at the index, and this is guarantee to happen.
                 iks = ilc;
@@ -476,11 +476,11 @@ control Sketch(
                 find_highest_tls( 0 );
                 find_highest_tls( 1 );
                 find_highest_tls( 2 );
-                // find_highest_tls( 3 );
-                // find_highest_tls( 4 );
-                // find_highest_tls( 5 );
-                // find_highest_tls( 6 );
-                // find_highest_tls( 7 );
+                find_highest_tls( 3 );
+                find_highest_tls( 4 );
+                find_highest_tls( 5 );
+                find_highest_tls( 6 );
+                find_highest_tls( 7 );
 
                 // Replace at the index, and this is guarantee to happen.
                 iks = iht;
@@ -494,11 +494,11 @@ control Sketch(
                 find_smallest_tls( 0 );
                 find_smallest_tls( 1 );
                 find_smallest_tls( 2 );
-                // find_smallest_tls( 3 );
-                // find_smallest_tls( 4 );
-                // find_smallest_tls( 5 );
-                // find_smallest_tls( 6 );
-                // find_smallest_tls( 7 );
+                find_smallest_tls( 3 );
+                find_smallest_tls( 4 );
+                find_smallest_tls( 5 );
+                find_smallest_tls( 6 );
+                find_smallest_tls( 7 );
 
                 // Replace at the index, and this is guarantee to happen.
                 iks = ist;
@@ -513,33 +513,33 @@ control Sketch(
             ik = -1;
             // Look for ir for dstAddr, index from 8 ~ 15
             ir = -1;
-            find_replace( 3, hdr.ipv4.dstAddr );
-            find_replace( 4, hdr.ipv4.dstAddr );
-            find_replace( 5, hdr.ipv4.dstAddr );
+            // find_replace( 3, hdr.ipv4.dstAddr );
+            // find_replace( 4, hdr.ipv4.dstAddr );
+            // find_replace( 5, hdr.ipv4.dstAddr );
 
-            // find_replace( 8, hdr.ipv4.dstAddr );
-            // find_replace( 9, hdr.ipv4.dstAddr );
-            // find_replace( 10, hdr.ipv4.dstAddr );
-            // find_replace( 11, hdr.ipv4.dstAddr );
-            // find_replace( 12, hdr.ipv4.dstAddr );
-            // find_replace( 13, hdr.ipv4.dstAddr );
-            // find_replace( 14, hdr.ipv4.dstAddr );
-            // find_replace( 15, hdr.ipv4.dstAddr );
+            find_replace( 8, hdr.ipv4.dstAddr );
+            find_replace( 9, hdr.ipv4.dstAddr );
+            find_replace( 10, hdr.ipv4.dstAddr );
+            find_replace( 11, hdr.ipv4.dstAddr );
+            find_replace( 12, hdr.ipv4.dstAddr );
+            find_replace( 13, hdr.ipv4.dstAddr );
+            find_replace( 14, hdr.ipv4.dstAddr );
+            find_replace( 15, hdr.ipv4.dstAddr );
 
             // Look for ie for dstAddr, index from 8 ~ 15
             ie = -1;
-            find_empty( 3 );
-            find_empty( 4 );
-            find_empty( 5 );
+            // find_empty( 3 );
+            // find_empty( 4 );
+            // find_empty( 5 );
 
-            // find_empty( 8 );
-            // find_empty( 9 );
-            // find_empty( 10 );
-            // find_empty( 11 );
-            // find_empty( 12 );
-            // find_empty( 13 );
-            // find_empty( 14 );
-            // find_empty( 15 );
+            find_empty( 8 );
+            find_empty( 9 );
+            find_empty( 10 );
+            find_empty( 11 );
+            find_empty( 12 );
+            find_empty( 13 );
+            find_empty( 14 );
+            find_empty( 15 );
 
             // 5. SKETCH( p.header.ipv4.dstAddr )
             r = -1;
@@ -569,18 +569,18 @@ control Sketch(
                 lc = MAX_COUNT;
 
                 // Find lowest count index for dstAddr.
-                find_lowest_count( 3, hdr.ipv4.dstAddr );
-                find_lowest_count( 4, hdr.ipv4.dstAddr );
-                find_lowest_count( 5, hdr.ipv4.dstAddr );
+                // find_lowest_count( 3, hdr.ipv4.dstAddr );
+                // find_lowest_count( 4, hdr.ipv4.dstAddr );
+                // find_lowest_count( 5, hdr.ipv4.dstAddr );
 
-                // find_lowest_count( 8, hdr.ipv4.dstAddr );
-                // find_lowest_count( 9, hdr.ipv4.dstAddr );
-                // find_lowest_count( 10, hdr.ipv4.dstAddr );
-                // find_lowest_count( 11, hdr.ipv4.dstAddr );
-                // find_lowest_count( 12, hdr.ipv4.dstAddr );
-                // find_lowest_count( 13, hdr.ipv4.dstAddr );
-                // find_lowest_count( 14, hdr.ipv4.dstAddr );
-                // find_lowest_count( 15, hdr.ipv4.dstAddr );
+                find_lowest_count( 8, hdr.ipv4.dstAddr );
+                find_lowest_count( 9, hdr.ipv4.dstAddr );
+                find_lowest_count( 10, hdr.ipv4.dstAddr );
+                find_lowest_count( 11, hdr.ipv4.dstAddr );
+                find_lowest_count( 12, hdr.ipv4.dstAddr );
+                find_lowest_count( 13, hdr.ipv4.dstAddr );
+                find_lowest_count( 14, hdr.ipv4.dstAddr );
+                find_lowest_count( 15, hdr.ipv4.dstAddr );
 
                 // Replace at the index, and this is guarantee to happen.
                 ikd = ilc;
@@ -591,18 +591,18 @@ control Sketch(
                 ht = -1;
 
                 // Find highefst tls index for dstAddr.
-                find_highest_tls( 3 );
-                find_highest_tls( 4 );
-                find_highest_tls( 5 );
+                // find_highest_tls( 3 );
+                // find_highest_tls( 4 );
+                // find_highest_tls( 5 );
 
-                // find_highest_tls( 8 );
-                // find_highest_tls( 9 );
-                // find_highest_tls( 10 );
-                // find_highest_tls( 11 );
-                // find_highest_tls( 12 );
-                // find_highest_tls( 13 );
-                // find_highest_tls( 14 );
-                // find_highest_tls( 15 );
+                find_highest_tls( 8 );
+                find_highest_tls( 9 );
+                find_highest_tls( 10 );
+                find_highest_tls( 11 );
+                find_highest_tls( 12 );
+                find_highest_tls( 13 );
+                find_highest_tls( 14 );
+                find_highest_tls( 15 );
 
                 // Replace at the index, and this is guarantee to happen.
                 ikd = iht;
@@ -613,18 +613,18 @@ control Sketch(
                 st = MAX_TLS;
 
                 // Find smallest tls index for dstAddr.
-                find_smallest_tls( 3 );
-                find_smallest_tls( 4 );
-                find_smallest_tls( 5 );
+                // find_smallest_tls( 3 );
+                // find_smallest_tls( 4 );
+                // find_smallest_tls( 5 );
 
-                // find_smallest_tls( 8 );
-                // find_smallest_tls( 9 );
-                // find_smallest_tls( 10 );
-                // find_smallest_tls( 11 );
-                // find_smallest_tls( 12 );
-                // find_smallest_tls( 13 );
-                // find_smallest_tls( 14 );
-                // find_smallest_tls( 15 );
+                find_smallest_tls( 8 );
+                find_smallest_tls( 9 );
+                find_smallest_tls( 10 );
+                find_smallest_tls( 11 );
+                find_smallest_tls( 12 );
+                find_smallest_tls( 13 );
+                find_smallest_tls( 14 );
+                find_smallest_tls( 15 );
 
                 // Replace at the index, and this is guarantee to happen.
                 ikd = ist;

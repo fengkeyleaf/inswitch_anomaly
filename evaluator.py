@@ -59,6 +59,7 @@ class Evaluator:
 
 
 if __name__ == '__main__':
-    Evaluator().evaluate( "./test/result.csv" )
+    # Evaluator().evaluate( "./test/result.csv" )
     # Evalutor().evaluate( "./test/test_csv1_small.csv" )
+    Evaluator().evaluate( "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv" )
 
