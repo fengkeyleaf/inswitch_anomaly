@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import math
 import os
 from argparse import (
@@ -34,7 +36,7 @@ sys.path.append( "../com/fengkeyleaf/utils/lang/" )
 import my_math
 
 
-# TODO: Parallel computing.k
+# TODO: Parallel computing.
 # TODO: Verify pk ids.
 class Proprocessor:
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
@@ -73,7 +75,7 @@ class Proprocessor:
         self.F: List[ str ] = None # file path list
         self.h: str = None # header file path
         self.F, self.h = Proprocessor.get_files( d, h )
-        self.fp = self.pro_process()
+        self.pre_process()
 
     @staticmethod
     def get_files( d: str, h: str ) -> Tuple[ List[ str ], str ]:
@@ -90,7 +92,7 @@ class Proprocessor:
 
         return ( P, h )
 
-    def pro_process( self ) -> str:
+    def pre_process( self ) -> None:
         D: List[ DataFrame ] = self.add_header()
         Proprocessor.mapping( D )
         Proprocessor.spoof_macs( D )
@@ -101,10 +103,9 @@ class Proprocessor:
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
         # print( len( D ) )
         assert len( self.F ) == len( D )
-        fp: str = ""
+
         for i in range( len( D ) ):
-            assert fp == "" or fp == my_writer.get_dir( self.F[ i ] )
-            fp = my_writer.get_dir( self.F[ i ] )
+            fp: str = my_writer.get_dir( self.F[ i ] )
             fn: str = my_writer.get_filename( self.F[ i ] )
             d: str = fp + Proprocessor.FOLDER_NAME
             # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
@@ -112,8 +113,6 @@ class Proprocessor:
 
             print( "pro-process: " + d + fn + Proprocessor.SIGNATURE )
             D[ i ].to_csv( d + fn + Proprocessor.SIGNATURE, index = False )
-
-        return fp
 
     def add_header( self ) -> List[ DataFrame ]:
         # https://www.geeksforgeeks.org/how-to-append-a-new-row-to-an-existing-csv-file/
@@ -253,8 +252,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # https://www.programiz.com/python-programming/methods/string/endswith
     assert not args.dir.endswith( "/" ) or not args.dir.endswith( "\\" )
-    pd: str = Proprocessor( args.dir, args.header ).fp
+    # pre-processing
+    Proprocessor( args.dir, args.header )
+    # sketch
     sketch_write.SketchWriter( args.dir + Proprocessor.FOLDER_NAME, args.dir )
+    # decision tree training.
     tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, args.dir )
 
 
