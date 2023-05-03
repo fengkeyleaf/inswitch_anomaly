@@ -13,6 +13,7 @@ import pandas
 from pandas import (
     DataFrame
 )
+import logging
 
 """
 file:
@@ -32,6 +33,8 @@ sys.path.append( "../com/fengkeyleaf/utils/lang/" )
 import my_math
 sys.path.append( "../com/fengkeyleaf/my_pandas/" )
 import my_dataframe
+sys.path.append( "../com/fengkeyleaf/logging/" )
+import my_logging
 
 
 RANGE_STR = "range"
@@ -44,12 +47,14 @@ class SketchWriter:
     FOLDER_NAME = "/sketches/"
     SIGNATURE = "_sketch.csv"
 
-    def __init__( self, dir: str, pdir: str ) -> None:
+    def __init__( self, dir: str, pdir: str, ll: int = logging.INFO ) -> None:
         """
 
         @param dir: Directory to re-formatted pkt csv files.
         @param pdir: Directory to original pkt csv files.
         """
+        self.l = my_logging.getLogger( ll )
+
         self.df: DataFrame = None
         self.data: List = []
         self.labels: List = []
@@ -57,6 +62,8 @@ class SketchWriter:
         self.gc: int = 0
         # bc <- 0 // bad pkt count
         self.bc: int = 0
+
+        self.c: SketchWriter.__Checker = self.__Checker( self.l )
 
         for s, d, F in os.walk( dir ):
             for f in F:
@@ -74,7 +81,7 @@ class SketchWriter:
                 # Write to file
                 d: str = pdir + SketchWriter.FOLDER_NAME
                 my_writer.make_dir( d )
-                print( "sketch: " + d + my_writer.get_filename( f ) + SketchWriter.SIGNATURE )
+                self.l.info( "sketch: " + d + my_writer.get_filename( f ) + SketchWriter.SIGNATURE )
                 self.write(
                     d + my_writer.get_filename( f ) + SketchWriter.SIGNATURE
                 )
@@ -83,10 +90,13 @@ class SketchWriter:
     # Input. P is input data set to generate a sketch csv file. Assuming we have labled data as our file.
     # Output. Balanced sketch csv file to train a decision tree.
     def process( self ) -> None:
+        assert self.c.setLen( my_dataframe.get_row_size( self.df ) )
+
         # gdp <- gc / len( P ) // good Drop Percent
         gdp: float = self.gc / my_dataframe.get_row_size( self.df )
         # bdp <- bc / len( P ) // bad Drop Percent
-        bdp: float = self.gc / my_dataframe.get_row_size( self.df )
+        bdp: float = self.bc / my_dataframe.get_row_size( self.df )
+        self.l.debug( "gdp: %f, bdp: %f" % ( gdp, bdp ) )
         # s <- sketch without the limitation threshold.
         s: Sketch.Sketch = Sketch.Sketch()
         # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
@@ -107,6 +117,7 @@ class SketchWriter:
             assert self.df.at[ idx, csvparaser.LABEL_STR ] == BAD_LABEL or self.df.at[ idx, csvparaser.LABEL_STR ] == GOOD_LABEL, self.df.at[ idx, csvparaser.LABEL_STR ]
             self.balancing( s.getData( si, di ), self.df.at[ idx, csvparaser.LABEL_STR ], gdp, bdp )
 
+        assert self.c.isBalanced()
         # return D
 
     def write( self, s: str ) -> None:
@@ -134,6 +145,8 @@ class SketchWriter:
                 assert self.df.at[ i, csvparaser.LABEL_STR ] == BAD_LABEL
                 self.bc = my_math.add_one( self.bc )
 
+        self.l.debug( "gc: %d, bc: %d, tc: %d" % ( self.gc, self.bc, my_dataframe.get_row_size( self.df ) ) )
+
     def balancing( self, D: List, l: int, gdp: float, bdp: float ) -> None:
         assert 0 <= gdp <= 1
         assert 0 <= bdp <= 1
@@ -152,6 +165,35 @@ class SketchWriter:
             self.data.append( D )
             self.labels.append( l )
 
+            # Record actual good pkts.
+            if if_add_good:
+                self.c.addGood()
+            if if_add_bad:
+                self.c.addBad()
+
+    class __Checker:
+        def __init__( self, l: logging.Logger ):
+            self.tc: int = 0 # total pkt count
+            self.gc: int = 0 # actual good count
+            self.bc: int = 0
+
+            self.l = l
+
+        def isBalanced( self ) -> bool:
+            self.l.info( "Ratio: %0.2f, gc: %d, bc: %d, tc: %d" % ( self.gc / self.bc, self.gc, self.bc, self.tc ) )
+            return True
+
+        def addGood( self ) -> bool:
+            self.gc = my_math.add_one( self.gc )
+            return True
+
+        def setLen( self, tc: int ) -> bool:
+            self.tc = tc
+            return True
+
+        def addBad( self ) -> None:
+            self.bc = my_math.add_one( self.bc )
+
 
 if __name__ == '__main__':
     parser:ArgumentParser = ArgumentParser()
@@ -162,4 +204,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     # SketchWriter( args.dir )
+
 

@@ -36,7 +36,7 @@ class Sketch:
             return
 
         # If they are in s, increment its count by 1.
-        self.S[ ip ][ TLS_STR ] = my_math.add_one( self.S[ ip ][ TLS_STR ] )
+        self.S[ ip ][ IP_COUNT_STR ] = my_math.add_one( self.S[ ip ][ IP_COUNT_STR ] )
 
     def add_dst( self, ip: str ) -> None:
         if self.D.get( ip ) is None:
@@ -46,7 +46,7 @@ class Sketch:
             }
             return
 
-        self.D[ ip ][ TLS_STR ] = my_math.add_one( self.D[ ip ][ TLS_STR ] )
+        self.D[ ip ][ IP_COUNT_STR ] = my_math.add_one( self.D[ ip ][ IP_COUNT_STR ] )
 
     def incrementTLS( self ) -> None:
         for k in self.S.keys():

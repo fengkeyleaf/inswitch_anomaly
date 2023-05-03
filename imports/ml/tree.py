@@ -1,20 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""
-file: file that takes training data as input and produces a tree as output
-description: file to do sketch building and write results to a csv file
-language: python3 3.11.3
-author: @sean bergen,
-        @Riley,
-        @Xiaoyu Tongyang, fengkeyleaf@gmail.com
-        Personal website: https://fengkeyleaf.com
-"""
-
 import csv
 import math
 import os
 import sys
 from collections import OrderedDict
+import logging
 
 import numpy as np
 from typing import (
@@ -32,11 +23,22 @@ from sklearn.tree import (
 )
 from matplotlib import pyplot as plt
 
+"""
+file: file that takes training data as input and produces a tree as output
+description: file to do sketch building and write results to a csv file
+language: python3 3.11.3
+author: @sean bergen,
+        @Riley,
+        @Xiaoyu Tongyang, fengkeyleaf@gmail.com
+        Personal website: https://fengkeyleaf.com
+"""
 
 sys.path.append( "../com/fengkeyleaf/utils/" )
 import my_collections
 sys.path.append( "../com/fengkeyleaf/io/" )
 import my_writer
+sys.path.append( "../com/fengkeyleaf/logging/" )
+import my_logging
 
 
 # https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/framework/Machinelearning.py
@@ -119,12 +121,14 @@ class Tree:
     FOLDER_NAME = "/trees/"
     SIGNATURE = "_tree.txt"
 
-    def __init__( self, d: str, pd: str ) -> None:
+    def __init__( self, d: str, pd: str, ll: int = logging.INFO  ) -> None:
         """
 
         @param d: Directory to pkt sketch csv files.
         @param pd: Directory to original pkt csv files.
         """
+        self.l = my_logging.getLogger( ll )
+
         self.reader = None
         self.data = []
         self.labels = []
@@ -143,13 +147,13 @@ class Tree:
 
                 d: str = pd + Tree.FOLDER_NAME
                 my_writer.make_dir( d )
-                print( "tree: "  + d + my_writer.get_filename( f ) + Tree.SIGNATURE )
+                self.l.info( "tree: "  + d + my_writer.get_filename( f ) + Tree.SIGNATURE )
                 self.get_tree(
                     d + my_writer.get_filename( f ) + Tree.SIGNATURE
                 )
 
     class Evaluator:
-        def __init__( self, X: List, y: List, t: DecisionTreeClassifier ) -> None:
+        def __init__( self, X: List, y: List, t: DecisionTreeClassifier, l: logging.Logger ) -> None:
             """
             :param X: array-like of shape (n_samples, n_features)
             :param y: array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -159,12 +163,14 @@ class Tree:
             self.t = t
             self.y = y
 
+            self.l = l
+
         # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
         def evaluate( self ) -> None:
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
             # print( self.t.predict( self.X ) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
-            print( "Accuracy of this tree: %.2f%%" % ( self.t.score( self.X, self.y ) * 100 ) )
+            self.l.info( "Accuracy of this tree: %.2f%%" % ( self.t.score( self.X, self.y ) * 100 ) )
 
     def reformatting( self ):
         """
@@ -190,7 +196,7 @@ class Tree:
         decision_tree = decision_tree.fit( self.data, self.labels )
 
         # Evaluate the tree
-        Tree.Evaluator( self.data, self.labels, decision_tree ).evaluate()
+        Tree.Evaluator( self.data, self.labels, decision_tree, self.l ).evaluate()
 
         # TODO: Configuration of features.
         feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
@@ -227,7 +233,7 @@ class Tree:
             F[ k ] = v
 
             if len( v ) <= 0:
-                print( "Warning! Empty Feature: " + o )
+                self.l.warning( "Warning! Empty Feature: " + o )
                 continue
 
             assert len( v ) > 0, str( k ) + " | " + str( v )

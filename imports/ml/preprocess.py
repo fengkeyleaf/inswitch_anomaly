@@ -15,6 +15,8 @@ from pandas import (
     DataFrame
 )
 
+import logging
+
 """
 file:
 description:
@@ -34,6 +36,8 @@ sys.path.append( "../com/fengkeyleaf/io/" )
 import my_writer
 sys.path.append( "../com/fengkeyleaf/utils/lang/" )
 import my_math
+sys.path.append( "../com/fengkeyleaf/logging/" )
+import my_logging
 
 
 # TODO: Parallel computing.
@@ -65,12 +69,17 @@ class Proprocessor:
     FOLDER_NAME = "/re-formatted/"
     SIGNATURE = "_reformatted.csv"
 
-    def __init__( self, d: str, h: str ) -> None:
+    def __init__( self, d: str, h: str, ll: int = logging.INFO ) -> None:
         """
 
         @param d: Directory to data set
         @param h: Path to features(headers)
+        @param ll: logging level
         """
+        # Logging setting
+        # https://docs.python.org/3/library/logging.html#logging-levels
+        self.l = my_logging.getLogger( ll )
+
         assert d is not None
         self.F: List[ str ] = None # file path list
         self.h: str = None # header file path
@@ -111,7 +120,7 @@ class Proprocessor:
             # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
             my_writer.make_dir( d )
 
-            print( "pro-process: " + d + fn + Proprocessor.SIGNATURE )
+            self.l.info( "pro-process: " + d + fn + Proprocessor.SIGNATURE )
             D[ i ].to_csv( d + fn + Proprocessor.SIGNATURE, index = False )
 
     def add_header( self ) -> List[ DataFrame ]:
@@ -248,15 +257,20 @@ if __name__ == '__main__':
         "-he", "--header",
         type = str, help = "Path to features(headers)", required = False, default = None
     )
+    parser.add_argument(
+        "-ll", "--logging-level",
+        type = str, help = "Logging Level", required = False, default = logging.INFO
+    )
+
 
     args = parser.parse_args()
     # https://www.programiz.com/python-programming/methods/string/endswith
     assert not args.dir.endswith( "/" ) or not args.dir.endswith( "\\" )
     # pre-processing
-    Proprocessor( args.dir, args.header )
+    Proprocessor( args.dir, args.header, args.logging_level )
     # sketch
-    sketch_write.SketchWriter( args.dir + Proprocessor.FOLDER_NAME, args.dir )
+    sketch_write.SketchWriter( args.dir + Proprocessor.FOLDER_NAME, args.dir, args.logging_level )
     # decision tree training.
-    tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, args.dir )
+    tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, args.dir, args.logging_level )
 
 
