@@ -2,6 +2,7 @@
 
 import math
 import os
+import re
 from argparse import (
     ArgumentParser
 )
@@ -81,87 +82,76 @@ class Proprocessor:
         self.l = my_logging.getLogger( ll )
 
         assert d is not None
-        self.F: List[ str ] = None # file path list
-        self.h: str = None # header file path
-        self.F, self.h = Proprocessor.get_files( d, h )
-        self.pre_process()
+        self.h: str = h # header file path
+        self.pre_process( d )
 
-    @staticmethod
-    def get_files( d: str, h: str ) -> Tuple[ List[ str ], str ]:
-        P: List[ str ] = []
+    def pre_process( self, dir: str ) -> None:
         # https://docs.python.org/3/library/os.html#os.walk
         # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
         # root, dirs, files
-        for s, d, F in os.walk( d ):
+        for s, d, F in os.walk( dir ):
             # print( s )
             # print( d )
             # print( F )
             for f in F:
-                P.append( os.path.join( s, f ) )
+                self.on_process( os.path.join( s, f ) )
 
-        return ( P, h )
-
-    def pre_process( self ) -> None:
-        D: List[ DataFrame ] = self.add_header()
-        Proprocessor.mapping( D )
-        Proprocessor.spoof_macs( D )
-        Proprocessor.renumber( D )
-        self.verify( D )
+    def on_process( self, f: str ) -> None:
+        df: DataFrame = self.add_header( f )
+        df = Proprocessor.mapping( df )
+        Proprocessor.spoof_macs( df )
+        Proprocessor.renumber( df )
+        Proprocessor.verify( df, f )
 
         # write to file.
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
-        # print( len( D ) )
-        assert len( self.F ) == len( D )
+        # print( len( df ) )
 
-        for i in range( len( D ) ):
-            fp: str = my_writer.get_dir( self.F[ i ] )
-            fn: str = my_writer.get_filename( self.F[ i ] )
-            d: str = fp + Proprocessor.FOLDER_NAME
-            # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
-            my_writer.make_dir( d )
+        fp: str = my_writer.get_dir( f )
+        fn: str = my_writer.get_filename( f )
+        d: str = fp + Proprocessor.FOLDER_NAME
+        # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
+        my_writer.make_dir( d )
 
-            self.l.info( "pro-process: " + d + fn + Proprocessor.SIGNATURE )
-            D[ i ].to_csv( d + fn + Proprocessor.SIGNATURE, index = False )
+        self.l.info( "pro-process: " + d + fn + Proprocessor.SIGNATURE )
+        df.to_csv( d + fn + Proprocessor.SIGNATURE, index = False )
 
-    def add_header( self ) -> List[ DataFrame ]:
+
+    def add_header( self, f: str ) -> DataFrame:
         # https://www.geeksforgeeks.org/how-to-append-a-new-row-to-an-existing-csv-file/
         # https://www.usepandas.com/csv/append-csv-files
-        D: List[ DataFrame ] = []
-        # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
-        for f in self.F:
-            # Header is provided.
-            if self.h:
-                hf = pandas.read_csv( self.h )
-                # print( type( hf.columns.values.tolist() ))
-                # https://datascienceparichay.com/article/get-column-names-as-list-in-pandas-dataframe/
-                cf = pandas.read_csv( f, names = hf.columns.values.tolist() )
-                # https://pandas.pydata.org/docs/reference/api/pandas.concat.html
-                D.append( pandas.concat( [ hf, cf ] ) )
-            # Default header is provided.
-            else:
-                D.append( pandas.read_csv( f ) )
 
-        return D
+        # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
+        # Header is provided.
+        if self.h:
+            hf = pandas.read_csv( self.h )
+            # print( type( hf.columns.values.tolist() ))
+            # https://datascienceparichay.com/article/get-column-names-as-list-in-pandas-dataframe/
+            cf = pandas.read_csv( f, names = hf.columns.values.tolist() )
+            # https://pandas.pydata.org/docs/reference/api/pandas.concat.html
+            return pandas.concat( [ hf, cf ] )
+
+        # Default header is provided.
+        return pandas.read_csv( f )
 
     @staticmethod
-    def mapping( D: List[ DataFrame ] ) -> None:
-        for i in range( len( D ) ):
-            d: DataFrame = D[ i ]
-            dl: List[ str ] = []
-            # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
-            # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
-            for k in d.keys():
-                h = Proprocessor.look_for_targeted_header( k )
-                if h is not None:
-                    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rename.html
-                    d = d.rename( columns = { k: h } )
-                else:
-                    dl.append( k )
+    def mapping( df: DataFrame ) -> DataFrame:
+        dl: List[ str ] = [ ]
+        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
+        # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
+        for k in df.keys():
+            h = Proprocessor.look_for_targeted_header( k )
+            if h is not None:
+                # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rename.html
+                df = df.rename( columns = { k: h } )
+            else:
+                dl.append( k )
 
-            # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop.html
-            # print( dl )
-            # d.drop( dl, axis = 1 )
-            D[ i ] = d.drop( columns = dl )
+        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop.html
+        # print( dl )
+        # d.drop( dl, axis = 1 )
+        return df.drop( columns = dl )
+
 
     @staticmethod
     def look_for_targeted_header( k: str ):
@@ -178,28 +168,28 @@ class Proprocessor:
 
     # TODO: not re-assign
     @staticmethod
-    def spoof_macs( D: List[ DataFrame ] ) -> None:
+    def spoof_macs( d: DataFrame ) -> None:
         """
         Add to input csv to add dest MAC and src MAC
         MACs are consistent with IPs
         @param D:
         """
-        for d in D:
-            # Create a dict to map IPs to MACs
-            m: Dict[ str, str ] = { }
-            S: Set[ str ] = set()
-            id: int = 0
+        # Create a dict to map IPs to MACs
+        m: Dict[ str, str ] = { }
+        S: Set[ str ] = set()
+        id: int = 0
 
-            for ( i, s ) in d.iterrows():
-                si: str = d.at[ i, csvparaser.SRC_ADDR_STR ]
-                di: str = d.at[ i, csvparaser.DST_ADDR_STR ]
-                id = Proprocessor.create_mac( m, [ si, di ], id, S )
+        for ( i, s ) in d.iterrows():
+            si: str = d.at[ i, csvparaser.SRC_ADDR_STR ]
+            di: str = d.at[ i, csvparaser.DST_ADDR_STR ]
+            id = Proprocessor.create_mac( m, [ si, di ], id, S )
 
-                # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.loc.html
-                assert m[ si ] is not None
-                d.loc[ i, csvparaser.SRC_MAC_STR ] = m[ si ]
-                assert m[ di ] is not None
-                d.loc[ i, csvparaser.DST_MAC_STR ] = m[ di ]
+            # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.loc.html
+            assert m[ si ] is not None
+            d.loc[ i, csvparaser.SRC_MAC_STR ] = m[ si ]
+            assert m[ di ] is not None
+            d.loc[ i, csvparaser.DST_MAC_STR ] = m[ di ]
+
 
     @staticmethod
     def create_mac( m: Dict[ str, str ], I: List[ str ], id: int, s: Set[ str ] ) -> int:
@@ -225,20 +215,22 @@ class Proprocessor:
                 "{:02d}".format( input % 100 )
 
     @staticmethod
-    def renumber( D: List[ DataFrame ] ) -> None:
+    def renumber( d: DataFrame ) -> None:
         id: int = 1
+        for ( i, s ) in d.iterrows():
+            d.loc[ i, csvparaser.ID_STR ] = id
+            id = my_math.add_one( id )
 
-        for d in D:
-            for ( i, s ) in d.iterrows():
-                d.loc[ i, csvparaser.ID_STR ] = id
-                id = my_math.add_one( id )
+    IP_REG = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$" # raw string
 
-    def verify( self, D: List[ DataFrame ] ) -> None:
+    @staticmethod
+    def verify( d: DataFrame, f: str ) -> None:
         # TODO: verify macs and ips
-        for d in D:
-            for ( i, s ) in d.iterrows():
-                assert d.loc[ i, csvparaser.ID_STR ] != "" and d.loc[ i, csvparaser.ID_STR ] is not None
-                assert d.loc[ i, csvparaser.LABEL_STR ] == 0 or d.loc[ i, csvparaser.LABEL_STR ] == 1, str( i ) + " | " + self.F[ i ]
+        for ( i, s ) in d.iterrows():
+            assert re.search( Proprocessor.IP_REG, d.loc[ i , csvparaser.SRC_ADDR_STR ] )
+            assert re.search( Proprocessor.IP_REG, d.loc[ i , csvparaser.DST_ADDR_STR ] )
+            assert d.loc[ i, csvparaser.ID_STR ] != "" and d.loc[ i, csvparaser.ID_STR ] is not None
+            assert d.loc[ i, csvparaser.LABEL_STR ] == 0 or d.loc[ i, csvparaser.LABEL_STR ] == 1, str( i ) + " | " + f
 
 
 # python .\preprocess.py -d "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"

@@ -12,6 +12,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 ID_STR = "No."
+TIMESTAMP_STR = "stime"
 SRC_ADDR_STR = "Source"
 SRC_MAC_STR = "srcMAC"
 DST_ADDR_STR = "Destination"
