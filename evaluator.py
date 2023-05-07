@@ -9,7 +9,6 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-import imports.com.fengkeyleaf.utils.lang.my_math as my_math
 import imports.com.fengkeyleaf.io.my_json as my_json
 import imports.csvparaser as csvparaser
 import receive as rec
@@ -39,10 +38,10 @@ class Evaluator:
         ct: int = 0
         for k in self.P: # k: pkt ID number
             if self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.GOOD_LABEL_STR ):
-                ct = my_math.add_one( ct )
+                ct += 1
             # https://www.geeksforgeeks.org/python-check-whether-given-key-already-exists-in-a-dictionary/
             if self.__is_correct( k ):
-                c = my_math.add_one( c )
+                c += 1
 
         # https://java2blog.com/python-print-percentage-sign/
         print( "%d out of total %d pkts, accuracy = %.2f%%" % ( c, len( self.P ), ( c / len( self.P ) ) * 100 ) )

@@ -127,7 +127,7 @@ class Tree:
         @param d: Directory to pkt sketch csv files.
         @param pd: Directory to original pkt csv files.
         """
-        self.l = my_logging.getLogger( ll )
+        self.l = my_logging.get_logger( ll )
 
         self.reader = None
         self.data = []

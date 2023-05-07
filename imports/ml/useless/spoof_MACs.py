@@ -9,7 +9,7 @@ import os
 import math
 
 
-# TODO: Functionality has been moved to preprocess.py
+# TODO: Functionality has been moved to pkt_processor.py
 def spoof_MACs( csv_path: str ):
     temp_path = os.path.join( os.getcwd(), 'temp.csv' )
     input = open( csv_path )

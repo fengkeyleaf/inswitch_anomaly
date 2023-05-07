@@ -11,7 +11,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 
-def getLogger( ll: int ) -> logging.Logger:
+def get_logger( ll: int ) -> logging.Logger:
     """
 
     @param ll: logging level
@@ -23,3 +23,8 @@ def getLogger( ll: int ) -> logging.Logger:
     # Setting the threshold of l to DEBUG
     l.setLevel( ll )
     return l
+
+
+def get_level_name( n: str ) -> int:
+    # https://docs.python.org/3/library/logging.html#logging.getLevelName
+    return logging.getLevelName( n.upper() )

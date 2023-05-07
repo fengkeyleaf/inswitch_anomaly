@@ -24,13 +24,11 @@ author: @sean bergen,
         Personal website: https://fengkeyleaf.com
 """
 
-import Sketch
+import sketch
 sys.path.append( "../" )
 import csvparaser
 sys.path.append( "../com/fengkeyleaf/io/" )
 import my_writer
-sys.path.append( "../com/fengkeyleaf/utils/lang/" )
-import my_math
 sys.path.append( "../com/fengkeyleaf/my_pandas/" )
 import my_dataframe
 sys.path.append( "../com/fengkeyleaf/logging/" )
@@ -53,7 +51,7 @@ class SketchWriter:
         @param dir: Directory to re-formatted pkt csv files.
         @param pdir: Directory to original pkt csv files.
         """
-        self.l = my_logging.getLogger( ll )
+        self.l: logging.Logger = my_logging.get_logger( ll )
 
         self.df: DataFrame = None
         self.data: List = []
@@ -98,7 +96,7 @@ class SketchWriter:
         bdp: float = self.bc / my_dataframe.get_row_size( self.df )
         self.l.debug( "gdp: %f, bdp: %f" % ( gdp, bdp ) )
         # s <- sketch without the limitation threshold.
-        s: Sketch.Sketch = Sketch.Sketch()
+        s: sketch.Sketch = sketch.Sketch()
         # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
 
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
@@ -125,6 +123,9 @@ class SketchWriter:
         write the sketches with labels to a file
         @param s: file path.
         """
+        if len( self.data ) == 0 or len( self.labels ) == 0:
+            self.l.warning( "Sketch: No data written to the file!" )
+
         # https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
         pandas.DataFrame( {
             RANGE_STR: self.data,
@@ -139,12 +140,13 @@ class SketchWriter:
             # do if p is a good one
             if self.df.at[ i, csvparaser.LABEL_STR ] == GOOD_LABEL:
                 # then gc++
-                self.gc = my_math.add_one( self.gc )
+                self.gc += 1
             # else bc++
             else:
                 assert self.df.at[ i, csvparaser.LABEL_STR ] == BAD_LABEL
-                self.bc = my_math.add_one( self.bc )
+                self.bc += 1
 
+        assert self.gc + self.bc == my_dataframe.get_row_size( self.df )
         self.l.debug( "gc: %d, bc: %d, tc: %d" % ( self.gc, self.bc, my_dataframe.get_row_size( self.df ) ) )
 
     def balancing( self, D: List, l: int, gdp: float, bdp: float ) -> None:
@@ -166,10 +168,8 @@ class SketchWriter:
             self.labels.append( l )
 
             # Record actual good pkts.
-            if if_add_good:
-                self.c.addGood()
-            if if_add_bad:
-                self.c.addBad()
+            if if_add_good: self.c.addGood();
+            if if_add_bad: self.c.addBad();
 
     class __Checker:
         def __init__( self, l: logging.Logger ):
@@ -180,11 +180,11 @@ class SketchWriter:
             self.l = l
 
         def isBalanced( self ) -> bool:
-            self.l.info( "Ratio: %0.2f, gc: %d, bc: %d, tc: %d" % ( self.gc / self.bc, self.gc, self.bc, self.tc ) )
+            self.l.info( "R of gc: %0.2f, R of bc: %.2f, gc: %d, bc: %d, tc: %d" % ( self.gc / self.tc, self.bc / self.tc, self.gc, self.bc, self.tc ) )
             return True
 
         def addGood( self ) -> bool:
-            self.gc = my_math.add_one( self.gc )
+            self.gc += 1
             return True
 
         def setLen( self, tc: int ) -> bool:
@@ -192,7 +192,7 @@ class SketchWriter:
             return True
 
         def addBad( self ) -> None:
-            self.bc = my_math.add_one( self.bc )
+            self.bc += 1
 
 
 if __name__ == '__main__':
