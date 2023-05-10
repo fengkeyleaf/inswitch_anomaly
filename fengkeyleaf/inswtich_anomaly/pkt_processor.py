@@ -1,22 +1,16 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import math
-import os
 import re
-from argparse import (
-    ArgumentParser
-)
 from typing import (
-    Dict, List, Tuple, Set
+    Dict, List, Set
 )
-import sys
 
 import pandas
 from pandas import (
     DataFrame
 )
-
-import logging
 
 """
 file:
@@ -27,18 +21,16 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         @Riley McGinn
 """
 
-import sketch_write
-import tree
-import mix_make_ups
-import mapper
-# https://www.geeksforgeeks.org/python-import-module-from-different-directory/
-# https://www.w3docs.com/snippets/python/importing-files-from-different-folder.html
-sys.path.append( "../" )
-import csvparaser
-sys.path.append( "../com/fengkeyleaf/io/" )
-import my_writer
-sys.path.append( "../com/fengkeyleaf/logging/" )
-import my_logging
+from fengkeyleaf.logging import (
+    my_logging,
+)
+from fengkeyleaf.io import my_writer
+from fengkeyleaf.inswtich_anomaly import (
+    mix_make_ups,
+    mapper,
+    csvparaser,
+)
+
 
 IP_REG = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"  # raw string
 
@@ -50,7 +42,7 @@ class PktProcessor:
     FOLDER_NAME = "/re-formatted/"
     SIGNATURE = "_reformatted.csv"
 
-    def __init__( self, da: str, h: str, dm: str, ll: int = logging.INFO ) -> None:
+    def __init__( self, h: str, m: mix_make_ups.Mixer, ll: int = logging.INFO ) -> None:
         """
 
         @param d: Directory to data set
@@ -60,27 +52,11 @@ class PktProcessor:
         # Logging setting
         # https://docs.python.org/3/library/logging.html#logging-levels
         self.l: logging.Logger = my_logging.get_logger( ll )
-        self.l.debug( "da: " + da )
-        self.l.debug( "h: " + h )
-        self.l.debug( "dm: " + dm )
 
-        assert da is not None
-        self.h: str = h # header file path
-        self.m: mix_make_ups.Mixer = mix_make_ups.Mixer( dm, self.get_original_relative_time( da ), ll )
-        self.pre_process( da )
+        self.h: str = h  # header file path
+        self.m: mix_make_ups.Mixer = m
 
-    def pre_process( self, dir: str ) -> None:
-        # https://docs.python.org/3/library/os.html#os.walk
-        # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
-        # root, dirs, files
-        for s, d, F in os.walk( dir ):
-            # print( s )
-            # print( d )
-            # print( F )
-            for f in F:
-                self.on_process( os.path.join( s, f ) )
-
-    def on_process( self, f: str ) -> None:
+    def process( self, f: str ) -> DataFrame:
         df: DataFrame = self.add_header( f )
         df = mapper.Mapper.mapping( df )
         df = self.m.mix( df )
@@ -90,6 +66,7 @@ class PktProcessor:
 
         # Write to file
         self.write( df, f )
+        return df
 
     def add_header( self, f: str ) -> DataFrame:
         # https://www.geeksforgeeks.org/how-to-append-a-new-row-to-an-existing-csv-file/
@@ -192,50 +169,5 @@ class PktProcessor:
 
         self.l.info( "pro-process: " + d + fn + PktProcessor.SIGNATURE )
         df.to_csv( d + fn + PktProcessor.SIGNATURE, index = False )
-
-    # TODO: Simplify
-    def get_original_relative_time( self, da: str ):
-        rt: float = sys.maxsize
-        for s, d, F in os.walk( da ):
-            for f in F:
-                df: DataFrame = mapper.Mapper.mapping( pandas.read_csv( os.path.join( s, f ), names = pandas.read_csv( self.h ).columns.values.tolist() ) )
-                for ( i, _ ) in df.iterrows():
-                    rt = min( rt, df.loc[ i, csvparaser.TIMESTAMP_STR ] )
-
-        self.l.debug( "rt: " + str( rt ) )
-        return rt
-
-
-# python .\pkt_processor.py -d "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-#  python .\pkt_processor.py -d "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\TON_IoT\Processed_Network_dataset"
-# python .\sketch_write.py "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv" "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_sketch.csv"
-# python .\tree.py -s "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_sketch.csv" -dt "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\New folder\re-formatted\UNSW_2018_IoT_Botnet_Dataset_1_tree.txt"
-if __name__ == '__main__':
-    parser: ArgumentParser = ArgumentParser()
-    # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
-    # TODO: dir has not sub-directory
-    parser.add_argument(
-        "-d", "--dir",
-        type = str, help = "Directory to data set", required = True
-    )
-    parser.add_argument(
-        "-he", "--header",
-        type = str, help = "Path to features(headers)", required = False, default = None
-    )
-    parser.add_argument(
-        "-ll", "--logging-level",
-        type = str, help = "Logging Level", required = False, default = logging.INFO
-    )
-
-
-    args = parser.parse_args()
-    # https://www.programiz.com/python-programming/methods/string/endswith
-    assert not args.dir.endswith( "/" ) or not args.dir.endswith( "\\" )
-    # pre-processing
-    PktProcessor( args.dir, args.header, args.logging_level )
-    # sketch
-    sketch_write.SketchWriter( args.dir + PktProcessor.FOLDER_NAME, args.dir, args.logging_level )
-    # decision tree training.
-    tree.Tree( args.dir + sketch_write.SketchWriter.FOLDER_NAME, args.dir, args.logging_level )
 
 

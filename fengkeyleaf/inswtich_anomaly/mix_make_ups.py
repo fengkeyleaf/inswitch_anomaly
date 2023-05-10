@@ -4,12 +4,11 @@ import logging
 import math
 import os
 import re
+from typing import (
+    List, Tuple
+)
 
 import pandas
-import sys
-from typing import (
-    List, Dict, Tuple
-)
 
 """
 file:
@@ -19,15 +18,17 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-import mapper
-import pkt_processor
-import sketch_write
-sys.path.append( "../" )
-import csvparaser
-sys.path.append( "../com/fengkeyleaf/my_pandas/" )
-import my_dataframe
-sys.path.append( "../com/fengkeyleaf/logging/" )
-import my_logging
+from fengkeyleaf.logging import (
+    my_logging,
+)
+from fengkeyleaf.my_pandas import (
+    my_dataframe
+)
+from fengkeyleaf.inswtich_anomaly import (
+    mapper,
+    csvparaser,
+    sketch_write
+)
 
 
 class Mixer:
@@ -51,6 +52,8 @@ class Mixer:
         @param n:
         @return:
         """
+        if len( self.F ) <= 0: return o;
+
         if n < 0:
             n = Mixer.get_bads( o )
 
@@ -78,6 +81,8 @@ class Mixer:
 
     @staticmethod
     def get_files( dir: str ) -> List[ str ]:
+        if dir is None or dir == "": return [];
+
         R: List[ str ] = []
         for s, d, F in os.walk( dir ):
             for f in F:
@@ -99,11 +104,11 @@ class Mixer:
     @staticmethod
     def wash( df: pandas.DataFrame ) -> pandas.DataFrame:
         I: List[ int ] = []
-        for ( i, s ) in df.iterrows():
-            if re.search( pkt_processor.IP_REG, df.loc[ i, csvparaser.SRC_ADDR_STR ] ) is None or \
-                    re.search( pkt_processor.IP_REG, df.loc[ i, csvparaser.DST_ADDR_STR ] ) is None:
+        # for ( i, s ) in df.iterrows():
+            # if re.search( pkt_processor.IP_REG, df.loc[ i, csvparaser.SRC_ADDR_STR ] ) is None or \
+            #         re.search( pkt_processor.IP_REG, df.loc[ i, csvparaser.DST_ADDR_STR ] ) is None:
                 # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop.html
-                I.append( i )
+                # I.append( i )
 
         return df.drop( I )
 

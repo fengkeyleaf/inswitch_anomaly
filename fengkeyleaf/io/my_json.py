@@ -11,11 +11,9 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+__version__ = "1.0"
+
 
 def load( fp:str ) -> Dict:
     with open( fp, "r" ) as f:
         return json.load( f )
-
-
-if __name__ == '__main__':
-    pass

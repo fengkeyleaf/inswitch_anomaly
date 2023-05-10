@@ -29,8 +29,10 @@ import utils.p4runtime_lib.bmv2 as bmv2
 import utils.p4runtime_lib.helper as helper
 from utils.p4runtime_lib.switch import ShutdownAllSwitchConnections
 
-from imports.p4ml import find_action, find_classification, find_feature
-from imports.write_rules import writeBasicForwardingRules, writeMLRules, printGrpcError
+from fengkeyleaf import (
+    p4ml,
+    write_rules
+)
 
 #######################
 # Paraphrase ML model.
@@ -47,14 +49,14 @@ actionfile = "./config/action.txt"
 fr = r"(srcCount|srcTLS|dstCount|dstTLS)"
 FS = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
-srcCount, srcTLS, dstCount, dstTLS = find_feature( inputfile, len( FS ) )
+srcCount, srcTLS, dstCount, dstTLS = p4ml.find_feature( inputfile, len( FS ) )
 print( "Feature:\nsrcCount=%s,\n srcTLS=%s,\n dstCount=%s,\n dstTLS=%s" % (srcCount, srcTLS, dstCount, dstTLS) )
-srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = find_classification( inputfile,
+srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = p4ml.find_classification( inputfile,
                                                                                      [ srcCount, srcTLS, dstCount,
                                                                                        dstTLS ], FS, fr )
 print( "Classification:\nsrcCountMap=%s,\nsrcTLSMap=%s,\ndstCountMap=%s,\ndstTLSMap=%s,\nclass=%s" % (
 srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication) )
-action = find_action( actionfile )
+action = p4ml.find_action( actionfile )
 print( "Action: %s" % (action) )
 
 
@@ -88,9 +90,9 @@ def main( p4info_file_path, bmv2_file_path ):
         print( "Installed P4 Program using SetForwardingPipelineConfig on s1" )
 
         # Write basic forwarding rules into switch.
-        # writeBasicForwardingRules( p4info_helper, s1 )
+        # write_rules.writeBasicForwardingRules( p4info_helper, s1 )
 
-        writeMLRules(
+        write_rules.writeMLRules(
             srcCount = srcCount,
             srcCountMap = srcCountMap,
             srcTLS = srcTLS,
@@ -108,7 +110,7 @@ def main( p4info_file_path, bmv2_file_path ):
     except KeyboardInterrupt:
         print( " Shutting down." )
     except grpc.RpcError as e:
-        printGrpcError( e )
+        write_rules.printGrpcError( e )
 
     ShutdownAllSwitchConnections()
 

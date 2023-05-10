@@ -9,15 +9,17 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from imports.csvparaser import Parser
-import imports.topo as topo
-from imports.com.fengkeyleaf.io import my_writer as writer
+from fengkeyleaf import (
+    csvparaser,
+    topo,
+    my_writer
+)
 
 def __get_host_json( d:Dict ) -> None:
     d:Dict = d[ topo.HOST_STR ]
     for k in d:
         assert d.get( k ) is not None
-        writer.write_to_file(
+        my_writer.write_to_file(
              "./pod-topo/" + k + ".json",
              json.dumps( d[ k ], indent = 4 )
         )
@@ -31,5 +33,5 @@ if __name__ == '__main__':
     # cf: str = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     cf: str = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv"
     
-    P: Dict = Parser().parse( cf )
+    P: Dict = csvparaser.Parser().parse( cf )
     __get_host_json( topo.CSVParaser().get_topo_json( P, "./pod-topo/topology.json" ) )

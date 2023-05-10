@@ -1,4 +1,3 @@
-import json
 from typing import Dict
 
 """
@@ -9,8 +8,10 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-import imports.com.fengkeyleaf.io.my_json as my_json
-import imports.csvparaser as csvparaser
+from fengkeyleaf import (
+    my_json,
+    csvparaser
+)
 import receive as rec
 
 RESULT_FILE = "./output.json" # result file path
