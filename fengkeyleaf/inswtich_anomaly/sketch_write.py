@@ -165,8 +165,12 @@ class SketchWriter:
             self.labels.append( l )
 
             # Record actual good pkts.
-            if if_add_good: self.c.addGood();
-            if if_add_bad: self.c.addBad();
+            if if_add_good:
+                assert l == GOOD_LABEL
+                self.c.addGood()
+            if if_add_bad:
+                assert l == BAD_LABEL
+                self.c.addBad()
 
     class __Checker:
         def __init__( self, l: logging.Logger ):

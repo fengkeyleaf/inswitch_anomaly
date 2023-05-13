@@ -29,6 +29,7 @@ from fengkeyleaf.inswtich_anomaly import (
     mix_make_ups,
     mapper,
     csvparaser,
+    sketch_write
 )
 
 
@@ -52,6 +53,7 @@ class PktProcessor:
         # Logging setting
         # https://docs.python.org/3/library/logging.html#logging-levels
         self.l: logging.Logger = my_logging.get_logger( ll )
+        self.c: PktProcessor.__Checker = PktProcessor.__Checker( self.l )
 
         self.h: str = h  # header file path
         self.m: mix_make_ups.Mixer = m
@@ -62,7 +64,8 @@ class PktProcessor:
         df = self.m.mix( df )
         PktProcessor.spoof_macs( df )
         PktProcessor.renumber( df )
-        assert PktProcessor.verify( df, f )
+        assert PktProcessor.__Checker.verify( df, f )
+        assert self.c.statistics( df )
 
         # Write to file
         self.write( df, f )
@@ -140,15 +143,35 @@ class PktProcessor:
             d.loc[ i, csvparaser.ID_STR ] = id
             id += 1
 
-    @staticmethod
-    def verify( d: DataFrame, f: str ) -> bool:
-        # TODO: verify macs
-        for ( i, s ) in d.iterrows():
-            # PktProcessor.verify_ip( d )
-            assert d.loc[ i, csvparaser.ID_STR ] != "" and d.loc[ i, csvparaser.ID_STR ] is not None
-            assert d.loc[ i, csvparaser.LABEL_STR ] == 0 or d.loc[ i, csvparaser.LABEL_STR ] == 1, str( i ) + " | " + f
+    class __Checker:
+        def __init__( self, l: logging.Logger ):
+            self.l: logging.Logger = l
 
-        return True
+        @staticmethod
+        def verify( d: DataFrame, f: str ) -> bool:
+            # TODO: verify macs
+            for ( i, s ) in d.iterrows():
+                # PktProcessor.verify_ip( d )
+                assert d.loc[ i, csvparaser.ID_STR ] != "" and d.loc[ i, csvparaser.ID_STR ] is not None
+                assert d.loc[ i, csvparaser.LABEL_STR ] == 0 or d.loc[ i, csvparaser.LABEL_STR ] == 1, str( i ) + " | " + f
+
+            return True
+
+        def statistics( self, df ) -> bool:
+            gc: int = 0
+            bc: int = 0
+            tc: int = 0
+
+            for ( i, s ) in df.iterrows():
+                if df.loc[ i, csvparaser.LABEL_STR ] == sketch_write.GOOD_LABEL:
+                    gc += 1
+                elif df.loc[ i, csvparaser.LABEL_STR ] == sketch_write.BAD_LABEL:
+                    bc += 1
+                else: assert False;
+                tc += 1
+
+            self.l.info( "Mixed dataset: gc = %d, bc = %d, tc = %d" % ( gc, bc, tc ) )
+            return True
 
     @staticmethod
     def verify_ip( d: DataFrame ) -> bool:

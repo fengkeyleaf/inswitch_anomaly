@@ -124,7 +124,7 @@ class CSVParaser:
         return True
 
     def get_topo_json( 
-        self, P: Dict[ str, Dict ], f: str
+        self, P: Dict[ float, Dict ], f: str
     ) -> Dict:
         """
         {
@@ -165,11 +165,11 @@ class CSVParaser:
 
         # k -> pkt id
         for k in P.keys():
-            v:Dict[ str, str ] = P.get( k )
-            sa:str = v[ csvparaser.SRC_ADDR_STR ] # src addr
-            sm:str = v[ csvparaser.SRC_MAC_STR ]
-            da:str = v[ csvparaser.DST_ADDR_STR ] # dst addr
-            dm:str = v[ csvparaser.DST_MAC_STR ]
+            v: Dict[ str, str ] = P.get( k )
+            sa: str = v[ csvparaser.SRC_ADDR_STR ] # src addr
+            sm: str = v[ csvparaser.SRC_MAC_STR ]
+            da: str = v[ csvparaser.DST_ADDR_STR ] # dst addr
+            dm: str = v[ csvparaser.DST_MAC_STR ]
 
             assert sa is not da
             assert sm is not dm

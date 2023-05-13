@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-
+from typing import List
 import pandas
 from pandas import (
     DataFrame
@@ -35,6 +35,7 @@ from fengkeyleaf.inswtich_anomaly import (
 #     | --> trees..
 #     | --> header ( optional )
 
+# TODO: Mix different group of data sets.
 class DataProcessor:
     def __init__( self, da: str, h: str, dm: str, ll: int = logging.INFO ) -> None:
         """
@@ -96,11 +97,13 @@ class DataProcessor:
         rt: float = sys.maxsize
         for s, d, F in os.walk( da ):
             for f in F:
-                df: DataFrame = mapper.Mapper.mapping( pandas.read_csv( os.path.join( s, f ), names = pandas.read_csv( h ).columns.values.tolist() ) )
+                n: List = pandas.read_csv( h ).columns.values.tolist() if h is not None else None
+                df: DataFrame = mapper.Mapper.mapping( pandas.read_csv( os.path.join( s, f ), names = n ) )
                 for ( i, _ ) in df.iterrows():
                     rt = min( rt, df.loc[ i, csvparaser.TIMESTAMP_STR ] )
 
         self.l.debug( "rt: " + str( rt ) )
         return rt
 
-    # DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv", None, 30 ).process()
+    # DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv", None, 30 ).process( True )
+    # DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", None, None, 30 ).process( True )

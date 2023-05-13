@@ -33,5 +33,5 @@ if __name__ == '__main__':
     # cf: str = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     cf: str = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv"
     
-    P: Dict = csvparaser.Parser().parse( cf )
+    P: Dict[ float, Dict ] = csvparaser.Parser().parse( cf )
     __get_host_json( topo.CSVParaser().get_topo_json( P, "./pod-topo/topology.json" ) )

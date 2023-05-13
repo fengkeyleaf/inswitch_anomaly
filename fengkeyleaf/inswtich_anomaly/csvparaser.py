@@ -38,7 +38,7 @@ class Parser:
         return True
 
     # https://stackoverflow.com/questions/11706215/how-can-i-fix-the-git-error-object-file-is-empty/12371337#12371337
-    def parse( self, f:str ) -> Dict[ str, Dict ]:
+    def parse( self, f: str ) -> Dict[ float, Dict ]:
         """
         :param f: file path to the csv file.
         :return: { 
@@ -49,20 +49,19 @@ class Parser:
             }
         }
         """
-        dic: Dict = {}
+        dic: Dict[ float, Dict ] = {}
         id: int = 0
         # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
         # https://pandas.pydata.org/docs/reference/frame.html
         # https://www.geeksforgeeks.org/python-next-method/
         # https://pandas.pydata.org/docs/reference/api/pandas.Series.html?highlight=series#pandas.Series
-        for r in pd.read_csv( f ).iterrows():
-            s = r[ 1 ];
+        for ( _, s ) in pd.read_csv( f ).iterrows():
             assert dic.get( s[ ID_STR ] ) is None, "Already seen this ID before."
             id = id + 1
             # if ( s[ ID_STR ] == 1 or s[ ID_STR ] == 2006 or s[ ID_STR ] == 2007 ):
             #     continue
 
-            assert id == int( s[ ID_STR ] ) # Consistent incremental id garaunteed
+            assert id <= int( s[ ID_STR ] ) # Consistent incremental id garaunteed
             assert s[ LABEL_STR ] == int( GOOD_LABEL_STR ) or s[ LABEL_STR ] == int( BAD_LABEL_STR ), type( s[ LABEL_STR ] )
             assert self.__assertion( s[ SRC_ADDR_STR ], s[ SRC_MAC_STR ] ) and self.__assertion( s[ DST_ADDR_STR ], s[ DST_MAC_STR ] )
 

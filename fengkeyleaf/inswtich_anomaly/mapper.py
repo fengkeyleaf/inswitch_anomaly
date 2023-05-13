@@ -53,6 +53,7 @@ class Mapper:
     time_M: Dict[ str, str ] = {
         "stime": csvparaser.TIMESTAMP_STR, # UNSW_2018_IoT
         "Stime": csvparaser.TIMESTAMP_STR, # UNSW-NB15-CSV
+        "ts": csvparaser.TIMESTAMP_STR, # TON_IoT\Processed_Network_dataset
         "Time": csvparaser.TIMESTAMP_STR # csv by wireshark
     }
 
