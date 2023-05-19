@@ -21,6 +21,9 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 from fengkeyleaf.logging import (
     my_logging,
 )
+from fengkeyleaf.io import (
+    my_files
+)
 from fengkeyleaf.my_pandas import (
     my_dataframe
 )
@@ -35,7 +38,7 @@ class Mixer:
     def __init__( self, dir_m: str, ort: float, ll: int = logging.INFO ) -> None:
         self.l: logging.Logger = my_logging.get_logger( ll )
 
-        self.F: List[ str ] = Mixer.get_files( dir_m )
+        self.F: List[ str ] = my_files.get_files_in_dir( dir_m )
         if dir_m is None or len( self.F ) == 0:
             self.l.debug( "No made-up data sets provided." )
 
@@ -78,17 +81,6 @@ class Mixer:
         self.l.info( "%d made-up pkts added." % ( c ) )
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.sort_values.html#pandas.DataFrame.sort_values
         return o.sort_values( csvparaser.TIMESTAMP_STR )
-
-    @staticmethod
-    def get_files( dir: str ) -> List[ str ]:
-        if dir is None or dir == "": return [];
-
-        R: List[ str ] = []
-        for s, d, F in os.walk( dir ):
-            for f in F:
-                R.append( os.path.join( s, f ) )
-
-        return R
 
     # TODO: Identify which group of pkts are more than the other, good or bad?
     @staticmethod

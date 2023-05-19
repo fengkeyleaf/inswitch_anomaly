@@ -17,6 +17,10 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+from fengkeyleaf.io import (
+    my_files,
+    my_writer
+)
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.inswtich_anomaly import (
     csvparaser,
@@ -35,13 +39,29 @@ from fengkeyleaf.inswtich_anomaly import (
 #     | --> trees..
 #     | --> header ( optional )
 
+
+# fengkeyleaf.data_processor.DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv", None, None, 20 ).process( True )
+# fengkeyleaf.data_processor.DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv", None, None, 20 ).process( True )
+# fengkeyleaf.data_processor.DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", None, None, None, 20 ).process( True )
 # TODO: Mix different group of data sets.
 class DataProcessor:
-    def __init__( self, da: str, h: str, dm: str, ll: int = logging.INFO ) -> None:
+    """
+    Class to do the all tree processing steps:
+    1) pkt processing;
+    2) sketch processing;
+    3) tree processing;
+    """
+    def __init__(
+            self, da: str, h: str,
+            dm: str = None, D: List[ str ] = None,
+            ll: int = logging.INFO
+    ) -> None:
         """
 
-        @param d: Directory to data set
+        @param da: Directory to the original data sets.
         @param h: Path to features(headers)
+        @param dm: Directory to the synthesised data sets.
+        @param D: List of directories to the processed data sets to test trees.
         @param ll: logging level
         """
         # Logging setting
@@ -50,12 +70,18 @@ class DataProcessor:
         self.l.debug( "da: " + str( da ) )
         self.l.debug( "h: " + str( h ) )
         self.l.debug( "dm: " + str( dm ) )
+        self.l.debug( "D: " + str( D ) )
 
         self.da: str = da
         assert da is not None
+        # Initialize the three processors.
         self.pkt_processor: pkt_processor.PktProcessor = pkt_processor.PktProcessor(
             h,
-            mix_make_ups.Mixer( dm, self.__get_original_relative_time( da, h ), ll ),
+            mix_make_ups.Mixer(
+                dm,
+                0 if dm is None or dm == "" else self.__get_original_relative_time( da, h ),
+                ll
+            ),
             ll
         )
         self.sketch_processor: sketch_write.SketchWriter = sketch_write.SketchWriter(
@@ -66,10 +92,17 @@ class DataProcessor:
         self.tree: tree.Tree = tree.Tree(
             da + sketch_write.SketchWriter.FOLDER_NAME,
             da,
+            D,
             ll
         )
 
     def process( self, is_only_filter: bool = False ) -> None:
+        """
+        Process data sets and train trees. Start from beginning.
+        @param is_only_filter: True, only generate processed data sets.
+        """
+        self.l.info( "Start processing from the beginning." )
+
         # https://docs.python.org/3/library/os.html#os.walk
         # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
         # root, dirs, files
@@ -93,7 +126,13 @@ class DataProcessor:
                 )
 
     # TODO: csvparaser.TIMESTAMP_STR could vary.
-    def __get_original_relative_time( self, da: str, h: str ):
+    def __get_original_relative_time( self, da: str, h: str ) -> float:
+        """
+        Relative Time to align all pkts in the original data sets in timestamp order.
+        @param da: Directory to the original data sets.
+        @param h: Path to features(headers)
+        @return:
+        """
         rt: float = sys.maxsize
         for s, d, F in os.walk( da ):
             for f in F:
@@ -105,5 +144,14 @@ class DataProcessor:
         self.l.debug( "rt: " + str( rt ) )
         return rt
 
-    # DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv", None, 30 ).process( True )
-    # DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", None, None, 30 ).process( True )
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/data"
+    # h = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/re-formatted-mapping", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/re-formatted-mapping", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/re-formatted-mapping" ]
+    # fengkeyleaf.data_processor.DataProcessor( da, h, None, D, 20 ).train_trees()
+    def train_trees( self ) -> None:
+        """
+        Train trees, assume all previous steps have been done already.
+        """
+        self.l.info( "Start processing from generating trees." )
+        for f in my_files.get_files_in_dir( self.tree.d ):
+            self.tree.process( pandas.read_csv( f ), self.tree.pd + "/" + my_writer.get_filename( f ) )

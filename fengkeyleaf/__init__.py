@@ -10,7 +10,8 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 from fengkeyleaf.io.api import (
     my_json,
-    my_writer
+    my_writer,
+    my_files
 )
 
 from fengkeyleaf.logging.api import (

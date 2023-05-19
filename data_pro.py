@@ -49,5 +49,5 @@ if __name__ == '__main__':
     assert not args.dir_data.endswith( "/" ) or not args.dir_data.endswith( "\\" )
     data_processor.DataProcessor(
         args.dir_data, args.header,
-        args.dir_madeup, my_logging.get_level_name( args.logging_level )
+        args.dir_madeup, None, my_logging.get_level_name( args.logging_level )
     ).process()

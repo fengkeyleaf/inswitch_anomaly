@@ -40,14 +40,17 @@ IP_REG = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"  # raw string
 # TODO: Parallel computing.
 # TODO: Verify pk ids.
 class PktProcessor:
+    """
+    Process original pkt data set, like getting rid of unwanted features, adding synthesised good pkts.
+    """
     FOLDER_NAME = "/re-formatted/"
     SIGNATURE = "_reformatted.csv"
 
     def __init__( self, h: str, m: mix_make_ups.Mixer, ll: int = logging.INFO ) -> None:
         """
 
-        @param d: Directory to data set
         @param h: Path to features(headers)
+        @param m: mixer to add synthesised good pkts.
         @param ll: logging level
         """
         # Logging setting

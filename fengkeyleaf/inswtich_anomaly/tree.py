@@ -8,9 +8,10 @@ from argparse import (
 from collections import OrderedDict
 from typing import (
     List,
-    Dict
+    Dict,
+    Tuple
 )
-
+import ast
 import numpy as np
 import pandas
 import sklearn.tree
@@ -32,7 +33,10 @@ author: @sean bergen,
 from fengkeyleaf.logging import (
     my_logging,
 )
-from fengkeyleaf.io import my_writer
+from fengkeyleaf.io import (
+    my_writer,
+    my_files
+)
 from fengkeyleaf.utils import my_collections
 from fengkeyleaf.inswtich_anomaly import (
     sketch_write,
@@ -117,47 +121,71 @@ def get_lineage( tree, feature_names, file ):
 
 # TODO: Use pandas
 class Tree:
+    """
+    Train decision trees with sketch csv files.
+    """
     FOLDER_NAME = "/trees/"
     SIGNATURE = "_tree.txt"
 
-    def __init__( self, d: str, pd: str, ll: int = logging.INFO ) -> None:
+    def __init__( self, d: str, pd: str, D: List[ str ], ll: int = logging.INFO ) -> None:
         """
 
         @param d: Directory to pkt sketch csv files.
         @param pd: Directory to original pkt csv files.
+        @param D: List of directories to the processed data sets to test trees.
+        @param ll: logging level
         """
         self.l = my_logging.get_logger( ll )
+        self.e = Tree.__Evaluator( self.l, D )
 
-        self.data: List[ List[ int ] ] = []
-        self.labels: List[ int ] = []
+        self.d = d
+        self.pd = pd
 
     def process( self, df: pandas.DataFrame, f: str ) -> None:
-        self.data = []
-        self.labels = []
-        self.reformatting( df )
-        self.get_tree( f )
+        data, labels = Tree.reformatting( df )
+        # print( data )
+        # print( labels )
+        self.get_tree( f, data, labels )
 
     class __Evaluator:
-        def __init__( self, X: List, y: List, t: DecisionTreeClassifier, l: logging.Logger ) -> None:
+        def __init__( self, l: logging.Logger, D: List[ str ] ) -> None:
             """
             :param X: array-like of shape (n_samples, n_features)
             :param y: array-like of shape (n_samples,) or (n_samples, n_outputs)
             :param t: decisoin tree
             """
-            self.X = X
-            self.t = t
-            self.y = y
+            self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
 
             self.l = l
 
         # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
-        def evaluate( self ) -> None:
+        def evaluate(
+                self, t: DecisionTreeClassifier, tf: str,
+                t_data: List[ List[ int ] ], t_labels: List[ int ]
+        ) -> None:
+            """
+
+            @param t: The tree.
+            @param tf: Tree file path.
+            @param t_data: Tree's training data.
+            @param t_labels: Tree's label data
+            """
+            if len( self.file_list ) <= 0:
+                self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
+                return
+
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
             # print( self.t.predict( self.X ) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
-            self.l.info( "Accuracy of this tree: %.2f%%" % ( self.t.score( self.X, self.y ) * 100 ) )
+            self.l.debug( "Verifying the tree with the sketch file:\n%s" % tf )
+            for F in self.file_list:
+                for f in F:
+                    data, labels = Tree.reformatting( pandas.read_csv( f ) )
+                    self.l.debug( f )
+                    self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
 
-    def reformatting( self, df: pandas.DataFrame ):
+    @staticmethod
+    def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ int ] ]:
         """
         formatting from the csv is kinda weird so it is explained here:
         each line looks something like:
@@ -165,6 +193,9 @@ class Tree:
         so, we need to unpack the sketch back into a list from a string
         and then also make sure each part of the sketch is read in as an integer
         """
+        data: List[ List[ int ] ] = []
+        labels: List[ int ] = []
+
         for ( i, _ ) in df.iterrows():
             # print( df.loc[ i, sketch_write.RANGE_STR ] )
             # tmp1: List[ str ] = df.loc[ i, sketch_write.RANGE_STR ].strip( '][' ).split( ',' )
@@ -172,11 +203,15 @@ class Tree:
             # for item in tmp1:
             #     tmp2.append( int( item ) )
 
-            self.labels.append( df.loc[ i, csvparaser.LABEL_STR ] )
-            assert self.labels[ -1 ] == sketch_write.GOOD_LABEL or self.labels[ -1 ] == sketch_write.BAD_LABEL
-            self.data.append( df.loc[ i, sketch_write.RANGE_STR ] )
+            labels.append( df.loc[ i, csvparaser.LABEL_STR ] )
+            assert labels[ -1 ] == sketch_write.GOOD_LABEL or labels[ -1 ] == sketch_write.BAD_LABEL
+            l = df.loc[ i, sketch_write.RANGE_STR ]
+            assert isinstance( l, str ) or isinstance( l, list )
+            data.append( ast.literal_eval( l ) if isinstance( l, str ) else l )
 
-    def get_tree( self, f: str ):
+        return ( data, labels )
+
+    def get_tree( self, f: str, data, labels ):
         d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
         my_writer.make_dir( d )
         f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
@@ -184,10 +219,10 @@ class Tree:
 
         decision_tree = tree.DecisionTreeClassifier()
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.fit
-        decision_tree = decision_tree.fit( self.data, self.labels )
+        decision_tree = decision_tree.fit( data, labels )
 
         # Evaluate the tree
-        Tree.__Evaluator( self.data, self.labels, decision_tree, self.l ).evaluate()
+        self.e.evaluate( decision_tree, f, data, labels )
 
         # TODO: Configuration of features.
         feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]

@@ -8,7 +8,6 @@ from argparse import (
 from typing import (
     List
 )
-
 from pandas import (
     DataFrame
 )
@@ -43,6 +42,9 @@ BAD_LABEL = 1 # attack pkt
 
 # https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
 class SketchWriter:
+    """
+    Generate sketch csv files to train trees.
+    """
     FOLDER_NAME = "/sketches/"
     SIGNATURE = "_sketch.csv"
 
@@ -63,6 +65,7 @@ class SketchWriter:
 
         self.c: SketchWriter.__Checker = self.__Checker( self.l )
 
+    # TODO: return ( data, labels )
     def process( self, df: DataFrame, f: str ) -> DataFrame:
         self.__counting( df )
         self.__process( df )
@@ -72,6 +75,11 @@ class SketchWriter:
     # Input. P is input data set to generate a sketch csv file. Assuming we have labled data as our file.
     # Output. Balanced sketch csv file to train a decision tree.
     def __process( self, df: DataFrame ) -> None:
+        """
+        Extract features from pkts and store the information into the sketch.
+        Also Update the sketch with the data sampling applied.
+        @param df:
+        """
         assert self.c.setLen( my_dataframe.get_row_size( df ) )
 
         # gdp <- gc / len( P ) // good Drop Percent
@@ -104,7 +112,7 @@ class SketchWriter:
 
     def __write( self, f: str ) -> DataFrame:
         """
-        write the sketches with labels to a file
+        Write the sketches with labels to a file.
         @param s: file path.
         """
         # Write to file
@@ -127,6 +135,10 @@ class SketchWriter:
         return df
 
     def __counting( self, df: DataFrame ) -> None:
+        """
+        Count good pkts and bad pkts.
+        @param df:
+        """
         self.data = []
         self.labels = []
         self.gc = 0
