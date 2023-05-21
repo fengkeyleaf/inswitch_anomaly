@@ -2,7 +2,7 @@
 
 import os
 from typing import (
-    List, Tuple
+    List
 )
 
 """
@@ -14,6 +14,16 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 __version__ = "1.0"
+
+
+# Coding
+UTF8: str = "utf8"
+
+# Error Handling
+BACK_SLASH_REPLACE: str = "backslashreplace"
+
+# File extensions in lower case
+CSV: str = ".csv"
 
 
 def get_files_in_dir( dir: str ) -> List[ str ]:

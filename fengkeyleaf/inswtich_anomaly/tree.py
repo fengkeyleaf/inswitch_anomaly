@@ -174,15 +174,21 @@ class Tree:
                 self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
                 return
 
+            self.l.debug( "Accuracy of this tree: %.2f%%" % (t.score( t_data, t_labels ) * 100) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
             # print( self.t.predict( self.X ) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
-            self.l.debug( "Verifying the tree with the sketch file:\n%s" % tf )
+            self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
             for F in self.file_list:
-                for f in F:
-                    data, labels = Tree.reformatting( pandas.read_csv( f ) )
-                    self.l.debug( f )
-                    self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
+                for fp in F:
+                    with open(
+                            fp, encoding = my_files.UTF8,
+                            errors = my_files.BACK_SLASH_REPLACE
+                    ) as f:
+                        assert my_writer.get_extension( fp ).lower() == my_files.CSV
+                        data, labels = Tree.reformatting( pandas.read_csv( f ) )
+                        self.l.debug( my_writer.get_filename( fp ) )
+                        self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
 
     @staticmethod
     def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ int ] ]:

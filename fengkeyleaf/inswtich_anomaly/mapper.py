@@ -22,6 +22,9 @@ from fengkeyleaf.inswtich_anomaly import (
 
 
 class Mapper:
+    """
+    Class to get rid of unwanted features and mapping wanted ones to our favorite names.
+    """
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
     id_M: Dict[ str, str ] = {
         "pkSeqID": csvparaser.ID_STR, # UNSW_2018_IoT
@@ -59,7 +62,7 @@ class Mapper:
 
     @staticmethod
     def mapping( df: DataFrame ) -> DataFrame:
-        dl: List[ str ] = [ ]
+        dl: List[ str ] = []
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
         # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
         for k in df.keys():

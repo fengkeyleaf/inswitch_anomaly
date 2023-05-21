@@ -26,6 +26,10 @@ def get_filename( fp: str ) -> str:
     return os.path.splitext( os.path.basename( fp ) )[ 0 ]
 
 
+def get_extension( fp: str ) -> str:
+    return os.path.splitext( fp )[ 1 ]
+
+
 def make_dir( d: str ) -> None:
     if not os.path.isdir( d ):
         os.mkdir( d )

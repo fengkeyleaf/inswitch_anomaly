@@ -1,5 +1,5 @@
 import json
-from typing import ( Dict, List, Tuple )
+from typing import (Dict, List, Tuple)
 
 """
 file: topo.py
@@ -25,19 +25,20 @@ PKT_STR = "pkts"
 DST_IP_STR = "dstAddr"
 DST_MAC_STR = "dstMac"
 
+
 # https://www.geeksforgeeks.org/python-classes-and-objects/
 # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
 # https://www.geeksforgeeks.org/access-modifiers-in-python-public-private-and-protected/
 class CSVParaser:
     def __init__( self ) -> None:
-        self.h1:Dict = {
+        self.h1: Dict = {
             NAME_STR: "h1",
             IP_STR: "10.230.195.161",
             MAC_STR: "A0:36:BC:D1:8D:82"
         }
 
     # https://pythonexamples.org/python-write-json-to-file/
-    def __generate_topo_json( self, H:Dict, S:Dict, L:List ) -> str:
+    def __generate_topo_json( self, H: Dict, S: Dict, L: List ) -> str:
         """
         :param I: List of hosts and their configurations.
         :param S: List of swtiches and their configurations.
@@ -49,12 +50,12 @@ class CSVParaser:
             "switches": S,
             "links": L
         }, indent = 4 )
-    
+
     def __write_to_file( self, topo, fp ):
         with open( fp, "w+" ) as f:
             f.write( topo )
 
-    def __add_pkt( self, h:Dict, da:str, dm:str, id:str ):
+    def __add_pkt( self, h: Dict, da: str, dm: str, id: str ):
         assert h[ PKT_STR ].get( id ) is None
 
         h[ PKT_STR ][ id ] = {
@@ -62,37 +63,40 @@ class CSVParaser:
             DST_MAC_STR: dm
         }
 
-    def __add_host( self, H:Dict[ str, Dict ], L:List, id:str, a:str, m:str ) -> Dict:
-        hn:str = "h" + str( id ) # host name
+    def __add_host( self, H: Dict[ str, Dict ], L: List, id: str, a: str, m: str ) -> Dict:
+        hn: str = "h" + str( id )  # host name
         # Initi host
-        h:Dict = {
+        h: Dict = {
             NAME_STR: hn,
             IP_STR: a,
             MAC_STR: m,
             COM_STR: [ "route add default gw " + a + " dev eth0" ],
-            PKT_STR: {}
+            PKT_STR: { }
         }
 
         # Add link
-        L.append( [ hn, "s1-p" + str( id) ] )
+        L.append( [ hn, "s1-p" + str( id ) ] )
 
         H[ a ] = h
         return h
 
-    def __get_host_json( 
-        self, n: str, i: str, m: str, c:List[ str ]
+    def __get_host_json(
+            self, n: str, i: str, m: str, c: List[ str ]
     ) -> Tuple[ str, Dict ]:
-        return ( n, {
-            IP_STR: i,
-            MAC_STR: m,
-            COM_STR: c
-        } )
+        return (
+            n,
+            {
+                IP_STR: i,
+                MAC_STR: m,
+                COM_STR: c
+            }
+        )
 
-    def __add_host_pkt( 
-        self, H:Dict, L:List,
-        idh:str, sa:str,
-        da:str, sm:str,
-        dm:str, idp:str 
+    def __add_host_pkt(
+            self, H: Dict, L: List,
+            idh: str, sa: str,
+            da: str, sm: str,
+            dm: str, idp: str
     ) -> None:
         """
         :param H: hosts in a dict.
@@ -105,9 +109,9 @@ class CSVParaser:
         :param idp: id of pkt
         """
         self.__add_pkt( self.__add_host( H, L, idh, sa, sm ), da, dm, idp )
-    
-    def __convert( self, H:Dict ) -> Dict:
-        P = {}
+
+    def __convert( self, H: Dict ) -> Dict:
+        P = { }
         for v in H.values():
             P[ v[ NAME_STR ] ] = {
                 IP_STR: v[ IP_STR ],
@@ -115,16 +119,16 @@ class CSVParaser:
                 COM_STR: v[ COM_STR ],
                 PKT_STR: v[ PKT_STR ]
             }
-        
+
         return P
-    
-    def __is_not_terminator_host( self, a:str, m:str ) -> bool:
+
+    def __is_not_terminator_host( self, a: str, m: str ) -> bool:
         assert self.h1[ IP_STR ] != a
         assert self.h1[ MAC_STR ] != m
         return True
 
-    def get_topo_json( 
-        self, P: Dict[ float, Dict ], f: str
+    def get_topo_json(
+            self, P: Dict[ float, Dict ], f: str
     ) -> Dict:
         """
         {
@@ -151,13 +155,13 @@ class CSVParaser:
             ]
         }
         """
-        H:Dict[ str, Dict ] = {}
-        id:int = 1 # host id
-        S = { "s1": {} }
-        L:List[ List ] = []
+        H: Dict[ str, Dict ] = { }
+        id: int = 1  # host id
+        S = { "s1": { } }
+        L: List[ List ] = [ ]
 
-        M = { 
-            "192.168.137.5": "08:00:00:00:01:11", 
+        M = {
+            "192.168.137.5": "08:00:00:00:01:11",
             "192.168.137.249": "08:00:00:00:02:22"
         }
 
@@ -166,9 +170,9 @@ class CSVParaser:
         # k -> pkt id
         for k in P.keys():
             v: Dict[ str, str ] = P.get( k )
-            sa: str = v[ csvparaser.SRC_ADDR_STR ] # src addr
+            sa: str = v[ csvparaser.SRC_ADDR_STR ]  # src addr
             sm: str = v[ csvparaser.SRC_MAC_STR ]
-            da: str = v[ csvparaser.DST_ADDR_STR ] # dst addr
+            da: str = v[ csvparaser.DST_ADDR_STR ]  # dst addr
             dm: str = v[ csvparaser.DST_MAC_STR ]
 
             assert sa is not da
@@ -185,7 +189,6 @@ class CSVParaser:
                 id = id + 1
                 self.__add_host( H, L, id, da, dm )
 
-
         res: Dict = {
             HOST_STR: self.__convert( H ),
             SWITCH_STR: S,
@@ -197,9 +200,9 @@ class CSVParaser:
 
 class _Tester:
     def test1( self ) -> None:
-        H = {}
-        S = {}
-        L = []
+        H = { }
+        S = { }
+        L = [ ]
         # ( hn, hc ) = __get_host_json( "h1", "10.0.1.1/24", "08:00:00:00:01:11", ["route add default gw 10.0.1.10 dev eth0"] )
         # H[ hn ] = hc
         # ( hn, hc ) = __get_host_json( "h2", "10.0.2.2/24", "08:00:00:00:02:22", ["route add default gw 10.0.2.20 dev eth0"] )
@@ -216,9 +219,8 @@ class _Tester:
         # print( __generate_topo_json( H, S, L ) )
         # __write_to_file( __generate_topo_json( H, S, L ), "../pod-topo/topology.json" )
 
-
     def test2( self ) -> None:
-        cf:str = "../test/test_csv1_small.csv"
+        cf: str = "../test/test_csv1_small.csv"
         cf = "../test/test_csv1.csv"
         # cf = "../test/test_csv1_small_one_side_sending.csv"
         # P:Dict = csvparaser.parse( cf )
@@ -228,4 +230,3 @@ class _Tester:
 if __name__ == '__main__':
     # _Tester().test1()
     _Tester().test2()
-    pass

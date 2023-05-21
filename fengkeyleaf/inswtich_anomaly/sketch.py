@@ -18,6 +18,9 @@ TLS_STR = "TLS"
 
 
 class Sketch:
+    """
+    Sketch class
+    """
     def __init__( self ) -> None:
         self.S: Dict[ str, Dict[ str, int ] ] = {}
         self.D: Dict[ str, Dict[ str, int ] ] = {}

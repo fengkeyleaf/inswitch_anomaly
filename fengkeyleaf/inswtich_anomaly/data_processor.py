@@ -146,12 +146,29 @@ class DataProcessor:
 
     # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/data"
     # h = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/re-formatted-mapping", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/re-formatted-mapping", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/re-formatted-mapping" ]
-    # fengkeyleaf.data_processor.DataProcessor( da, h, None, D, 20 ).train_trees()
+
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data"
+
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data"
+    # h = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
+
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches" ]
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches" ]
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/processed/sketches" ]
+
+    # fengkeyleaf.data_processor.DataProcessor( da, h, None, D, 10 ).train_trees()
     def train_trees( self ) -> None:
         """
         Train trees, assume all previous steps have been done already.
         """
         self.l.info( "Start processing from generating trees." )
-        for f in my_files.get_files_in_dir( self.tree.d ):
-            self.tree.process( pandas.read_csv( f ), self.tree.pd + "/" + my_writer.get_filename( f ) )
+        for fp in my_files.get_files_in_dir( self.tree.d ):
+            with open(
+                    fp, encoding = my_files.UTF8,
+                    errors = my_files.BACK_SLASH_REPLACE
+            ) as f:
+                assert my_writer.get_extension( fp ).lower() == my_files.CSV, fp
+                self.tree.process(
+                    pandas.read_csv( f ),
+                    self.tree.pd + "/" + my_writer.get_filename( fp )
+                )

@@ -22,7 +22,8 @@ from fengkeyleaf.logging import (
     my_logging,
 )
 from fengkeyleaf.io import (
-    my_files
+    my_files,
+    my_writer
 )
 from fengkeyleaf.my_pandas import (
     my_dataframe
@@ -35,6 +36,9 @@ from fengkeyleaf.inswtich_anomaly import (
 
 
 class Mixer:
+    """
+    Mix synthesised pkts.
+    """
     def __init__( self, dir_m: str, ort: float, ll: int = logging.INFO ) -> None:
         self.l: logging.Logger = my_logging.get_logger( ll )
 
@@ -52,11 +56,13 @@ class Mixer:
         """
 
         @param o: All belong to the same network interval, i.e. only one chunk has 0 timestamp.
-        @param n:
+        @param n: How many synthesised pkts to be aded.
         @return:
         """
+        # No synthesised pkts provided.
         if len( self.F ) <= 0: return o;
 
+        # Find out n if not provided.
         if n < 0:
             n = Mixer.get_bads( o )
 
@@ -67,7 +73,12 @@ class Mixer:
         while len( self.F ) > 0 and n > 0:
             # https://stackoverflow.com/a/51763708
             df: pandas.DataFrame = None
-            with open( self.F.pop(), encoding = "utf8", errors = 'backslashreplace' ) as f:
+            fp: str = self.F.pop()
+            with open(
+                    fp, encoding = my_files.UTF8,
+                    errors = my_files.BACK_SLASH_REPLACE
+            ) as f:
+                assert my_writer.get_extension( fp ).lower() == my_files.CSV
                 df = Mixer.label( mapper.Mapper.mapping( pandas.read_csv( f ) ) )
 
             n -= my_dataframe.get_row_size( df )
@@ -125,6 +136,13 @@ class Mixer:
 
     @staticmethod
     def align( df: pandas.DataFrame, rt: float ) -> Tuple[ pandas.DataFrame, float ]:
+        """
+        Align pkts based on their timestamp.
+        THe first pkt in a capture is considered as the one with timestamp 0.00.
+        @param df:
+        @param rt:
+        @return:
+        """
         df = df.sort_values( csvparaser.TIMESTAMP_STR )
 
         # print( df )
@@ -145,6 +163,11 @@ class Mixer:
 
     @staticmethod
     def label( df: pandas.DataFrame ) -> pandas.DataFrame:
+        """
+        Label synthesised good pkts as 0.
+        @param df:
+        @return:
+        """
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.insert.html#pandas.DataFrame.insert
         df.insert( len( df.columns ), csvparaser.LABEL_STR, [ 0 for _ in range( my_dataframe.get_row_size( df ) ) ] )
         return df
