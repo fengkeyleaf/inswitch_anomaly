@@ -40,9 +40,27 @@ control MyIngress(
         default_action = drop();
     }
 
-    apply {        
-        s.apply( hdr, meta, standard_metadata );
+    table ipv4_lpm {
+        key = {
+            hdr.ipv4.dstAddr: lpm;
+        }
+        actions = {
+            ipv4_forward;
+            drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = drop();
+    }
 
+    apply {
+        // Basic forwarding/routing.
+        // if ( hdr.ipv4.isValid() ) {
+            // ipv4_lpm.apply();
+        // }
+
+        // Classification based on decision tree.
+        s.apply( hdr, meta, standard_metadata );
         decision_tree.apply();
     }
 }

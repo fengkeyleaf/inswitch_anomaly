@@ -7,7 +7,7 @@ from time import sleep
 import grpc
 
 """
-file: 
+file:
 description:
 language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
@@ -38,11 +38,18 @@ from fengkeyleaf import (
 # Paraphrase ML model.
 #######################
 
-
+# Initial Test
 inputfile = '../decision_tree/tree.txt'
 inputfile = "./test/test_tree_4_features.txt"
 inputfile = "./config/tree.txt"
-inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_1_tree.txt"
+
+# Real-world data Test
+inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_3_tree.txt"
+# inputfile = "/home/p4/tutorials/data/UNSW-NB15/UNSW-NB15_2_tree.txt"
+
+# Basic forwarding test
+inputfile = "/home/p4/tutorials/data/Bot-loT/processed/without_synthesised/UNSW_2018_IoT_Botnet_Dataset_3_reformatted_sketch_tree.txt"
+
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"
 
@@ -91,6 +98,9 @@ def main( p4info_file_path, bmv2_file_path ):
 
         # Write basic forwarding rules into switch.
         # write_rules.writeBasicForwardingRules( p4info_helper, s1 )
+
+        # Basic forwarding without the tree.
+        # write_rules.write_basic_forwarding_rules_batch_test( p4info_helper, s1 )
 
         write_rules.writeMLRules(
             srcCount = srcCount,
