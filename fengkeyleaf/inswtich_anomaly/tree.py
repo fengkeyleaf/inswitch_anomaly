@@ -15,7 +15,6 @@ import ast
 import numpy as np
 import pandas
 import sklearn.tree
-from sklearn import tree
 from sklearn.tree import (
     DecisionTreeClassifier
 )
@@ -30,14 +29,13 @@ author: @sean bergen,
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf.logging import (
-    my_logging,
-)
+from fengkeyleaf.logging import my_logging
 from fengkeyleaf.io import (
     my_writer,
     my_files
 )
 from fengkeyleaf.utils import my_collections
+from fengkeyleaf.my_pandas import my_dataframe
 from fengkeyleaf.inswtich_anomaly import (
     sketch_write,
     csvparaser
@@ -124,10 +122,14 @@ class Tree:
     """
     Train decision trees with sketch csv files.
     """
-    FOLDER_NAME = "/trees/"
-    SIGNATURE = "_tree.txt"
+    FOLDER_NAME: str = "/trees/"
+    SIGNATURE: str = "_tree.txt"
 
-    def __init__( self, d: str, pd: str, D: List[ str ], ll: int = logging.INFO ) -> None:
+    def __init__(
+            self, d: str, pd: str,
+            D: List[ str ], is_writing: bool = False,
+            ll: int = logging.INFO
+    ) -> None:
         """
 
         @param d: Directory to pkt sketch csv files.
@@ -136,7 +138,10 @@ class Tree:
         @param ll: logging level
         """
         self.l = my_logging.get_logger( ll )
-        self.e = Tree.__Evaluator( self.l, D )
+        self.recorder: my_dataframe.Generator = my_dataframe.Generator( ll )
+        self.e = Tree._Evaluator( self.l, D, self.recorder )
+        self._is_writing: bool = is_writing
+        self.e.set_is_writing( is_writing )
 
         self.d = d
         self.pd = pd
@@ -147,16 +152,21 @@ class Tree:
         # print( labels )
         self.get_tree( f, data, labels )
 
-    class __Evaluator:
-        def __init__( self, l: logging.Logger, D: List[ str ] ) -> None:
+    # https://towardsdatascience.com/whats-the-meaning-of-single-and-double-underscores-in-python-3d27d57d6bd1
+    class _Evaluator:
+        SIGNATURE: str = "_result.csv"
+
+        def __init__( self, l: logging.Logger, D: List[ str ], g: my_dataframe.Generator ) -> None:
             """
             :param X: array-like of shape (n_samples, n_features)
             :param y: array-like of shape (n_samples,) or (n_samples, n_outputs)
             :param t: decisoin tree
             """
-            self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
+            self.l: logging.Logger = l
 
-            self.l = l
+            self.recorder: my_dataframe.Generator = g
+            self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
+            self._is_writing: bool = False
 
         # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
         def evaluate(
@@ -189,6 +199,45 @@ class Tree:
                         data, labels = Tree.reformatting( pandas.read_csv( f ) )
                         self.l.debug( my_writer.get_filename( fp ) )
                         self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
+
+        # TODO: different header.
+        def evaluate_classic(
+                self, t: DecisionTreeClassifier, tf: str, h: str,
+                feature_list: List[ str ], l: str,
+                t_data: pandas.DataFrame, t_labels: pandas.DataFrame
+        ) -> None:
+            """
+
+            @param t: Decision tree classifier.
+            @param df: File path to the tree.
+            @param h: File path to the header.
+            @param feature_list: List of wanted features.
+            @param l: Label string
+            @param t_data: training data set.
+            @param t_labels: testing data set.
+            """
+            self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
+            self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
+
+            if self._is_writing: self.recorder.add_row_name( my_writer.get_filename( tf ) );
+
+            for F in self.file_list:
+                for fp in F:
+                    assert my_writer.get_extension( fp ).lower() == my_files.CSV
+
+                    ( df, X, y ) = Tree._get_data( fp, h, l, feature_list )
+
+                    test_file_name: str = my_writer.get_filename( fp )
+                    self.l.debug( test_file_name )
+                    result: float = t.score( X, y ) * 100
+                    self.l.debug( "Accuracy: %.2f%%" % result )
+
+                    if self._is_writing: self.recorder.add_column_name( test_file_name );
+                    if self._is_writing:
+                        self.recorder.append_element( str( result ), my_writer.get_filename( tf ), test_file_name )
+
+        def set_is_writing( self, is_writing: bool ) -> None:
+            self._is_writing = is_writing
 
     @staticmethod
     def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ int ] ]:
@@ -223,7 +272,7 @@ class Tree:
         f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
         self.l.info( "tree: " + f )
 
-        decision_tree = tree.DecisionTreeClassifier()
+        decision_tree = DecisionTreeClassifier()
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.fit
         decision_tree = decision_tree.fit( data, labels )
 
@@ -293,6 +342,58 @@ class Tree:
         get_lineage( decision_tree, feature_names, output )
         output.close()
 
+    # Initial Test
+    # F = [ "pkts", "bytes", "ltime"  ]
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training"
+    # h = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate" ]
+
+    # BoT-IoT
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training_large"
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate_large" ]
+
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches" ]
+
+    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( h, "attack", F )
+    def train( self, h: str, l: str, F: List[ str ] = None ) -> None:
+        """
+        Train a tree without the sketch applied.
+        @param h: File path to the header.
+        @param l: label string.
+        @param F: list of wanted features.
+        """
+        self.l.info( "Normally training tree......" )
+        assert l is not None and l != ""
+
+        if len( my_files.get_files_in_dir( self.pd ) ) <= 0:
+            self.l.warning( "Empty data sets provided!\n" + self.pd )
+
+        for f in my_files.get_files_in_dir( self.pd ):
+            self.l.debug( "Processing data set file: " + my_writer.get_filename( f ) )
+            assert my_writer.get_extension( f ).lower() == my_files.CSV
+
+            ( df, X, y ) = Tree._get_data( f, h, l, F )
+            self.l.debug( "DataFrame:\n" + str( df ) )
+            self.l.debug( "Training:\n" + str( X ) )
+            self.l.debug( "Testing:\n" + str( y ) )
+
+            t: DecisionTreeClassifier = DecisionTreeClassifier().fit( X, y )
+            self.e.set_is_writing( True )
+            self.e.evaluate_classic( t, f, h, F, l, X, y )
+
+        if self._is_writing:
+            self.recorder.to_csv( my_writer.get_dir( f ) + Tree._Evaluator.SIGNATURE )
+            self.recorder.reset()
+
+    @staticmethod
+    def _get_data( fp: str, h: str, l: str, F: List[ str ] ):
+        df: pandas.DataFrame = my_dataframe.add_header( h, fp )
+        X: pandas.DataFrame = my_dataframe.get_feature_content( df, l, F )
+        # https://stackoverflow.com/a/76294033
+        y: pandas.DataFrame = df[ l ].astype( int )
+
+        return ( df, X, y )
 
 if __name__ == '__main__':
     parser:ArgumentParser = ArgumentParser()
