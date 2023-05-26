@@ -184,7 +184,7 @@ class Tree:
                 self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
                 return
 
-            self.l.debug( "Accuracy of this tree: %.2f%%" % (t.score( t_data, t_labels ) * 100) )
+            self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
             # print( self.t.predict( self.X ) )
             # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
@@ -202,17 +202,17 @@ class Tree:
 
         # TODO: different header.
         def evaluate_classic(
-                self, t: DecisionTreeClassifier, tf: str, h: str,
-                feature_list: List[ str ], l: str,
+                self, t: DecisionTreeClassifier, tf: str, H: List[ str ],
+                feature_list: List[ List[ str ] ], L: List[ str ],
                 t_data: pandas.DataFrame, t_labels: pandas.DataFrame
         ) -> None:
             """
 
             @param t: Decision tree classifier.
-            @param df: File path to the tree.
-            @param h: File path to the header.
+            @param tf: File path to the tree.
+            @param H: List of file paths to the header.
             @param feature_list: List of wanted features.
-            @param l: Label string
+            @param L: List of label strings.
             @param t_data: training data set.
             @param t_labels: testing data set.
             """
@@ -221,11 +221,11 @@ class Tree:
 
             if self._is_writing: self.recorder.add_row_name( my_writer.get_filename( tf ) );
 
-            for F in self.file_list:
-                for fp in F:
+            for i in range( len( self.file_list ) ):
+                for fp in self.file_list[ i ]:
                     assert my_writer.get_extension( fp ).lower() == my_files.CSV
 
-                    ( df, X, y ) = Tree._get_data( fp, h, l, feature_list )
+                    ( df, X, y ) = Tree._get_data( fp, H[ i ], L[ i ], feature_list[ i ] )
 
                     test_file_name: str = my_writer.get_filename( fp )
                     self.l.debug( test_file_name )
@@ -343,52 +343,69 @@ class Tree:
         output.close()
 
     # Initial Test
-    # F = [ "pkts", "bytes", "ltime"  ]
+    # F = [ [ "pkts", "bytes", "ltime"  ] ]
+    # L = [ "attack" ]
     # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training"
-    # h = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-
     # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate" ]
 
     # BoT-IoT
+    # F1 = [ "spkts", "dpkts", "sbytes", "dbytes" ]
+    # h1 = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
     # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training_large"
     # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate_large" ]
 
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches" ]
+    # TON_IoT
+    # F2 = [ "src_bytes", "dst_bytes", "src_pkts", "dst_pkts" ]
 
-    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( h, "attack", F )
-    def train( self, h: str, l: str, F: List[ str ] = None ) -> None:
+    # UNSW-NB15
+    # F3 = [ "sbytes", "dbytes", "Spkts", "Dpkts" ]
+    # h3 = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
+
+    # L = [ "attack", "label", "Label" ]
+    # F = [ F1, F2, F3 ]
+    # H = [ h1, None, h3 ]
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training_large", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/large_test", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
+
+    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( H, L, F )
+    def train( self, H: List[ str ], L: List[ str ], F: List[ List[ str ] ] = None ) -> None:
         """
         Train a tree without the sketch applied.
-        @param h: File path to the header.
-        @param l: label string.
-        @param F: list of wanted features.
+        @param H: List of file paths to the header.
+        @param L: List of label strings.
+        @param F: List of wanted features.
         """
         self.l.info( "Normally training tree......" )
-        assert l is not None and l != ""
+        assert L is not None and L != ""
 
-        if len( my_files.get_files_in_dir( self.pd ) ) <= 0:
+        files: List[ str ] = my_files.get_files_in_dir( self.pd )
+        assert len( H ) == len( L )
+        assert len( L ) == len( self.e.file_list ), str( len( L ) ) + " | " + str( len( self.e.file_list ) )
+
+        if len( files ) <= 0:
             self.l.warning( "Empty data sets provided!\n" + self.pd )
 
-        for f in my_files.get_files_in_dir( self.pd ):
+        for f in files:
             self.l.debug( "Processing data set file: " + my_writer.get_filename( f ) )
             assert my_writer.get_extension( f ).lower() == my_files.CSV
 
-            ( df, X, y ) = Tree._get_data( f, h, l, F )
+            ( df, X, y ) = Tree._get_data( f, H[ 0 ], L[ 0 ], F[ 0 ] )
             self.l.debug( "DataFrame:\n" + str( df ) )
             self.l.debug( "Training:\n" + str( X ) )
             self.l.debug( "Testing:\n" + str( y ) )
 
             t: DecisionTreeClassifier = DecisionTreeClassifier().fit( X, y )
             self.e.set_is_writing( True )
-            self.e.evaluate_classic( t, f, h, F, l, X, y )
+            self.e.evaluate_classic( t, f, H, F, L, X, y )
 
         if self._is_writing:
-            self.recorder.to_csv( my_writer.get_dir( f ) + Tree._Evaluator.SIGNATURE )
+            self.recorder.to_csv( self.pd + Tree._Evaluator.SIGNATURE )
             self.recorder.reset()
 
     @staticmethod
     def _get_data( fp: str, h: str, l: str, F: List[ str ] ):
         df: pandas.DataFrame = my_dataframe.add_header( h, fp )
+        assert l in df.columns
+
         X: pandas.DataFrame = my_dataframe.get_feature_content( df, l, F )
         # https://stackoverflow.com/a/76294033
         y: pandas.DataFrame = df[ l ].astype( int )
