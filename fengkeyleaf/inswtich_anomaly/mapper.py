@@ -26,39 +26,58 @@ class Mapper:
     Class to get rid of unwanted features and mapping wanted ones to our favorite names.
     """
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
-    id_M: Dict[ str, str ] = {
+    ID_M: Dict[ str, str ] = {
         "pkSeqID": csvparaser.ID_STR, # UNSW_2018_IoT
         "No.": csvparaser.ID_STR # csv by wireshark
     }
-    src_ip_M: Dict[ str, str ] = {
+    SRC_IP_M: Dict[ str, str ] = {
         "saddr": csvparaser.SRC_ADDR_STR, # UNSW_2018_IoT
         "src_ip": csvparaser.SRC_ADDR_STR, # TON_IoT\Processed_Network_dataset
         "srcip": csvparaser.SRC_ADDR_STR, # UNSW-NB15-CSV
         "Source": csvparaser.SRC_ADDR_STR # csv by wireshark
     }
-    src_mac_M: Dict[ str, str ] = {
+    SRC_MAC_M: Dict[ str, str ] = {
         "smac": csvparaser.SRC_MAC_STR # UNSW_2018_IoT
     }
-    dst_ip_M: Dict[ str, str ] = {
+    DST_IP_M: Dict[ str, str ] = {
         "daddr": csvparaser.DST_ADDR_STR, # UNSW_2018_IoT
         "dst_ip": csvparaser.DST_ADDR_STR, # TON_IoT\Processed_Network_dataset
         "dstip": csvparaser.DST_ADDR_STR, # UNSW-NB15-CSV
         "Destination": csvparaser.DST_ADDR_STR # csv by wireshark
     }
-    dst_mac_M: Dict[ str, str ] = {
+    DST_MAC_M: Dict[ str, str ] = {
         "dmac": csvparaser.DST_MAC_STR # UNSW_2018_IoT
     }
-    label_M: Dict[ str, str ] = {
+    LABEL_M: Dict[ str, str ] = {
         "attack": csvparaser.LABEL_STR, # UNSW_2018_IoT
         "label": csvparaser.LABEL_STR, # TON_IoT\Processed_Network_dataset
         "Label": csvparaser.LABEL_STR # UNSW-NB15-CSV
     }
-    time_M: Dict[ str, str ] = {
+    TIME_M: Dict[ str, str ] = {
         "stime": csvparaser.TIMESTAMP_STR, # UNSW_2018_IoT
         "Stime": csvparaser.TIMESTAMP_STR, # UNSW-NB15-CSV
         "ts": csvparaser.TIMESTAMP_STR, # TON_IoT\Processed_Network_dataset
         "Time": csvparaser.TIMESTAMP_STR # csv by wireshark
     }
+    SRC_PKTS_M: Dict[ str, str ] = {
+        "spkts": csvparaser.SRC_PKTS_STR, # BoT-IoT
+        "src_pkts": csvparaser.SRC_PKTS_STR, # TON_IoT
+        "Spkts": csvparaser.SRC_PKTS_STR # UNSW-NB15
+    }
+    DST_PKTS_M: Dict[ str, str ] = {
+        "dpkts": csvparaser.DST_PKTS_STR, # BoT-IoT
+        "dst_pkts": csvparaser.DST_PKTS_STR, # TON_IoT
+        "Dpkts": csvparaser.DST_PKTS_STR # UNSW-NB15
+    }
+    SRC_BYTES_M: Dict[ str, str ] = {
+        "sbytes": csvparaser.SRC_BYTES_STR, # BoT-IoT, UNSW-NB15
+        "src_bytes": csvparaser.SRC_BYTES_STR # TON_IoT
+    }
+    DST_BYTES_M: Dict[ str, str ] = {
+        "dbytes": csvparaser.DST_BYTES_STR, # BoT-IoT, UNSW-NB15
+        "dst_bytes": csvparaser.DST_BYTES_STR # TON_IoT
+    }
+
 
     @staticmethod
     def mapping( df: DataFrame ) -> DataFrame:
@@ -82,11 +101,13 @@ class Mapper:
         # d.drop( dl, axis = 1 )
         return df.drop( columns = dl )
 
+
     @staticmethod
     def look_for_targeted_header( k: str ):
         D: List[ Dict ] = [
-            Mapper.id_M, Mapper.src_ip_M, Mapper.src_mac_M,
-            Mapper.dst_ip_M, Mapper.dst_mac_M, Mapper.label_M, Mapper.time_M
+            Mapper.ID_M, Mapper.SRC_IP_M, Mapper.SRC_MAC_M,
+            Mapper.DST_IP_M, Mapper.DST_MAC_M, Mapper.LABEL_M, Mapper.TIME_M,
+            Mapper.SRC_PKTS_M, Mapper.DST_PKTS_M, Mapper.SRC_BYTES_M, Mapper.DST_BYTES_M
         ]
 
         for d in D:

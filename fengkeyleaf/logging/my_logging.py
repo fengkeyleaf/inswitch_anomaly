@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import logging
+import logging as py_logging
 import colorlog
 
 """
@@ -11,17 +11,23 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+from fengkeyleaf import logging
 
 # https://docs.python.org/3/library/logging.html#logging-levels
 # https://github.com/borntyping/python-colorlog
-def get_logger( ll: int, n: str = __name__ ) -> logging.Logger:
+def get_logger( ll: int, n: str = None ) -> py_logging.Logger:
     """
-
+    Note that if two or more identical names are provided, logging will be printed out server times.
     @param ll: logging level
     @return:
     """
     # Create a logger
-    logger: logging.Logger = colorlog.getLogger( n )
+    logger: py_logging.Logger = None
+    if n is None:
+        logger = colorlog.getLogger( str( logging.NAME_ID ) )
+        logging.NAME_ID += 1
+    else: logger = colorlog.getLogger( n );
+
     logger.setLevel( ll )
 
     # # Create a console handler and set its level
@@ -52,4 +58,4 @@ def get_logger( ll: int, n: str = __name__ ) -> logging.Logger:
 
 def get_level_name( n: str ) -> int:
     # https://docs.python.org/3/library/logging.html#logging.getLevelName
-    return logging.getLevelName( n.upper() )
+    return py_logging.getLevelName( n.upper() )

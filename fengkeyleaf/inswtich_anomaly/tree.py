@@ -38,7 +38,8 @@ from fengkeyleaf.utils import my_collections
 from fengkeyleaf.my_pandas import my_dataframe
 from fengkeyleaf.inswtich_anomaly import (
     sketch_write,
-    csvparaser
+    csvparaser,
+    mapper
 )
 
 
@@ -203,7 +204,7 @@ class Tree:
         # TODO: different header.
         def evaluate_classic(
                 self, t: DecisionTreeClassifier, tf: str, H: List[ str ],
-                feature_list: List[ List[ str ] ], L: List[ str ],
+                feature_list: List[ str ],
                 t_data: pandas.DataFrame, t_labels: pandas.DataFrame
         ) -> None:
             """
@@ -225,7 +226,7 @@ class Tree:
                 for fp in self.file_list[ i ]:
                     assert my_writer.get_extension( fp ).lower() == my_files.CSV
 
-                    ( df, X, y ) = Tree._get_data( fp, H[ i ], L[ i ], feature_list[ i ] )
+                    ( df, X, y ) = Tree._get_data( fp, H[ i ], feature_list )
 
                     test_file_name: str = my_writer.get_filename( fp )
                     self.l.debug( test_file_name )
@@ -356,30 +357,36 @@ class Tree:
 
     # TON_IoT
     # F2 = [ "src_bytes", "dst_bytes", "src_pkts", "dst_pkts" ]
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/large_test"
 
     # UNSW-NB15
     # F3 = [ "sbytes", "dbytes", "Spkts", "Dpkts" ]
     # h3 = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
+    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data"
 
     # L = [ "attack", "label", "Label" ]
     # F = [ F1, F2, F3 ]
+    # F = [ fengkeyleaf.csvparaser.SRC_PKTS_STR, fengkeyleaf.csvparaser.SRC_BYTES_STR, fengkeyleaf.csvparaser.DST_PKTS_STR, fengkeyleaf.csvparaser.DST_BYTES_STR ]
     # H = [ h1, None, h3 ]
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training_large", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/large_test", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate_large", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/large_test", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
 
-    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( H, L, F )
-    def train( self, H: List[ str ], L: List[ str ], F: List[ List[ str ] ] = None ) -> None:
+    # Full test
+    # Handle NaN
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
+
+    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( None, H, F )
+    def train( self, h: str, H: List[ str ], F: List[ str ] = None ) -> None:
         """
         Train a tree without the sketch applied.
+        @param h: File paths to the testing header.
         @param H: List of file paths to the header.
         @param L: List of label strings.
         @param F: List of wanted features.
         """
         self.l.info( "Normally training tree......" )
-        assert L is not None and L != ""
 
         files: List[ str ] = my_files.get_files_in_dir( self.pd )
-        assert len( H ) == len( L )
-        assert len( L ) == len( self.e.file_list ), str( len( L ) ) + " | " + str( len( self.e.file_list ) )
+        assert len( H ) == len( self.e.file_list ), str( len( H ) ) + " | " + str( len( self.e.file_list ) )
 
         if len( files ) <= 0:
             self.l.warning( "Empty data sets provided!\n" + self.pd )
@@ -388,29 +395,33 @@ class Tree:
             self.l.debug( "Processing data set file: " + my_writer.get_filename( f ) )
             assert my_writer.get_extension( f ).lower() == my_files.CSV
 
-            ( df, X, y ) = Tree._get_data( f, H[ 0 ], L[ 0 ], F[ 0 ] )
+            ( df, X, y ) = Tree._get_data( f, h, F )
             self.l.debug( "DataFrame:\n" + str( df ) )
             self.l.debug( "Training:\n" + str( X ) )
             self.l.debug( "Testing:\n" + str( y ) )
 
             t: DecisionTreeClassifier = DecisionTreeClassifier().fit( X, y )
             self.e.set_is_writing( True )
-            self.e.evaluate_classic( t, f, H, F, L, X, y )
+            self.e.evaluate_classic( t, f, H, F, X, y )
 
         if self._is_writing:
             self.recorder.to_csv( self.pd + Tree._Evaluator.SIGNATURE )
             self.recorder.reset()
 
     @staticmethod
-    def _get_data( fp: str, h: str, l: str, F: List[ str ] ):
-        df: pandas.DataFrame = my_dataframe.add_header( h, fp )
-        assert l in df.columns
+    def _get_data( fp: str, h: str, F: List[ str ] ):
+        df: pandas.DataFrame = mapper.Mapper.mapping( my_dataframe.add_header( h, fp ) )
+        assert csvparaser.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
+        for f in F: assert f in df.columns, f + "\n" + str( my_dataframe.add_header( h, fp ).columns ) + "\n" + str( df.columns );
 
-        X: pandas.DataFrame = my_dataframe.get_feature_content( df, l, F )
+        # print( df )
+        X: pandas.DataFrame = my_dataframe.get_feature_content( df, csvparaser.LABEL_STR, F )
+        # print( df[ csvparaser.LABEL_STR ] )
         # https://stackoverflow.com/a/76294033
-        y: pandas.DataFrame = df[ l ].astype( int )
+        y: pandas.DataFrame = df[ csvparaser.LABEL_STR ].astype( int )
 
         return ( df, X, y )
+
 
 if __name__ == '__main__':
     parser:ArgumentParser = ArgumentParser()

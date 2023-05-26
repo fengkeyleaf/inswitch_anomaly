@@ -19,6 +19,10 @@ SRC_MAC_STR = "srcMAC"
 DST_ADDR_STR = "Destination"
 DST_MAC_STR = "dstMAC"
 LABEL_STR = "Label"
+SRC_PKTS_STR = "spkts"
+SRC_BYTES_STR = "sbytes"
+DST_PKTS_STR = "dpkts"
+DST_BYTES_STR = "dbytes"
 GOOD_LABEL_STR = "0"
 BAD_LABEL_STR = "1" # attack pkt
 
