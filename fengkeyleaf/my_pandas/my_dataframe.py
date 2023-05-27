@@ -61,29 +61,53 @@ def get_feature_content( df: pandas.DataFrame, l: str, F: List[ str ] = None ) -
     return df[ F ]
 
 
-class Generator:
+class Builder:
     def __init__( self, ll: int = logging.INFO ):
-        self.l: logging.Logger = my_logging.get_logger( ll )
-
         self.C: List[ str ] = []
         self.R: List[ str ] = []
         self.D: List[ List[ str ] ] = []
 
-    def add_column_name( self, n: str ):
-        if  n in self.C:
+        self.l: logging.Logger = my_logging.get_logger( ll )
+        self._c: _Checker = _Checker( self )
+
+    # https://realpython.com/python-kwargs-and-args/
+    def add_column_name( self, *args: str ):
+        for n in args:
+            if n is None or n == "":
+                self.l.warning( "None name or empty name" )
+                continue
+
+            if not ( n in self.C ):
+                self.C.append( n )
+                continue
+
             self.l.warning( "Duplicate column name: " + n )
-            return
-        self.C.append( n )
 
-    def add_row_name( self, n: str ):
-        if n in self.R:
+    def add_row_name( self, *args: str ):
+        for n in args:
+            if n is None or n == "":
+                self.l.warning( "None name or empty name" )
+                continue
+
+            if not ( n in self.R ):
+                self.R.append( n )
+                self.D.append( [] )
+
+                assert len( self.R ) == len( self.D )
+                continue
+
             self.l.warning( "Duplicate row name: " + n )
+
+    def _add_row_name( self, n ) -> None:
+        if n is None or n == "":
+            self.l.warning( "None name or empty name" )
             return
 
-        self.R.append( n )
-        self.D.append( [] )
+        if not ( n in self.R ):
+            self.R.append( n )
+            return
 
-        assert len( self.R ) == len( self.D )
+        self.l.warning( "Duplicate row name: " + n )
 
     def append_element( self, e: str, row_name: str == None, col_name: str = None ) -> Tuple[ int, int ]:
         assert len( self.D[ -1 ] ) + 1 <= len( self.C ), str( len( self.D[ -1 ] ) + 1 ) + " | " + str( len( self.C ) )
@@ -93,16 +117,53 @@ class Generator:
         assert col_name is None or col_name == self.C[ len( self.D[ -1 ] ) - 1 ]
         return ( len( self.D ) - 1, len( self.D[ -1 ] ) - 1 )
 
-    def reset( self ):
+    def add_row( self, r: List[ str ], rn: str = None ) -> None:
+        assert len( r ) == len( self.C ), str( len( r ) ) + " | " + str( len( self.C ) )
+        for d in self.D: assert len( r ) == len( d );
+        assert self._c.is_full_row()
+
+        self.D.append( r )
+        self.add_row_name( rn )
+
+    def reset( self ) -> None:
         self.C = []
         self.R = []
         self.D = []
 
-    def to_csv( self, f: str ):
+    def to_csv( self, f: str ) -> None:
         self.l.info( "Saving dataframe to:\n" + f )
-        pandas.DataFrame(
+        self.to_dataframe().to_csv( f )
+
+    def to_dataframe( self ) -> pandas.DataFrame:
+        return pandas.DataFrame(
             numpy.array( self.D ),
             self.R,
             self.C
-        ).to_csv( f )
+        )
 
+
+class _Checker:
+    def __init__( self, b: Builder ):
+        self.b: Builder = b
+
+    def is_full_row( self ) -> bool:
+        for r in self.b.R:
+            assert len( r ) == self.b.C, "Not full row!"
+
+        return True
+
+class _Tester:
+    @staticmethod
+    def test1():
+        b: Builder = Builder()
+        b.add_column_name( "A", "B", "C" )
+        # b.add_row_name( "a", "b", "c" )
+        b.add_row( [ "1", "2", "3" ], "a" )
+        b.add_row( [ "4", "5", "6" ], "b" )
+        b.add_row( [ "7", "8", "9" ], "c" )
+
+        print( b.to_dataframe() )
+
+
+if __name__ == '__main__':
+    _Tester.test1()

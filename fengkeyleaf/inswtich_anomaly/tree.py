@@ -139,7 +139,7 @@ class Tree:
         @param ll: logging level
         """
         self.l = my_logging.get_logger( ll )
-        self.recorder: my_dataframe.Generator = my_dataframe.Generator( ll )
+        self.recorder: my_dataframe.Builder = my_dataframe.Builder( ll )
         self.e = Tree._Evaluator( self.l, D, self.recorder )
         self._is_writing: bool = is_writing
         self.e.set_is_writing( is_writing )
@@ -157,7 +157,7 @@ class Tree:
     class _Evaluator:
         SIGNATURE: str = "_result.csv"
 
-        def __init__( self, l: logging.Logger, D: List[ str ], g: my_dataframe.Generator ) -> None:
+        def __init__( self, l: logging.Logger, D: List[ str ], g: my_dataframe.Builder ) -> None:
             """
             :param X: array-like of shape (n_samples, n_features)
             :param y: array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -165,7 +165,7 @@ class Tree:
             """
             self.l: logging.Logger = l
 
-            self.recorder: my_dataframe.Generator = g
+            self.recorder: my_dataframe.Builder = g
             self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
             self._is_writing: bool = False
 

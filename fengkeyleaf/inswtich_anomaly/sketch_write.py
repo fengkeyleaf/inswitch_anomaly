@@ -21,14 +21,9 @@ author: @sean bergen,
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf.logging import (
-    my_logging,
-)
-from fengkeyleaf.my_pandas import (
-    my_dataframe
-)
+from fengkeyleaf.logging import my_logging
+from fengkeyleaf.my_pandas import my_dataframe
 from fengkeyleaf.io import my_writer
-
 from fengkeyleaf.inswtich_anomaly import (
     csvparaser,
     sketch
@@ -63,7 +58,7 @@ class SketchWriter:
         # bc <- 0 // bad pkt count
         self.bc: int = 0
 
-        self.c: SketchWriter.__Checker = self.__Checker( self.l )
+        self.c: SketchWriter._Checker = self._Checker( self.l )
 
     # TODO: return ( data, labels )
     def process( self, df: DataFrame, f: str ) -> DataFrame:
@@ -184,7 +179,7 @@ class SketchWriter:
                 assert l == BAD_LABEL
                 self.c.addBad()
 
-    class __Checker:
+    class _Checker:
         def __init__( self, l: logging.Logger ):
             self.tc: int = 0 # total pkt count
             self.gc: int = 0 # actual good count
