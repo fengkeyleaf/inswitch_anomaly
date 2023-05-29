@@ -10,10 +10,11 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf import (
     my_json,
-    csvparaser,
     my_logging,
+    csvparaser,
     pkt_processor
 )
 import receive as rec
@@ -38,18 +39,18 @@ class Evaluator:
         :param k: pkt ID number
         :return:
         """
-        if self.P[ k ].get( csvparaser.LABEL_STR ) is None: return False;
+        if self.P[ k ].get( fkl_inswitch.LABEL_STR ) is None: return False;
 
-        return self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.GOOD_LABEL_STR ) and str( k ) in self.R
+        return self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and str( k ) in self.R
 
     def __is_correct_bad( self, k: float ) -> bool:
         """
         :param k: pkt ID number
         :return:
         """
-        if self.P[ k ].get( csvparaser.LABEL_STR ) is None: return False;
+        if self.P[ k ].get( fkl_inswitch.LABEL_STR ) is None: return False;
 
-        return self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.BAD_LABEL_STR ) and not ( str( k ) in self.R )
+        return self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and not (str( k ) in self.R)
 
     def __is_correct_forwarding( self, k: float ) -> bool:
         """
@@ -63,7 +64,7 @@ class Evaluator:
         :param k: pkt ID number
         :return:
         """
-        return re.match( pkt_processor.IP_REG, self.P[ k ][ csvparaser.DST_ADDR_STR ] ) is not None
+        return re.match( pkt_processor.IP_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
 
     def __evaluate( self ) -> None:
         gc: int = 0 # good count
@@ -72,7 +73,7 @@ class Evaluator:
         rc: int = 0 # received pkt count
         rtc: int = 0 # received pkt total count
         for k in self.P: # k: pkt ID number
-            if self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.GOOD_LABEL_STR ):
+            if self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ):
                 gtc += 1
             # if k == 21:
             #     print( self.__is_correct( k ) )

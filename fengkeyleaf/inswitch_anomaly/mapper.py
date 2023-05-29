@@ -3,10 +3,7 @@
 from typing import (
     Dict, List
 )
-
-from pandas import (
-    DataFrame
-)
+from pandas import DataFrame
 
 """
 file:
@@ -16,9 +13,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf.inswtich_anomaly import (
-    csvparaser
-)
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
 
 class Mapper:
@@ -28,68 +23,68 @@ class Mapper:
     # Pkt features mapping
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
     ID_M: Dict[ str, str ] = {
-        "pkSeqID": csvparaser.ID_STR, # UNSW_2018_IoT
-        "No.": csvparaser.ID_STR # csv by wireshark
+        "pkSeqID": fkl_inswitch.ID_STR, # UNSW_2018_IoT
+        "No.": fkl_inswitch.ID_STR # csv by wireshark
     }
     SRC_IP_M: Dict[ str, str ] = {
-        "saddr": csvparaser.SRC_ADDR_STR, # UNSW_2018_IoT
-        "src_ip": csvparaser.SRC_ADDR_STR, # TON_IoT\Processed_Network_dataset
-        "srcip": csvparaser.SRC_ADDR_STR, # UNSW-NB15-CSV
-        "Source": csvparaser.SRC_ADDR_STR # csv by wireshark
+        "saddr": fkl_inswitch.SRC_ADDR_STR, # UNSW_2018_IoT
+        "src_ip": fkl_inswitch.SRC_ADDR_STR, # TON_IoT\Processed_Network_dataset
+        "srcip": fkl_inswitch.SRC_ADDR_STR, # UNSW-NB15-CSV
+        "Source": fkl_inswitch.SRC_ADDR_STR # csv by wireshark
     }
     SRC_MAC_M: Dict[ str, str ] = {
-        "smac": csvparaser.SRC_MAC_STR # UNSW_2018_IoT
+        "smac": fkl_inswitch.SRC_MAC_STR # UNSW_2018_IoT
     }
     DST_IP_M: Dict[ str, str ] = {
-        "daddr": csvparaser.DST_ADDR_STR, # UNSW_2018_IoT
-        "dst_ip": csvparaser.DST_ADDR_STR, # TON_IoT\Processed_Network_dataset
-        "dstip": csvparaser.DST_ADDR_STR, # UNSW-NB15-CSV
-        "Destination": csvparaser.DST_ADDR_STR # csv by wireshark
+        "daddr": fkl_inswitch.DST_ADDR_STR, # UNSW_2018_IoT
+        "dst_ip": fkl_inswitch.DST_ADDR_STR, # TON_IoT\Processed_Network_dataset
+        "dstip": fkl_inswitch.DST_ADDR_STR, # UNSW-NB15-CSV
+        "Destination": fkl_inswitch.DST_ADDR_STR # csv by wireshark
     }
     DST_MAC_M: Dict[ str, str ] = {
-        "dmac": csvparaser.DST_MAC_STR # UNSW_2018_IoT
+        "dmac": fkl_inswitch.DST_MAC_STR # UNSW_2018_IoT
     }
     LABEL_M: Dict[ str, str ] = {
-        "attack": csvparaser.LABEL_STR, # UNSW_2018_IoT
-        "label": csvparaser.LABEL_STR, # TON_IoT\Processed_Network_dataset
-        "Label": csvparaser.LABEL_STR # UNSW-NB15-CSV
+        "attack": fkl_inswitch.LABEL_STR, # UNSW_2018_IoT
+        "label": fkl_inswitch.LABEL_STR, # TON_IoT\Processed_Network_dataset
+        "Label": fkl_inswitch.LABEL_STR # UNSW-NB15-CSV
     }
     TIME_M: Dict[ str, str ] = {
-        "stime": csvparaser.TIMESTAMP_STR, # UNSW_2018_IoT
-        "Stime": csvparaser.TIMESTAMP_STR, # UNSW-NB15-CSV
-        "ts": csvparaser.TIMESTAMP_STR, # TON_IoT\Processed_Network_dataset
-        "Time": csvparaser.TIMESTAMP_STR # csv by wireshark
+        "stime": fkl_inswitch.TIMESTAMP_STR, # UNSW_2018_IoT
+        "Stime": fkl_inswitch.TIMESTAMP_STR, # UNSW-NB15-CSV
+        "ts": fkl_inswitch.TIMESTAMP_STR, # TON_IoT\Processed_Network_dataset
+        "Time": fkl_inswitch.TIMESTAMP_STR # csv by wireshark
     }
     SRC_PKTS_M: Dict[ str, str ] = {
-        "spkts": csvparaser.SRC_PKTS_STR, # BoT-IoT
-        "src_pkts": csvparaser.SRC_PKTS_STR, # TON_IoT
-        "Spkts": csvparaser.SRC_PKTS_STR # UNSW-NB15
+        "spkts": fkl_inswitch.SRC_PKTS_STR, # BoT-IoT
+        "src_pkts": fkl_inswitch.SRC_PKTS_STR, # TON_IoT
+        "Spkts": fkl_inswitch.SRC_PKTS_STR # UNSW-NB15
     }
     DST_PKTS_M: Dict[ str, str ] = {
-        "dpkts": csvparaser.DST_PKTS_STR, # BoT-IoT
-        "dst_pkts": csvparaser.DST_PKTS_STR, # TON_IoT
-        "Dpkts": csvparaser.DST_PKTS_STR # UNSW-NB15
+        "dpkts": fkl_inswitch.DST_PKTS_STR, # BoT-IoT
+        "dst_pkts": fkl_inswitch.DST_PKTS_STR, # TON_IoT
+        "Dpkts": fkl_inswitch.DST_PKTS_STR # UNSW-NB15
     }
     SRC_BYTES_M: Dict[ str, str ] = {
-        "sbytes": csvparaser.SRC_BYTES_STR, # BoT-IoT, UNSW-NB15
-        "src_bytes": csvparaser.SRC_BYTES_STR # TON_IoT
+        "sbytes": fkl_inswitch.SRC_BYTES_STR, # BoT-IoT, UNSW-NB15
+        "src_bytes": fkl_inswitch.SRC_BYTES_STR # TON_IoT
     }
     DST_BYTES_M: Dict[ str, str ] = {
-        "dbytes": csvparaser.DST_BYTES_STR, # BoT-IoT, UNSW-NB15
-        "dst_bytes": csvparaser.DST_BYTES_STR # TON_IoT
+        "dbytes": fkl_inswitch.DST_BYTES_STR, # BoT-IoT, UNSW-NB15
+        "dst_bytes": fkl_inswitch.DST_BYTES_STR # TON_IoT
     }
     # Computed features mapping
     SRC_COUNT_M: Dict[ str, str ] = {
-        csvparaser.SRC_COUNT_STR: csvparaser.SRC_COUNT_STR
+        fkl_inswitch.SRC_COUNT_STR: fkl_inswitch.SRC_COUNT_STR
     }
     SRC_TLS_M: Dict[ str, str ] = {
-        csvparaser.SRC_TLS_STR: csvparaser.SRC_TLS_STR
+        fkl_inswitch.SRC_TLS_STR: fkl_inswitch.SRC_TLS_STR
     }
     DST_COUNT_M: Dict[ str, str ] = {
-        csvparaser.DST_COUNT_STR: csvparaser.DST_COUNT_STR
+        fkl_inswitch.DST_COUNT_STR: fkl_inswitch.DST_COUNT_STR
     }
     DST_TLS_M: Dict[ str, str ] = {
-        csvparaser.DST_TLS_STR: csvparaser.DST_TLS_STR
+        fkl_inswitch.DST_TLS_STR: fkl_inswitch.DST_TLS_STR
     }
     D: List[ Dict ] = [
         # Pkt features mapping
@@ -102,11 +97,16 @@ class Mapper:
 
     @staticmethod
     def mapping( df: DataFrame ) -> DataFrame:
+        """
+        Mapping feature names.
+        @param df:
+        @return:
+        """
         dl: List[ str ] = []
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
         # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
         for k in df.keys():
-            h = Mapper.look_for_targeted_header( k )
+            h = Mapper._look_for_targeted_header( k )
             # Skip the feature with the same name.
             if h == k: continue;
 
@@ -124,7 +124,7 @@ class Mapper:
 
 
     @staticmethod
-    def look_for_targeted_header( k: str ):
+    def _look_for_targeted_header( k: str ) -> str | None:
         for d in Mapper.D:
             if d.get( k ) is not None:
                 return d.get( k )

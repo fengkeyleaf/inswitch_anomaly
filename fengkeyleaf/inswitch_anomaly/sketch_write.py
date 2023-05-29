@@ -27,11 +27,8 @@ author: @sean bergen,
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.my_pandas import my_dataframe
 from fengkeyleaf.io import ( my_writer, my_files )
-from fengkeyleaf.inswtich_anomaly import (
-    csvparaser,
-    sketch
-)
-
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+from fengkeyleaf.inswitch_anomaly import sketch
 
 RANGE_STR = "range"
 GOOD_LABEL = 0
@@ -47,9 +44,9 @@ class SketchWriter:
     SIGNATURE: str = "_sketch.csv"
     SIGNATURE_NEW: str = "_sketch_new.csv"
     COLUMN_NAMES: List[ str ] = [
-        csvparaser.SRC_COUNT_STR, csvparaser.SRC_TLS_STR,
-        csvparaser.DST_COUNT_STR, csvparaser.DST_TLS_STR,
-        csvparaser.LABEL_STR
+        fkl_inswitch.SRC_COUNT_STR, fkl_inswitch.SRC_TLS_STR,
+        fkl_inswitch.DST_COUNT_STR, fkl_inswitch.DST_TLS_STR,
+        fkl_inswitch.LABEL_STR
     ]
 
     def __init__( self, dir: str, pdir: str, ll: int = logging.INFO ) -> None:
@@ -61,11 +58,13 @@ class SketchWriter:
         self.data: List = []
         self.labels: List = []
         self.b: my_dataframe.Builder = my_dataframe.Builder( C = SketchWriter.COLUMN_NAMES )
+
         self.idx: int = 0
         # gc <- 0 // good pkt count
         self.gc: int = 0
         # bc <- 0 // bad pkt count
         self.bc: int = 0
+        self.is_balancing: bool = True
 
         self.dir = dir
         self.pdir = pdir
@@ -111,15 +110,15 @@ class SketchWriter:
             # Increment the TLS of every tracked ip in s.
             s.incrementTLS()
 
-            si: str = df.at[ idx, csvparaser.SRC_ADDR_STR ]
-            di: str = df.at[ idx, csvparaser.DST_ADDR_STR ]
+            si: str = df.at[ idx, fkl_inswitch.SRC_ADDR_STR ]
+            di: str = df.at[ idx, fkl_inswitch.DST_ADDR_STR ]
             # Record p's srcIP and p's dstIP in s.
             s.add_src( si )
             s.add_dst( di )
 
             # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
-            assert df.at[ idx, csvparaser.LABEL_STR ] == BAD_LABEL or df.at[ idx, csvparaser.LABEL_STR ] == GOOD_LABEL, df.at[ idx, csvparaser.LABEL_STR ]
-            self.__balancing( s.getData( si, di ), df.at[ idx, csvparaser.LABEL_STR ], gdp, bdp )
+            assert df.at[ idx, fkl_inswitch.LABEL_STR ] == BAD_LABEL or df.at[ idx, fkl_inswitch.LABEL_STR ] == GOOD_LABEL, df.at[ idx, fkl_inswitch.LABEL_STR ]
+            self.__balancing( s.getData( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
 
         assert self._c.isBalanced()
         # return D
@@ -141,7 +140,7 @@ class SketchWriter:
         # https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
         df_o: DataFrame = DataFrame( {
             RANGE_STR: self.data,
-            csvparaser.LABEL_STR: self.labels
+            fkl_inswitch.LABEL_STR: self.labels
         } )
         self.l.info( "Writing old sketch to:\n" + f )
         df_o.to_csv(
@@ -168,12 +167,12 @@ class SketchWriter:
         # for every pkt, p, in P
         for ( i, s ) in df.iterrows():
             # do if p is a good one
-            if df.at[ i, csvparaser.LABEL_STR ] == GOOD_LABEL:
+            if df.at[ i, fkl_inswitch.LABEL_STR ] == GOOD_LABEL:
                 # then gc++
                 self.gc += 1
             # else bc++
             else:
-                assert df.at[ i, csvparaser.LABEL_STR ] == BAD_LABEL
+                assert df.at[ i, fkl_inswitch.LABEL_STR ] == BAD_LABEL
                 self.bc += 1
 
         assert self.gc + self.bc == my_dataframe.get_row_size( df )

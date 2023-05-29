@@ -14,6 +14,11 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 __version__ = "1.0"
 
 
-def load( fp:str ) -> Dict:
+def load( fp: str ) -> Dict:
+    """
+    Load json data from a json file.
+    @param fp:
+    @return:
+    """
     with open( fp, "r" ) as f:
         return json.load( f )

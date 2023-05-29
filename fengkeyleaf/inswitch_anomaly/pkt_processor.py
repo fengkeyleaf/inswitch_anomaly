@@ -6,7 +6,6 @@ import re
 from typing import (
     Dict, List, Set
 )
-
 import pandas
 from pandas import (
     DataFrame
@@ -24,10 +23,10 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.io import my_writer
 from fengkeyleaf.my_pandas import my_dataframe
-from fengkeyleaf.inswtich_anomaly import (
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+from fengkeyleaf.inswitch_anomaly import (
     mix_make_ups,
     mapper,
-    csvparaser,
     sketch_write
 )
 
@@ -104,15 +103,15 @@ class PktProcessor:
         id: int = 0
 
         for ( i, s ) in d.iterrows():
-            si: str = d.at[ i, csvparaser.SRC_ADDR_STR ]
-            di: str = d.at[ i, csvparaser.DST_ADDR_STR ]
+            si: str = d.at[ i, fkl_inswitch.SRC_ADDR_STR ]
+            di: str = d.at[ i, fkl_inswitch.DST_ADDR_STR ]
             id = PktProcessor.create_mac( m, [ si, di ], id, S )
 
             # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.loc.html
             assert m[ si ] is not None
-            d.loc[ i, csvparaser.SRC_MAC_STR ] = m[ si ]
+            d.loc[ i, fkl_inswitch.SRC_MAC_STR ] = m[ si ]
             assert m[ di ] is not None
-            d.loc[ i, csvparaser.DST_MAC_STR ] = m[ di ]
+            d.loc[ i, fkl_inswitch.DST_MAC_STR ] = m[ di ]
 
 
     @staticmethod
@@ -142,7 +141,7 @@ class PktProcessor:
     def renumber( d: DataFrame ) -> None:
         id: int = 1
         for ( i, s ) in d.iterrows():
-            d.loc[ i, csvparaser.ID_STR ] = id
+            d.loc[ i, fkl_inswitch.ID_STR ] = id
             id += 1
 
     class __Checker:
@@ -154,8 +153,8 @@ class PktProcessor:
             # TODO: verify macs
             for ( i, s ) in d.iterrows():
                 # PktProcessor.verify_ip( d )
-                assert d.loc[ i, csvparaser.ID_STR ] != "" and d.loc[ i, csvparaser.ID_STR ] is not None
-                assert d.loc[ i, csvparaser.LABEL_STR ] == 0 or d.loc[ i, csvparaser.LABEL_STR ] == 1, str( i ) + " | " + f
+                assert d.loc[ i, fkl_inswitch.ID_STR ] != "" and d.loc[ i, fkl_inswitch.ID_STR ] is not None
+                assert d.loc[ i, fkl_inswitch.LABEL_STR ] == 0 or d.loc[ i, fkl_inswitch.LABEL_STR ] == 1, str( i ) + " | " + f
 
             return True
 
@@ -165,9 +164,9 @@ class PktProcessor:
             tc: int = 0
 
             for ( i, s ) in df.iterrows():
-                if df.loc[ i, csvparaser.LABEL_STR ] == sketch_write.GOOD_LABEL:
+                if df.loc[ i, fkl_inswitch.LABEL_STR ] == sketch_write.GOOD_LABEL:
                     gc += 1
-                elif df.loc[ i, csvparaser.LABEL_STR ] == sketch_write.BAD_LABEL:
+                elif df.loc[ i, fkl_inswitch.LABEL_STR ] == sketch_write.BAD_LABEL:
                     bc += 1
                 else: assert False;
                 tc += 1
@@ -178,8 +177,8 @@ class PktProcessor:
     @staticmethod
     def verify_ip( d: DataFrame ) -> bool:
         for ( i, s ) in d.iterrows():
-            assert re.search( IP_REG, d.loc[ i , csvparaser.SRC_ADDR_STR ] ), str( i ) + " " +  d.loc[ i , csvparaser.SRC_ADDR_STR ]
-            assert re.search( IP_REG, d.loc[ i , csvparaser.DST_ADDR_STR ] ), str( i ) + " " + d.loc[ i , csvparaser.DST_ADDR_STR ]
+            assert re.search( IP_REG, d.loc[ i , fkl_inswitch.SRC_ADDR_STR ] ), str( i ) + " " + d.loc[ i , fkl_inswitch.SRC_ADDR_STR ]
+            assert re.search( IP_REG, d.loc[ i , fkl_inswitch.DST_ADDR_STR ] ), str( i ) + " " + d.loc[ i , fkl_inswitch.DST_ADDR_STR ]
 
         return True
 

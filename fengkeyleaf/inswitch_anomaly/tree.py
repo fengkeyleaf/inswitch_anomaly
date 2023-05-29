@@ -34,9 +34,9 @@ from fengkeyleaf.io import (
 )
 from fengkeyleaf.utils import my_collections
 from fengkeyleaf.my_pandas import my_dataframe
-from fengkeyleaf.inswtich_anomaly import (
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+from fengkeyleaf.inswitch_anomaly import (
     sketch_write,
-    csvparaser,
     mapper
 )
 
@@ -261,7 +261,7 @@ class Tree:
             # for item in tmp1:
             #     tmp2.append( int( item ) )
 
-            labels.append( df.loc[ i, csvparaser.LABEL_STR ] )
+            labels.append( df.loc[ i, fkl_inswitch.LABEL_STR ] )
             assert labels[ -1 ] == sketch_write.GOOD_LABEL or labels[ -1 ] == sketch_write.BAD_LABEL
             l = df.loc[ i, sketch_write.RANGE_STR ]
             assert isinstance( l, str ) or isinstance( l, list )
@@ -416,21 +416,21 @@ class Tree:
     @staticmethod
     def _get_data( fp: str, h: str, F: List[ str ] ):
         df: pandas.DataFrame = mapper.Mapper.mapping( my_dataframe.add_header( h, fp ) )
-        assert csvparaser.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
+        assert fkl_inswitch.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
         for f in F: assert f in df.columns, f + "\n" + str( my_dataframe.add_header( h, fp ).columns ) + "\n" + str( df.columns );
 
         # print( df )
-        X: pandas.DataFrame = my_dataframe.get_feature_content( df, csvparaser.LABEL_STR, F )
+        X: pandas.DataFrame = my_dataframe.get_feature_content( df, fkl_inswitch.LABEL_STR, F )
         # print( df[ csvparaser.LABEL_STR ] )
         # https://stackoverflow.com/a/76294033
-        y: pandas.DataFrame = df[ csvparaser.LABEL_STR ].astype( int )
+        y: pandas.DataFrame = df[ fkl_inswitch.LABEL_STR ].astype( int )
 
         return ( df, X, y )
 
 
 class _Tester( unittest.TestCase ):
     h1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-    F_S: List[ str ] = [ csvparaser.SRC_COUNT_STR, csvparaser.SRC_TLS_STR, csvparaser.DST_COUNT_STR, csvparaser.DST_TLS_STR ]
+    F_S: List[ str ] = [ fkl_inswitch.SRC_COUNT_STR, fkl_inswitch.SRC_TLS_STR, fkl_inswitch.DST_COUNT_STR, fkl_inswitch.DST_TLS_STR ]
     dt1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
     dt2: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches_new"
     dt3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches_new"

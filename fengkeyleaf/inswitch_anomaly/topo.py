@@ -10,9 +10,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf.io import my_writer
-from fengkeyleaf.inswtich_anomaly import (
-    csvparaser
-)
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
 IP_STR = "ip"
 MAC_STR = "mac"
@@ -170,10 +168,10 @@ class CSVParaser:
         # k -> pkt id
         for k in P.keys():
             v: Dict[ str, str ] = P.get( k )
-            sa: str = v[ csvparaser.SRC_ADDR_STR ]  # src addr
-            sm: str = v[ csvparaser.SRC_MAC_STR ]
-            da: str = v[ csvparaser.DST_ADDR_STR ]  # dst addr
-            dm: str = v[ csvparaser.DST_MAC_STR ]
+            sa: str = v[ fkl_inswitch.SRC_ADDR_STR ]  # src addr
+            sm: str = v[ fkl_inswitch.SRC_MAC_STR ]
+            da: str = v[ fkl_inswitch.DST_ADDR_STR ]  # dst addr
+            dm: str = v[ fkl_inswitch.DST_MAC_STR ]
 
             assert sa is not da
             assert sm is not dm

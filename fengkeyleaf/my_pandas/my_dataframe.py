@@ -54,6 +54,13 @@ def add_header( h: str, f: str ) -> pandas.DataFrame:
 
 
 def get_feature_content( df: pandas.DataFrame, l: str, F: List[ str ] = None ) -> pandas.DataFrame:
+    """
+    Get specific data with the given features, except for the label.
+    @param df:
+    @param l: Label name
+    @param F: List of feature names.
+    @return:
+    """
     assert l is not None and l != "", l
     assert ( F is None or len( F ) <= 0 ) or not ( l in F )
 
@@ -66,6 +73,9 @@ def get_feature_content( df: pandas.DataFrame, l: str, F: List[ str ] = None ) -
 
 # TODO: Default column and index.
 class Builder:
+    """
+    Class being the intermedia data structure to the pandas.DataFrame.
+    """
     def __init__(
             self, C: List[ str ] = None,
             R: List[ str ] = None, ll: int = logging.INFO
@@ -79,7 +89,11 @@ class Builder:
 
     # https://realpython.com/python-kwargs-and-args/
     # TODO: append one element to every row.
-    def add_column_name( self, *args: str ):
+    def add_column_name( self, *args: str ) -> None:
+        """
+        Add column name(s) into this builder.
+        @param args:
+        """
         for n in args:
             if n is None or n == "":
                 self.l.warning( "None name or empty name" )
@@ -91,7 +105,11 @@ class Builder:
 
             self.l.warning( "Duplicate column name: " + n )
 
-    def add_row_name( self, *args: str ):
+    def add_row_name( self, *args: str ) -> None:
+        """
+        Add row name(s) into this builder.
+        @param args:
+        """
         for n in args:
             if n is None or n == "":
                 self.l.warning( "None name or empty name" )
@@ -107,7 +125,19 @@ class Builder:
 
             self.l.warning( "Duplicate row name: " + n )
 
-    def append_element( self, e: str, row_name: str = None, col_name: str = None ) -> Tuple[ int, int ]:
+    # TODO: Add the row name and column name as well.
+    def append_element(
+            self, e: str,
+            row_name: str = None, col_name: str = None
+    ) -> Tuple[ int, int ]:
+        """
+        Append an element into this builder.
+        It's required that the last row has at least one empty spot.
+        @param e:
+        @param row_name:
+        @param col_name:
+        @return: Index at which the element is inserted.
+        """
         assert len( self.D[ -1 ] ) + 1 <= len( self.C ), str( len( self.D[ -1 ] ) + 1 ) + " | " + str( len( self.C ) )
         self.D[ -1 ].append( e )
 
@@ -115,7 +145,13 @@ class Builder:
         assert col_name is None or col_name == self.C[ len( self.D[ -1 ] ) - 1 ]
         return ( len( self.D ) - 1, len( self.D[ -1 ] ) - 1 )
 
-    def add_row( self, rn: str, R: List[ str ] = None ) -> None:
+    def add_row( self, rn: str, R: List[ str ] | None = None ) -> None:
+        """
+        Add en entire rwo into this builder. THe new row name is required.
+        @param rn:
+        @param R:
+        @return:
+        """
         if rn in self.R:
             self.l.warning( "Duplicate row name: " + rn )
             return
@@ -132,15 +168,26 @@ class Builder:
         self.add_row_name( rn )
 
     def reset( self ) -> None:
+        """
+        Reset this builder, clear its data.
+        """
         self.C = []
         self.R = []
         self.D = []
 
     def to_csv( self, f: str ) -> None:
+        """
+        Save this builder into a csv file.
+        @param f:
+        """
         self.l.info( "Saving dataframe to:\n" + f )
         self.to_dataframe().to_csv( f )
 
     def to_dataframe( self ) -> pandas.DataFrame:
+        """
+        Convert this builder into a Dataframe.
+        @return:
+        """
         return pandas.DataFrame(
             numpy.array( self.D ),
             self.R,

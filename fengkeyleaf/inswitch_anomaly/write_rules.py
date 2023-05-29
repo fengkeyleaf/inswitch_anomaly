@@ -1,6 +1,6 @@
 import sys
 import json
-from typing import Dict, List
+from typing import Dict
 import re
 
 """
@@ -11,9 +11,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf.inswtich_anomaly import (
-    topo
-)
+from fengkeyleaf.inswitch_anomaly import topo
 
 
 # Reference material about basic decision-tree combing packet re-forwading:

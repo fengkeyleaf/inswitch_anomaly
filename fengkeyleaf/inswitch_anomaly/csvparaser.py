@@ -11,28 +11,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-# Pkt features
-ID_STR = "No."
-TIMESTAMP_STR = "stime"
-SRC_ADDR_STR = "Source"
-SRC_MAC_STR = "srcMAC"
-DST_ADDR_STR = "Destination"
-DST_MAC_STR = "dstMAC"
-LABEL_STR = "Label"
-SRC_PKTS_STR = "spkts"
-SRC_BYTES_STR = "sbytes"
-DST_PKTS_STR = "dpkts"
-DST_BYTES_STR = "dbytes"
-
-# Computed features
-SRC_COUNT_STR = "srcCount"
-SRC_TLS_STR = "srcTLS"
-DST_COUNT_STR = "dstCount"
-DST_TLS_STR = "dstTLS"
-
-# Label types
-GOOD_LABEL_STR = "0"
-BAD_LABEL_STR = "1" # attack pkt
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
 
 class Parser:
@@ -56,6 +35,8 @@ class Parser:
     @staticmethod
     def parse( f: str ) -> Dict[ float, Dict ]:
         """
+        Class to parse processed pkt csv files into a dict.
+        The file should be in the standard format, that is, all features are mapping to our own ones.
         :param f: file path to the csv file.
         :return: { 
             pkt_id: {
@@ -72,22 +53,22 @@ class Parser:
         # https://www.geeksforgeeks.org/python-next-method/
         # https://pandas.pydata.org/docs/reference/api/pandas.Series.html?highlight=series#pandas.Series
         for ( _, s ) in pd.read_csv( f ).iterrows():
-            assert dic.get( s[ ID_STR ] ) is None, "Already seen this ID before."
+            assert dic.get( s[ fkl_inswitch.ID_STR ] ) is None, "Already seen this ID before."
             id = id + 1
             # if ( s[ ID_STR ] == 1 or s[ ID_STR ] == 2006 or s[ ID_STR ] == 2007 ):
             #     continue
 
-            assert id <= int( s[ ID_STR ] ) # Consistent incremental id garaunteed
-            assert s[ LABEL_STR ] == int( GOOD_LABEL_STR ) or s[ LABEL_STR ] == int( BAD_LABEL_STR ), type( s[ LABEL_STR ] )
-            assert Parser.__assertion( s[ SRC_ADDR_STR ], s[ SRC_MAC_STR ] ) and Parser.__assertion( s[ DST_ADDR_STR ], s[ DST_MAC_STR ] )
+            assert id <= int( s[ fkl_inswitch.ID_STR ] ) # Consistent incremental id garaunteed
+            assert s[ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) or s[ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ), type( s[ fkl_inswitch.LABEL_STR ] )
+            assert Parser.__assertion( s[ fkl_inswitch.SRC_ADDR_STR ], s[ fkl_inswitch.SRC_MAC_STR ] ) and Parser.__assertion( s[ fkl_inswitch.DST_ADDR_STR ], s[ fkl_inswitch.DST_MAC_STR ] )
 
             # print( "s=%s, d=%s" % ( s[ "Source" ], s[ "Destination" ] ) )
-            dic[ s[ ID_STR ] ] = {
-                SRC_ADDR_STR: s[ SRC_ADDR_STR ],
-                DST_ADDR_STR: s[ DST_ADDR_STR ],
-                SRC_MAC_STR: s[ SRC_MAC_STR ],
-                DST_MAC_STR: s[ DST_MAC_STR ],
-                LABEL_STR: s[ LABEL_STR ]
+            dic[ s[ fkl_inswitch.ID_STR ] ] = {
+                fkl_inswitch.SRC_ADDR_STR: s[ fkl_inswitch.SRC_ADDR_STR ],
+                fkl_inswitch.DST_ADDR_STR: s[ fkl_inswitch.DST_ADDR_STR ],
+                fkl_inswitch.SRC_MAC_STR: s[ fkl_inswitch.SRC_MAC_STR ],
+                fkl_inswitch.DST_MAC_STR: s[ fkl_inswitch.DST_MAC_STR ],
+                fkl_inswitch.LABEL_STR: s[ fkl_inswitch.LABEL_STR ]
             }
 
         print( "csvparaser: %d pkts in this csv file" % ( id ) )

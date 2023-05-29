@@ -26,7 +26,7 @@ from fengkeyleaf.utils.api import (
     my_collections
 )
 
-from fengkeyleaf.inswtich_anomaly.api import (
+from fengkeyleaf.inswitch_anomaly.api import (
     mapper,
     mix_make_ups,
     sketch,

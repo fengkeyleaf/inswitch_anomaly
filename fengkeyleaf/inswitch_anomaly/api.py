@@ -8,7 +8,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf.inswtich_anomaly import (
+from fengkeyleaf.inswitch_anomaly import (
     mapper,
     mix_make_ups,
     sketch,

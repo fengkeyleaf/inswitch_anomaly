@@ -22,14 +22,14 @@ from fengkeyleaf.io import (
     my_writer
 )
 from fengkeyleaf.logging import my_logging
-from fengkeyleaf.inswtich_anomaly import (
-    csvparaser,
+from fengkeyleaf.inswitch_anomaly import (
     mapper,
     mix_make_ups,
     pkt_processor,
     sketch_write,
     tree
 )
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
 # parent-directory..
 #     | --> original_data..
@@ -100,6 +100,9 @@ class DataProcessor:
     def process( self, is_only_filter: bool = False ) -> None:
         """
         Process data sets and train trees. Start from beginning.
+        1) Re-format csv data sets.
+        2) Generate sketch csv files.
+        3) Train a tree with the sketch files.
         @param is_only_filter: True, only generate processed data sets.
         """
         self.l.info( "Start processing from the beginning." )
@@ -122,7 +125,7 @@ class DataProcessor:
                     self.sketch_processor.process(
                         self.pkt_processor.process( fp ),
                         fp
-                    ),
+                    )[ 0 ],
                     fp
                 )
 
@@ -140,7 +143,7 @@ class DataProcessor:
                 n: List = pandas.read_csv( h ).columns.values.tolist() if h is not None else None
                 df: DataFrame = mapper.Mapper.mapping( pandas.read_csv( os.path.join( s, f ), names = n ) )
                 for ( i, _ ) in df.iterrows():
-                    rt = min( rt, df.loc[ i, csvparaser.TIMESTAMP_STR ] )
+                    rt = min( rt, df.loc[ i, fkl_inswitch.TIMESTAMP_STR ] )
 
         self.l.debug( "rt: " + str( rt ) )
         return rt
@@ -161,9 +164,10 @@ class DataProcessor:
     # TODO: merge into process() in this class or train() in the Tree class.
     def train_trees( self ) -> None:
         """
-        Train tree with give csv files.
+        Train tree with given csv files.
         """
         self.l.info( "Start processing from generating trees." )
+
         for fp in my_files.get_files_in_dir( self.tree.d ):
             with open(
                     fp, encoding = my_files.UTF8,
