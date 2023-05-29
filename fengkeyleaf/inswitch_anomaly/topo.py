@@ -28,6 +28,9 @@ DST_MAC_STR = "dstMac"
 # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
 # https://www.geeksforgeeks.org/access-modifiers-in-python-public-private-and-protected/
 class CSVParaser:
+    """
+    Parse csv pkt files into p4 network topology json file.
+    """
     def __init__( self ) -> None:
         self.h1: Dict = {
             NAME_STR: "h1",

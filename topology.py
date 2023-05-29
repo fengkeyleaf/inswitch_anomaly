@@ -11,7 +11,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf import (
-    fkl_inswitch,
+    csvparaser,
     topo,
     my_writer
 )
@@ -41,5 +41,5 @@ if __name__ == '__main__':
     # Basic forwarding test
     cf = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
 
-    P: Dict[ float, Dict ] = fkl_inswitch.Parser().parse( cf )
+    P: Dict[ float, Dict ] = csvparaser.Parser().parse( cf )
     __get_host_json( topo.CSVParaser().get_topo_json( P, "./pod-topo/topology.json" ) )

@@ -54,40 +54,28 @@ class PktProcessor:
         # Logging setting
         # https://docs.python.org/3/library/logging.html#logging-levels
         self.l: logging.Logger = my_logging.get_logger( ll )
-        self.c: PktProcessor.__Checker = PktProcessor.__Checker( self.l )
+        self.c: PktProcessor._Checker = PktProcessor._Checker( self.l )
 
         self.h: str = h  # header file path
         self.m: mix_make_ups.Mixer = m
 
     def process( self, f: str ) -> DataFrame:
+        """
+        Process a csv pkt file, adding header, mapping features, re-numbering and spoofing macs
+        @param f:
+        @return:
+        """
         df: DataFrame = my_dataframe.add_header( self.h, f )
         df = mapper.Mapper.mapping( df )
         df = self.m.mix( df )
         PktProcessor.spoof_macs( df )
         PktProcessor.renumber( df )
-        assert PktProcessor.__Checker.verify( df, f )
+        assert PktProcessor._Checker.verify( df, f )
         assert self.c.statistics( df )
 
         # Write to file
         self.write( df, f )
         return df
-
-    def add_header( self, f: str ) -> DataFrame:
-        # https://www.geeksforgeeks.org/how-to-append-a-new-row-to-an-existing-csv-file/
-        # https://www.usepandas.com/csv/append-csv-files
-
-        # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
-        # Header is provided.
-        if self.h:
-            hf: DataFrame = pandas.read_csv( self.h )
-            # print( type( hf.columns.values.tolist() ))
-            # https://datascienceparichay.com/article/get-column-names-as-list-in-pandas-dataframe/
-            cf: DataFrame = pandas.read_csv( f, names = hf.columns.values.tolist() )
-            # https://pandas.pydata.org/docs/reference/api/pandas.concat.html
-            return pandas.concat( [ hf, cf ] )
-
-        # Default header is provided.
-        return pandas.read_csv( f )
 
     # TODO: not re-assign
     @staticmethod
@@ -144,7 +132,7 @@ class PktProcessor:
             d.loc[ i, fkl_inswitch.ID_STR ] = id
             id += 1
 
-    class __Checker:
+    class _Checker:
         def __init__( self, l: logging.Logger ):
             self.l: logging.Logger = l
 

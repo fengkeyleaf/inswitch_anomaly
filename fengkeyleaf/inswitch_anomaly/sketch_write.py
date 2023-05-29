@@ -2,9 +2,6 @@
 
 import logging
 import random
-from argparse import (
-    ArgumentParser
-)
 from typing import (
     List,
     Tuple
@@ -16,7 +13,7 @@ from pandas import (
 )
 
 """
-file:
+file: sketch_write.py
 description: file to do sketch building and write results to a csv file
 language: python3 3.11.3
 author: @sean bergen,
@@ -49,7 +46,10 @@ class SketchWriter:
         fkl_inswitch.LABEL_STR
     ]
 
-    def __init__( self, dir: str, pdir: str, ll: int = logging.INFO ) -> None:
+    def __init__(
+            self, dir: str, pdir: str,
+            is_not_balancing: bool = False, ll: int = logging.INFO
+    ) -> None:
         """
 
         @param dir: Directory to re-formatted pkt csv files.
@@ -57,6 +57,7 @@ class SketchWriter:
         """
         self.data: List = []
         self.labels: List = []
+        # Data in the Builder will not be cleared after training.
         self.b: my_dataframe.Builder = my_dataframe.Builder( C = SketchWriter.COLUMN_NAMES )
 
         self.idx: int = 0
@@ -64,7 +65,7 @@ class SketchWriter:
         self.gc: int = 0
         # bc <- 0 // bad pkt count
         self.bc: int = 0
-        self.is_balancing: bool = True
+        self.is_not_balancing: bool = is_not_balancing
 
         self.dir = dir
         self.pdir = pdir
@@ -75,11 +76,14 @@ class SketchWriter:
     # TODO: return ( data, labels )
     def process( self, df: DataFrame, f: str ) -> Tuple[ DataFrame, DataFrame ]:
         """
-
+        Process pre-processed csv pkt files and balancing the data set,
+        and track some features with the sketch.
         @param df:
         @param f: File path to the original pkt csv file.
         @return:
         """
+        if self.is_not_balancing: self.l.info( "Balancing is turned off." );
+
         self.__counting( df )
         self.__process( df )
         return self.__write( f )
@@ -99,7 +103,9 @@ class SketchWriter:
         gdp: float = self.gc / my_dataframe.get_row_size( df )
         # bdp <- bc / len( P ) // bad Drop Percent
         bdp: float = self.bc / my_dataframe.get_row_size( df )
-        self.l.debug( "gdp( bad Drop Percent ): %f, bdp( bad Drop Percent ): %f" % ( gdp, bdp ) )
+        if not self.is_not_balancing:
+            self.l.debug( "gdp( bad Drop Percent ): %f, bdp( bad Drop Percent ): %f" % ( gdp, bdp ) )
+
         # s <- sketch without the limitation threshold.
         s: sketch.Sketch = sketch.Sketch()
         # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
@@ -159,6 +165,7 @@ class SketchWriter:
         Count good pkts and bad pkts.
         @param df:
         """
+        # Reset data
         self.data = []
         self.labels = []
         self.gc = 0
@@ -176,9 +183,10 @@ class SketchWriter:
                 self.bc += 1
 
         assert self.gc + self.bc == my_dataframe.get_row_size( df )
-        self.l.debug( "gc(good count): %d, bc(bad count): %d, tc(total count): %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
+        if not self.is_not_balancing:
+            self.l.debug( "gc(good count): %d, bc(bad count): %d, tc(total count): %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
 
-    def __balancing( self, D: List, l: int, gdp: float, bdp: float ) -> None:
+    def __balancing( self, D: List[ int ], l: int, gdp: float, bdp: float ) -> None:
         assert 0 <= gdp <= 1
         assert 0 <= bdp <= 1
         assert l == GOOD_LABEL or l == BAD_LABEL
@@ -188,7 +196,7 @@ class SketchWriter:
         # ifAddBad <- p is a bad one and randDoube() > bdp
         if_add_bad: bool = l == BAD_LABEL and random.random() > bdp
         # if ifAddGood or ifAddBad
-        if if_add_good or if_add_bad:
+        if self.is_not_balancing or ( if_add_good or if_add_bad ):
             # then d <- [
             #   			[ srcCount in s, srcTL in s, dstCount in s, dstTLS in s ],
             #               label
@@ -249,26 +257,29 @@ class SketchWriter:
 
 # https://www.digitalocean.com/community/tutorials/python-unittest-unit-test-example
 class _Tester( unittest.TestCase ):
+    IS_NOT_BALANCING: bool = True
+
     def test_bot_lot( self ) -> None:
         dir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/re-formatted"
         pdir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/"
 
-        SketchWriter( dir, pdir, 10 ).train()
+        SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
 
     def test_ton_lot( self ):
         dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/re-formatted"
         pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/"
 
-        SketchWriter( dir, pdir, 10 ).train()
+        SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
 
     def test_unsw_nb15( self ):
         dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/re-formatted"
         pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/"
 
-        SketchWriter( dir, pdir, 10 ).train()
+        SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
 
 
 if __name__ == '__main__':
-    unittest.main( defaultTest = [ "_Tester.test_ton_lot" ] )
+    unittest.main()
+    # unittest.main( argv = [ '' ], defaultTest = [ "_Tester.test_ton_lot" ] )z
 
 

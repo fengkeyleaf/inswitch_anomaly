@@ -146,6 +146,11 @@ class Tree:
         self.pd = pd
 
     def process( self, df: pandas.DataFrame, f: str ) -> None:
+        """
+        Process pkt sketch csv file and train a tree.
+        @param df:
+        @param f:
+        """
         data, labels = Tree.reformatting( df )
         # print( data )
         # print( labels )
@@ -269,7 +274,15 @@ class Tree:
 
         return ( data, labels )
 
+    # TODO: Return a DecisionTreeClassifier.
     def get_tree( self, f: str, data, labels ):
+        """
+        Train a tree ( DecisionTreeClassifier ) and Convert it into a txt file format,
+        read by p4 program
+        @param f:
+        @param data:
+        @param labels:
+        """
         d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
         my_writer.make_dir( d )
         f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
@@ -382,7 +395,7 @@ class Tree:
             F: List[ str ] | None = None
     ) -> None:
         """
-        Train a tree with designed features.
+        Train a tree with designed features. No sketch applied.
         @param h: File paths to the testing header.
         @param H: List of file paths to the header.
         @param L: List of label strings.

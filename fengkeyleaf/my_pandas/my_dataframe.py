@@ -160,7 +160,7 @@ class Builder:
             self.l.warning( "Empty row" )
             return
 
-        assert len( R ) == len( self.C ), str( len( R ) ) + " | " + str( len( self.C ) )
+        assert len( R ) == len( self.C ), str( len( R ) ) + " | " + str( len( self.C ) ) + "\n" + str( self )
         for d in self.D: assert len( R ) == len( d );
         assert self._c.is_full_row()
 

@@ -87,6 +87,7 @@ class DataProcessor:
         self.sketch_processor: sketch_write.SketchWriter = sketch_write.SketchWriter(
             da + pkt_processor.PktProcessor.FOLDER_NAME,
             da,
+            False,
             ll
         )
         self.tree: tree.Tree = tree.Tree(
