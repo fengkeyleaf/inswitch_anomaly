@@ -2,9 +2,7 @@
 
 import logging
 import math
-from argparse import (
-    ArgumentParser
-)
+import unittest
 from collections import OrderedDict
 from typing import (
     List,
@@ -127,7 +125,7 @@ class Tree:
     SIGNATURE: str = "_tree.txt"
 
     def __init__(
-            self, d: str, pd: str,
+            self, d: str | None, pd: str | None,
             D: List[ str ], is_writing: bool = False,
             ll: int = logging.INFO
     ) -> None:
@@ -139,7 +137,7 @@ class Tree:
         @param ll: logging level
         """
         self.l = my_logging.get_logger( ll )
-        self.recorder: my_dataframe.Builder = my_dataframe.Builder( ll )
+        self.recorder: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
         self.e = Tree._Evaluator( self.l, D, self.recorder )
         self._is_writing: bool = is_writing
         self.e.set_is_writing( is_writing )
@@ -226,7 +224,11 @@ class Tree:
                 for fp in self.file_list[ i ]:
                     assert my_writer.get_extension( fp ).lower() == my_files.CSV
 
-                    ( df, X, y ) = Tree._get_data( fp, H[ i ], feature_list )
+                    ( df, X, y ) = Tree._get_data(
+                        fp,
+                        H[ i ],
+                        feature_list
+                    )
 
                     test_file_name: str = my_writer.get_filename( fp )
                     self.l.debug( test_file_name )
@@ -374,10 +376,13 @@ class Tree:
     # Handle NaN
     # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
 
-    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( None, H, F )
-    def train( self, h: str, H: List[ str ], F: List[ str ] = None ) -> None:
+    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( h, H, F )
+    def train(
+            self, h: str | None, H: List[ str ] | None,
+            F: List[ str ] | None = None
+    ) -> None:
         """
-        Train a tree without the sketch applied.
+        Train a tree with designed features.
         @param h: File paths to the testing header.
         @param H: List of file paths to the header.
         @param L: List of label strings.
@@ -423,11 +428,32 @@ class Tree:
         return ( df, X, y )
 
 
-if __name__ == '__main__':
-    parser:ArgumentParser = ArgumentParser()
-    # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
-    # parser.add_argument( "-s", "--sketch", type = str, help = "Path to sketch csv file", required = True )
-    # parser.add_argument( "-dt", "--decisionTree", type = str, help = "Path to decision tree txt file", required = True )
+class _Tester( unittest.TestCase ):
+    h1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+    F_S: List[ str ] = [ csvparaser.SRC_COUNT_STR, csvparaser.SRC_TLS_STR, csvparaser.DST_COUNT_STR, csvparaser.DST_TLS_STR ]
+    dt1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
+    dt2: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches_new"
+    dt3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches_new"
+    V_FULL: List[ str ] = [
+        dt1, dt2, dt3
+    ]
+    h3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
+    H_FULL: List[ str ] = [ None, None, None ]
 
-    args = parser.parse_args()
-    # Tree( args.sketch, args.decisionTree )
+    def test_bot_lot( self ) -> None:
+        dt: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
+        V: List[ str ] = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new" ]
+        H: List[ str | None ] = [ None ]
+
+        # Tree( None, dt, V, True, 10 ).train( None, H, _Tester.F_S )
+        Tree( None, _Tester.dt1, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+
+    def test_ton_lot( self ) -> None:
+        Tree( None, _Tester.dt2, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+
+    def test_unsw_nb15( self ):
+        Tree( None, _Tester.dt3, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+
+
+if __name__ == '__main__':
+    unittest.main()

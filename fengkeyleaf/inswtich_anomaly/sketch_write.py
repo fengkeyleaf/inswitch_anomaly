@@ -6,8 +6,11 @@ from argparse import (
     ArgumentParser
 )
 from typing import (
-    List
+    List,
+    Tuple
 )
+import unittest
+import pandas
 from pandas import (
     DataFrame
 )
@@ -23,7 +26,7 @@ author: @sean bergen,
 
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.my_pandas import my_dataframe
-from fengkeyleaf.io import my_writer
+from fengkeyleaf.io import ( my_writer, my_files )
 from fengkeyleaf.inswtich_anomaly import (
     csvparaser,
     sketch
@@ -40,8 +43,14 @@ class SketchWriter:
     """
     Generate sketch csv files to train trees.
     """
-    FOLDER_NAME = "/sketches/"
-    SIGNATURE = "_sketch.csv"
+    FOLDER_NAME: str = "/sketches/"
+    SIGNATURE: str = "_sketch.csv"
+    SIGNATURE_NEW: str = "_sketch_new.csv"
+    COLUMN_NAMES: List[ str ] = [
+        csvparaser.SRC_COUNT_STR, csvparaser.SRC_TLS_STR,
+        csvparaser.DST_COUNT_STR, csvparaser.DST_TLS_STR,
+        csvparaser.LABEL_STR
+    ]
 
     def __init__( self, dir: str, pdir: str, ll: int = logging.INFO ) -> None:
         """
@@ -49,19 +58,29 @@ class SketchWriter:
         @param dir: Directory to re-formatted pkt csv files.
         @param pdir: Directory to original pkt csv files.
         """
-        self.l: logging.Logger = my_logging.get_logger( ll )
-
         self.data: List = []
         self.labels: List = []
+        self.b: my_dataframe.Builder = my_dataframe.Builder( C = SketchWriter.COLUMN_NAMES )
+        self.idx: int = 0
         # gc <- 0 // good pkt count
         self.gc: int = 0
         # bc <- 0 // bad pkt count
         self.bc: int = 0
 
-        self.c: SketchWriter._Checker = self._Checker( self.l )
+        self.dir = dir
+        self.pdir = pdir
+
+        self.l: logging.Logger = my_logging.get_logger( ll )
+        self._c: SketchWriter._Checker = self._Checker( self.l )
 
     # TODO: return ( data, labels )
-    def process( self, df: DataFrame, f: str ) -> DataFrame:
+    def process( self, df: DataFrame, f: str ) -> Tuple[ DataFrame, DataFrame ]:
+        """
+
+        @param df:
+        @param f: File path to the original pkt csv file.
+        @return:
+        """
         self.__counting( df )
         self.__process( df )
         return self.__write( f )
@@ -75,13 +94,13 @@ class SketchWriter:
         Also Update the sketch with the data sampling applied.
         @param df:
         """
-        assert self.c.setLen( my_dataframe.get_row_size( df ) )
+        assert self._c.setLen( my_dataframe.get_row_size( df ) )
 
         # gdp <- gc / len( P ) // good Drop Percent
         gdp: float = self.gc / my_dataframe.get_row_size( df )
         # bdp <- bc / len( P ) // bad Drop Percent
         bdp: float = self.bc / my_dataframe.get_row_size( df )
-        self.l.debug( "gdp: %f, bdp: %f" % ( gdp, bdp ) )
+        self.l.debug( "gdp( bad Drop Percent ): %f, bdp( bad Drop Percent ): %f" % ( gdp, bdp ) )
         # s <- sketch without the limitation threshold.
         s: sketch.Sketch = sketch.Sketch()
         # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
@@ -102,32 +121,39 @@ class SketchWriter:
             assert df.at[ idx, csvparaser.LABEL_STR ] == BAD_LABEL or df.at[ idx, csvparaser.LABEL_STR ] == GOOD_LABEL, df.at[ idx, csvparaser.LABEL_STR ]
             self.__balancing( s.getData( si, di ), df.at[ idx, csvparaser.LABEL_STR ], gdp, bdp )
 
-        assert self.c.isBalanced()
+        assert self._c.isBalanced()
         # return D
 
-    def __write( self, f: str ) -> DataFrame:
+    def __write( self, f: str ) -> Tuple[ DataFrame, DataFrame ]:
         """
         Write the sketches with labels to a file.
-        @param s: file path.
+        @param s: File path where the result sketch file is written.
         """
         # Write to file
         d: str = my_writer.get_dir( f )+ SketchWriter.FOLDER_NAME
         my_writer.make_dir( d )
-        f = d + my_writer.get_filename( f ) + SketchWriter.SIGNATURE
-        self.l.info( "sketch: " + f )
+        fn: str = my_writer.get_filename( f )
+        f = d + fn + SketchWriter.SIGNATURE
 
         if len( self.data ) == 0 or len( self.labels ) == 0:
             self.l.warning( "Sketch: No data written to the file!" )
 
         # https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
-        df: DataFrame = DataFrame( {
+        df_o: DataFrame = DataFrame( {
             RANGE_STR: self.data,
             csvparaser.LABEL_STR: self.labels
         } )
-        df.to_csv(
+        self.l.info( "Writing old sketch to:\n" + f )
+        df_o.to_csv(
             f, index = False
         )
-        return df
+
+        df_n: DataFrame = self.b.to_dataframe()
+        self.l.info( "Writing new sketch to:\n" + d + fn + SketchWriter.SIGNATURE_NEW )
+        df_n.to_csv(
+            d + fn + SketchWriter.SIGNATURE_NEW, index = False
+        )
+        return ( df_o, df_n )
 
     def __counting( self, df: DataFrame ) -> None:
         """
@@ -151,7 +177,7 @@ class SketchWriter:
                 self.bc += 1
 
         assert self.gc + self.bc == my_dataframe.get_row_size( df )
-        self.l.debug( "gc: %d, bc: %d, tc: %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
+        self.l.debug( "gc(good count): %d, bc(bad count): %d, tc(total count): %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
 
     def __balancing( self, D: List, l: int, gdp: float, bdp: float ) -> None:
         assert 0 <= gdp <= 1
@@ -171,13 +197,28 @@ class SketchWriter:
             self.data.append( D )
             self.labels.append( l )
 
+            D_t: List = list( D )
+            D_t.append( l )
+            self.b.add_row( str( self.idx ), [ str( n ) for n in D_t ] )
+            self.idx += 1
+
             # Record actual good pkts.
             if if_add_good:
                 assert l == GOOD_LABEL
-                self.c.addGood()
+                self._c.addGood()
             if if_add_bad:
                 assert l == BAD_LABEL
-                self.c.addBad()
+                self._c.addBad()
+
+    def train( self ) -> None:
+        """
+        Train sketch with processed pkt data sets.
+        Data sets may include synthesised good pkts or may not.
+        """
+        self.l.info( "Start processing from training sketch" )
+
+        for fp in my_files.get_files_in_dir( self.dir ):
+            self.process( pandas.read_csv( fp ), self.pdir + my_writer.get_filename( fp ) )
 
     class _Checker:
         def __init__( self, l: logging.Logger ):
@@ -188,7 +229,11 @@ class SketchWriter:
             self.l = l
 
         def isBalanced( self ) -> bool:
-            self.l.info( "R of gc: %0.2f, R of bc: %.2f, gc: %d, bc: %d, tc: %d" % ( self.gc / self.tc, self.bc / self.tc, self.gc, self.bc, self.tc ) )
+            self.l.info(
+                "R of gc: %0.2f, R of bc: %.2f, gc: %d, bc: %d, tc: %d" % (
+                    self.gc / self.tc, self.bc / self.tc, self.gc, self.bc, self.tc
+                )
+            )
             return True
 
         def addGood( self ) -> bool:
@@ -203,14 +248,28 @@ class SketchWriter:
             self.bc += 1
 
 
-if __name__ == '__main__':
-    parser:ArgumentParser = ArgumentParser()
-    # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
-    # parser.add_argument( "-d", "--data", type = str, help="Path to pkt csv file", required = True )
-    # parser.add_argument( "-s", "--sketch", type = str, help="Path to sketch csv file", required = True )
-    # parser.add_argument( "-dir", "--dir", type = str, help="Directory to pre-processed pkt csv files", required = True )
+# https://www.digitalocean.com/community/tutorials/python-unittest-unit-test-example
+class _Tester( unittest.TestCase ):
+    def test_bot_lot( self ) -> None:
+        dir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/re-formatted"
+        pdir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/"
 
-    args = parser.parse_args()
-    # SketchWriter( args.dir )
+        SketchWriter( dir, pdir, 10 ).train()
+
+    def test_ton_lot( self ):
+        dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/re-formatted"
+        pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/"
+
+        SketchWriter( dir, pdir, 10 ).train()
+
+    def test_unsw_nb15( self ):
+        dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/re-formatted"
+        pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/"
+
+        SketchWriter( dir, pdir, 10 ).train()
+
+
+if __name__ == '__main__':
+    unittest.main( defaultTest = [ "_Tester.test_ton_lot" ] )
 
 

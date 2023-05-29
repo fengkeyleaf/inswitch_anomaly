@@ -25,6 +25,7 @@ class Mapper:
     """
     Class to get rid of unwanted features and mapping wanted ones to our favorite names.
     """
+    # Pkt features mapping
     # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
     ID_M: Dict[ str, str ] = {
         "pkSeqID": csvparaser.ID_STR, # UNSW_2018_IoT
@@ -77,7 +78,27 @@ class Mapper:
         "dbytes": csvparaser.DST_BYTES_STR, # BoT-IoT, UNSW-NB15
         "dst_bytes": csvparaser.DST_BYTES_STR # TON_IoT
     }
-
+    # Computed features mapping
+    SRC_COUNT_M: Dict[ str, str ] = {
+        csvparaser.SRC_COUNT_STR: csvparaser.SRC_COUNT_STR
+    }
+    SRC_TLS_M: Dict[ str, str ] = {
+        csvparaser.SRC_TLS_STR: csvparaser.SRC_TLS_STR
+    }
+    DST_COUNT_M: Dict[ str, str ] = {
+        csvparaser.DST_COUNT_STR: csvparaser.DST_COUNT_STR
+    }
+    DST_TLS_M: Dict[ str, str ] = {
+        csvparaser.DST_TLS_STR: csvparaser.DST_TLS_STR
+    }
+    D: List[ Dict ] = [
+        # Pkt features mapping
+        ID_M, SRC_IP_M, SRC_MAC_M,
+        DST_IP_M, DST_MAC_M, LABEL_M, TIME_M,
+        SRC_PKTS_M, DST_PKTS_M, SRC_BYTES_M, DST_BYTES_M,
+        # Computed features mapping
+        SRC_COUNT_M, SRC_TLS_M, DST_COUNT_M, DST_TLS_M
+    ]
 
     @staticmethod
     def mapping( df: DataFrame ) -> DataFrame:
@@ -104,13 +125,7 @@ class Mapper:
 
     @staticmethod
     def look_for_targeted_header( k: str ):
-        D: List[ Dict ] = [
-            Mapper.ID_M, Mapper.SRC_IP_M, Mapper.SRC_MAC_M,
-            Mapper.DST_IP_M, Mapper.DST_MAC_M, Mapper.LABEL_M, Mapper.TIME_M,
-            Mapper.SRC_PKTS_M, Mapper.DST_PKTS_M, Mapper.SRC_BYTES_M, Mapper.DST_BYTES_M
-        ]
-
-        for d in D:
+        for d in Mapper.D:
             if d.get( k ) is not None:
                 return d.get( k )
 

@@ -158,9 +158,10 @@ class DataProcessor:
     # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/processed/sketches" ]
 
     # fengkeyleaf.data_processor.DataProcessor( da, h, None, D, 10 ).train_trees()
+    # TODO: merge into process() in this class or train() in the Tree class.
     def train_trees( self ) -> None:
         """
-        Train trees, assume all previous steps have been done already.
+        Train tree with give csv files.
         """
         self.l.info( "Start processing from generating trees." )
         for fp in my_files.get_files_in_dir( self.tree.d ):
