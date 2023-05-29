@@ -1,0 +1,74 @@
+```java
+// Entry algorithm
+Algorithm SKETCHCLASSIFICATION( p )
+Input. Incomming packet.
+Initialize the following global variables:
+    c <- 0 // Global IP counter.
+    I <- Array of size of 16, each element in it is bit<48> presenting macAddr_t.
+    C <- Array of size of 16, each element in it is bit<10> presenting counts for ips.
+    T <- Array of size of 16, each element in it is bit<10> presenting TLS for ips.
+if p has a valid ipv4 header
+   then SKETCH( p.header.ipv4.srcAddr )
+        SKETCH( p.header.ipv4.dstAddr )
+        Run the feature tables and then run the decision tree in the control plane.
+        Increment every element in T by 1, as well as c.
+        if c >= 1000
+           then Reset every element in T to 0, as well as c.
+   else Drop p.
+       
+Algorithm SKETCH( a )
+Input. IP address, either srcAddr or dstAddr.
+if ISREPLACE( a ) is true
+   // Neither p's srcAddr nor p's dstAddr is in the Sketch.
+   // Start the replacement policy.
+   then rand <- get a random number from 0 to 3, inclusive.
+        if rand == 0 // Replace lowest count
+           then LOWESTCOUNT( a )
+           else if rand == 1 // Highest TLS
+                   then HIGHESTTLS( a )
+           else if rand == 2 // smallest count and tls score, calculated by count * ( 1000 - tls )
+                   then SMALLFESTTLS( a )
+           // No replace when rand == 3
+
+Algorithm ISREPLACE( a )
+Input. IP address, either srcAddr or dstAddr.
+Output. To tell if we need to apply the replace policy.
+if I contains a, and locating at the index i
+   then C[ i ] = C[ i ] + 1
+        T[ i ] = 0
+        return false
+   else if HASEMPTY( a )
+           then return false
+           else return true
+
+Algorithm HASEMPTY( a )
+Input. IP address, either srcAddr or dstAddr.
+Output. To tell if there is an empty spot.
+i <- Find the index so that I[ index ] is empty ( So are C[ index ] and T[ index ] )
+if such i exists:
+   then REPLACE( i, a )
+        return true
+   else return false
+
+Algorithm REPLACE( i, a )
+Input. index where the replacement happens, and IP address to be replaced.
+I[ i ] = a
+C[ i ] = 1
+T[ i ] = 0
+
+Algorithm LOWESTCOUNT( a )
+Input. IP address, either srcAddr or dstAddr.
+i <- Find the index so that C[ index ] is the lowest in C.
+REPLACE( i, a )
+
+Algorithm HIGHESTTLS( a )
+Input. IP address, either srcAddr or dstAddr.
+i <- Find the index so that T[ index ] is the highest in T.
+REPLACE( i, a )
+
+Algorithm SMALLFESTTLS( a )
+Input. IP address, either srcAddr or dstAddr.
+i <- Find the index so that T[ index ] is the smallest in T.
+REPLACE( i, a )
+```
+

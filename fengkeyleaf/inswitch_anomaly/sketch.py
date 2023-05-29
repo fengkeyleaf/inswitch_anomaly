@@ -22,6 +22,10 @@ class Sketch:
     Sketch class. Currently tracking src IP and dst IP.
     """
     def __init__( self ) -> None:
+        # Initialize the following global variables:
+        #     c <- 0 // Global IP counter.
+        #     S <- Array of size of n, each element in it is a dict[ src ip, its info ].
+        #     D <- Array of size of n, each element in it is a dict[ dst ip, its info ].
         self.S: Dict[ str, Dict[ str, int ] ] = {}
         self.D: Dict[ str, Dict[ str, int ] ] = {}
 
