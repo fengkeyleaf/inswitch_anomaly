@@ -112,9 +112,10 @@ class SketchWriter:
 
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
         # for every pkt, p, in P
-        for ( idx, d ) in df.iterrows():
+        for ( idx, _ ) in df.iterrows():
             # Increment the TLS of every tracked ip in s.
-            s.incrementTLS()
+            # None of element in the sketch right now, so no effect execute this step first.
+            # s.post_process()
 
             si: str = df.at[ idx, fkl_inswitch.SRC_ADDR_STR ]
             di: str = df.at[ idx, fkl_inswitch.DST_ADDR_STR ]

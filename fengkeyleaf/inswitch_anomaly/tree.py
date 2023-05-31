@@ -27,6 +27,9 @@ author: @sean bergen,
         Personal website: https://fengkeyleaf.com
 """
 
+__version__ = "1.0"
+
+
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.io import (
     my_writer,
@@ -172,13 +175,15 @@ class Tree:
             self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
             self._is_writing: bool = False
 
+        # TODO: evaluate() and evaluate_classic can be merged into one, meaning we can give arbitrary features for evaluate(), not the fixed four, scrCount, srcTLS, dstCount, dstTLS.
         # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
         def evaluate(
                 self, t: DecisionTreeClassifier, tf: str,
                 t_data: List[ List[ int ] ], t_labels: List[ int ]
         ) -> None:
             """
-
+            Standard evaluation where validation sets are pre-processed ( mainly feature mapping ).
+            Validation process doesn't involve the sketch.
             @param t: The tree.
             @param tf: Tree file path.
             @param t_data: Tree's training data.
@@ -204,14 +209,15 @@ class Tree:
                         self.l.debug( my_writer.get_filename( fp ) )
                         self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
 
-        # TODO: different header.
         def evaluate_classic(
                 self, t: DecisionTreeClassifier, tf: str, H: List[ str ],
                 feature_list: List[ str ],
                 t_data: pandas.DataFrame, t_labels: pandas.DataFrame
         ) -> None:
             """
-
+            Standard evaluation where validation sets are not pre-processed ( mainly feature mapping ).
+            Validation features are the same as the ones in the training process.
+            Validation process doesn't involve the sketch.
             @param t: Decision tree classifier.
             @param tf: File path to the tree.
             @param H: List of file paths to the header.
@@ -246,6 +252,10 @@ class Tree:
 
         def set_is_writing( self, is_writing: bool ) -> None:
             self._is_writing = is_writing
+
+        def evaluate_sketch( self ):
+
+            pass
 
     @staticmethod
     def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ int ] ]:
@@ -428,6 +438,13 @@ class Tree:
 
     @staticmethod
     def _get_data( fp: str, h: str, F: List[ str ] ):
+        """
+        Get data columns with wanted feature names
+        @param fp: File path to the data set.
+        @param h: File path to the header file.
+        @param F:List of wanted features.
+        @return: ( dataFrame, feature dataFrame, labels )
+        """
         df: pandas.DataFrame = mapper.Mapper.mapping( my_dataframe.add_header( h, fp ) )
         assert fkl_inswitch.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
         for f in F: assert f in df.columns, f + "\n" + str( my_dataframe.add_header( h, fp ).columns ) + "\n" + str( df.columns );

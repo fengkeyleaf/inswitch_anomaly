@@ -1,4 +1,5 @@
 ```java
+// P4 Version
 // Entry algorithm
 Algorithm SKETCHCLASSIFICATION( p )
 Input. Incomming packet.
@@ -70,5 +71,76 @@ Algorithm SMALLFESTTLS( a )
 Input. IP address, either srcAddr or dstAddr.
 i <- Find the index so that T[ index ] is the smallest in T.
 REPLACE( i, a )
+```
+
+
+
+```java
+// Python Version
+// Entry algorithm
+Algorithm SKETCHCLASSIFICATION( p )
+Input. Incomming packet, p.
+Output. List of feature values extracted from the sketch based on the packet, p.
+Initialize the following global variables:
+	c <- 0 // Global IP counter.
+    l <- 0 // non-positive, indicating that this sketch has limitation.
+	S <- Array of size of n, each element in it is a dict[ src ip, its info ].
+	D <- Array of size of n, each element in it is a dict[ dst ip, its info ].
+ADD( S, p.header.ipv4.srcAddr )
+ADD( D, p.header.ipv4.dstAddr )
+Increment every element in T by 1, as well as c.
+if l > 0 and c >= 1000
+    then Reset every element in T to 0, as well as c.
+return [ p's srcCount, p's srcTLS, p's dstCount, p's dstTLS ]
+    
+Algorithm ADD( dic, ip )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
+if dic contains ip:
+   then dic[ ip ][ IP_COUNT ] += 1
+        dic[ ip ][ IP_TLS ] = 0
+else REPLACE( dic, ip )
+    
+Algorithm REPLACE( dic, ip )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
+if HASEMPTY( dic )
+   then TREACK( dic, ip )
+else r <- get a random number from 0 to 3, inclusive.
+     if r == 0 // Replace lowest count
+          then LOWESTCOUNT( dic, ip )
+     else if r == 1 // Highest TLS
+          then HIGHESTTLS( dic, ip )
+     else if r == 2 // smallest count and tls score, calculated by count * ( 1000 - tls )
+          then SMALLFESTTLS( dic, ip )
+     // No replace when rand == 3
+
+Algorithm HASEMPTY( dic )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ).
+Output. To tell if the sketch has an empty spot or not.
+// Either no limitation or the current number of elements in dic is less than the limitation.
+return l <= 0 or len( dic ) < l
+                                                
+Algorithm TREACK( dic, ip )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
+assert that ip is not in dic.
+dic[ ip ][ IP_COUNT ] = 1
+dic[ ip ][ IP_TLS ] = 0         
+         
+Algorithm LOWESTCOUNT( dic, ip )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
+i <- Find the ip, i, so that dic[ i ][ IP_COUNT ] is the lowest in dic.
+Remove the key-value pair with i as the key.
+TREACK( dic, ip )
+
+Algorithm HIGHESTTLS( dic, ip )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
+i <- Find the ip, i, so that dic[ i ][ IP_TLS ] is the highest in dic.
+Remove the key-value pair with i as the key.
+TREACK( dic, ip )
+
+Algorithm SMALLFESTTLS( dic, ip )
+Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
+i <- Find the ip, i, so that dic[ i ][ IP_TLS ] is the smallest in dic.
+Remove the key-value pair with i as the key.
+TREACK( dic, ip )
 ```
 
