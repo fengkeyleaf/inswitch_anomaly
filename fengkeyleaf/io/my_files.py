@@ -23,7 +23,7 @@ UTF8: str = "utf8"
 BACK_SLASH_REPLACE: str = "backslashreplace"
 
 # File extensions in lower case
-CSV: str = ".csv"
+CSV_EXTENSION: str = ".csv"
 
 
 def get_files_in_dir( dir: str ) -> List[ str ]:

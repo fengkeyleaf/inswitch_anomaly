@@ -9,7 +9,6 @@ from typing import (
     Dict,
     Tuple
 )
-import ast
 import numpy as np
 import pandas
 import sklearn.tree
@@ -38,10 +37,7 @@ from fengkeyleaf.io import (
 from fengkeyleaf.utils import my_collections
 from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
-from fengkeyleaf.inswitch_anomaly import (
-    sketch_write,
-    mapper
-)
+from fengkeyleaf.inswitch_anomaly import _tree_evaluator
 
 
 # https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/framework/Machinelearning.py
@@ -126,6 +122,7 @@ class Tree:
     """
     FOLDER_NAME: str = "/trees/"
     SIGNATURE: str = "_tree.txt"
+    SKETCH_LIMITATION: int = 8
 
     def __init__(
             self, d: str | None, pd: str | None,
@@ -141,151 +138,49 @@ class Tree:
         """
         self.l = my_logging.get_logger( ll )
         self.recorder: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
-        self.e = Tree._Evaluator( self.l, D, self.recorder )
+        self.e = _tree_evaluator.Evaluator( self.l, D, self.recorder )
         self._is_writing: bool = is_writing
         self.e.set_is_writing( is_writing )
 
         self.d = d
         self.pd = pd
 
-    def process( self, df: pandas.DataFrame, f: str ) -> None:
+    def process( self, f: str, df_o: pandas.DataFrame, df_n: pandas.DataFrame,  ) -> None:
         """
         Process pkt sketch csv file and train a tree.
-        @param df:
-        @param f:
+        @param df_o: Pre-processed sketch dataframe, list form.
+        @param df_n: Pre-processed sketch dataframe, individual column.
+        @param f: File path to the original csv pkt file.
         """
-        data, labels = Tree.reformatting( df )
-        # print( data )
-        # print( labels )
-        self.get_tree( f, data, labels )
+        self.get_tree_old( f, *_tree_evaluator.reformatting( df_o ) )
+        self.get_tree_new( f, df_n )
 
-    # https://towardsdatascience.com/whats-the-meaning-of-single-and-double-underscores-in-python-3d27d57d6bd1
-    class _Evaluator:
-        SIGNATURE: str = "_result.csv"
+    def get_tree_new( self, f: str, df: pandas.DataFrame ) -> None:
+        d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
+        my_writer.make_dir( d )
+        f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
+        self.l.info( "tree: " + f )
 
-        def __init__( self, l: logging.Logger, D: List[ str ], g: my_dataframe.Builder ) -> None:
-            """
-            :param X: array-like of shape (n_samples, n_features)
-            :param y: array-like of shape (n_samples,) or (n_samples, n_outputs)
-            :param t: decisoin tree
-            """
-            self.l: logging.Logger = l
+        assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION
+        ( df, X, y ) = _tree_evaluator.get_data_dataframe(
+            df,
+            fkl_inswitch.FEATURE_NAMES
+        )
 
-            self.recorder: my_dataframe.Builder = g
-            self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
-            self._is_writing: bool = False
+        t = DecisionTreeClassifier().fit( X, y )
 
-        # TODO: evaluate() and evaluate_classic can be merged into one, meaning we can give arbitrary features for evaluate(), not the fixed four, scrCount, srcTLS, dstCount, dstTLS.
-        # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
-        def evaluate(
-                self, t: DecisionTreeClassifier, tf: str,
-                t_data: List[ List[ int ] ], t_labels: List[ int ]
-        ) -> None:
-            """
-            Standard evaluation where validation sets are pre-processed ( mainly feature mapping ).
-            Validation process doesn't involve the sketch.
-            @param t: The tree.
-            @param tf: Tree file path.
-            @param t_data: Tree's training data.
-            @param t_labels: Tree's label data
-            """
-            if len( self.file_list ) <= 0:
-                self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
-                return
+        self.e.set_is_writing( True )
+        self.e.evaluate_sketch(
+            t, f,
+            [ None for _ in range( len( self.e.file_list ) ) ],
+            fkl_inswitch.FEATURE_NAMES, Tree.SKETCH_LIMITATION,
+            X, y
+        )
 
-            self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
-            # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
-            # print( self.t.predict( self.X ) )
-            # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
-            self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
-            for F in self.file_list:
-                for fp in F:
-                    with open(
-                            fp, encoding = my_files.UTF8,
-                            errors = my_files.BACK_SLASH_REPLACE
-                    ) as f:
-                        assert my_writer.get_extension( fp ).lower() == my_files.CSV
-                        data, labels = Tree.reformatting( pandas.read_csv( f ) )
-                        self.l.debug( my_writer.get_filename( fp ) )
-                        self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
-
-        def evaluate_classic(
-                self, t: DecisionTreeClassifier, tf: str, H: List[ str ],
-                feature_list: List[ str ],
-                t_data: pandas.DataFrame, t_labels: pandas.DataFrame
-        ) -> None:
-            """
-            Standard evaluation where validation sets are not pre-processed ( mainly feature mapping ).
-            Validation features are the same as the ones in the training process.
-            Validation process doesn't involve the sketch.
-            @param t: Decision tree classifier.
-            @param tf: File path to the tree.
-            @param H: List of file paths to the header.
-            @param feature_list: List of wanted features.
-            @param L: List of label strings.
-            @param t_data: training data set.
-            @param t_labels: testing data set.
-            """
-            self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
-            self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
-
-            if self._is_writing: self.recorder.add_row_name( my_writer.get_filename( tf ) );
-
-            for i in range( len( self.file_list ) ):
-                for fp in self.file_list[ i ]:
-                    assert my_writer.get_extension( fp ).lower() == my_files.CSV
-
-                    ( df, X, y ) = Tree._get_data(
-                        fp,
-                        H[ i ],
-                        feature_list
-                    )
-
-                    test_file_name: str = my_writer.get_filename( fp )
-                    self.l.debug( test_file_name )
-                    result: float = t.score( X, y ) * 100
-                    self.l.debug( "Accuracy: %.2f%%" % result )
-
-                    if self._is_writing: self.recorder.add_column_name( test_file_name );
-                    if self._is_writing:
-                        self.recorder.append_element( str( result ), my_writer.get_filename( tf ), test_file_name )
-
-        def set_is_writing( self, is_writing: bool ) -> None:
-            self._is_writing = is_writing
-
-        def evaluate_sketch( self ):
-
-            pass
-
-    @staticmethod
-    def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ int ] ]:
-        """
-        formatting from the csv is kinda weird so it is explained here:
-        each line looks something like:
-            "[sketch]",label
-        so, we need to unpack the sketch back into a list from a string
-        and then also make sure each part of the sketch is read in as an integer
-        """
-        data: List[ List[ int ] ] = []
-        labels: List[ int ] = []
-
-        for ( i, _ ) in df.iterrows():
-            # print( df.loc[ i, sketch_write.RANGE_STR ] )
-            # tmp1: List[ str ] = df.loc[ i, sketch_write.RANGE_STR ].strip( '][' ).split( ',' )
-            # tmp2: List[ int ] = []
-            # for item in tmp1:
-            #     tmp2.append( int( item ) )
-
-            labels.append( df.loc[ i, fkl_inswitch.LABEL_STR ] )
-            assert labels[ -1 ] == sketch_write.GOOD_LABEL or labels[ -1 ] == sketch_write.BAD_LABEL
-            l = df.loc[ i, sketch_write.RANGE_STR ]
-            assert isinstance( l, str ) or isinstance( l, list )
-            data.append( ast.literal_eval( l ) if isinstance( l, str ) else l )
-
-        return ( data, labels )
+        # TODO: Missing converting the tree into a txt file format.
 
     # TODO: Return a DecisionTreeClassifier.
-    def get_tree( self, f: str, data, labels ):
+    def get_tree_old( self, f: str, data, labels ):
         """
         Train a tree ( DecisionTreeClassifier ) and Convert it into a txt file format,
         read by p4 program
@@ -408,7 +303,6 @@ class Tree:
         Train a tree with designed features. No sketch applied.
         @param h: File paths to the testing header.
         @param H: List of file paths to the header.
-        @param L: List of label strings.
         @param F: List of wanted features.
         """
         self.l.info( "Normally training tree......" )
@@ -421,9 +315,9 @@ class Tree:
 
         for f in files:
             self.l.debug( "Processing data set file: " + my_writer.get_filename( f ) )
-            assert my_writer.get_extension( f ).lower() == my_files.CSV
+            assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION
 
-            ( df, X, y ) = Tree._get_data( f, h, F )
+            ( df, X, y ) = _tree_evaluator.get_data_file( f, h, F )
             self.l.debug( "DataFrame:\n" + str( df ) )
             self.l.debug( "Training:\n" + str( X ) )
             self.l.debug( "Testing:\n" + str( y ) )
@@ -433,44 +327,26 @@ class Tree:
             self.e.evaluate_classic( t, f, H, F, X, y )
 
         if self._is_writing:
-            self.recorder.to_csv( self.pd + Tree._Evaluator.SIGNATURE )
+            self.recorder.to_csv( self.pd + _tree_evaluator.Evaluator.SIGNATURE )
             self.recorder.reset()
-
-    @staticmethod
-    def _get_data( fp: str, h: str, F: List[ str ] ):
-        """
-        Get data columns with wanted feature names
-        @param fp: File path to the data set.
-        @param h: File path to the header file.
-        @param F:List of wanted features.
-        @return: ( dataFrame, feature dataFrame, labels )
-        """
-        df: pandas.DataFrame = mapper.Mapper.mapping( my_dataframe.add_header( h, fp ) )
-        assert fkl_inswitch.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
-        for f in F: assert f in df.columns, f + "\n" + str( my_dataframe.add_header( h, fp ).columns ) + "\n" + str( df.columns );
-
-        # print( df )
-        X: pandas.DataFrame = my_dataframe.get_feature_content( df, fkl_inswitch.LABEL_STR, F )
-        # print( df[ csvparaser.LABEL_STR ] )
-        # https://stackoverflow.com/a/76294033
-        y: pandas.DataFrame = df[ fkl_inswitch.LABEL_STR ].astype( int )
-
-        return ( df, X, y )
 
 
 class _Tester( unittest.TestCase ):
     h1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+    h3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
+    H_FULL: List[ str ] = [ None, None, None ]
+
     F_S: List[ str ] = [ fkl_inswitch.SRC_COUNT_STR, fkl_inswitch.SRC_TLS_STR, fkl_inswitch.DST_COUNT_STR, fkl_inswitch.DST_TLS_STR ]
+
     dt1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
     dt2: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches_new"
     dt3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches_new"
     V_FULL: List[ str ] = [
         dt1, dt2, dt3
     ]
-    h3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
-    H_FULL: List[ str ] = [ None, None, None ]
 
-    def test_bot_lot( self ) -> None:
+    # Validation with wanted features and unlimited sketch
+    def test_bot_lot_wanted_unlimited_sketch( self ) -> None:
         dt: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
         V: List[ str ] = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new" ]
         H: List[ str | None ] = [ None ]
@@ -478,12 +354,32 @@ class _Tester( unittest.TestCase ):
         # Tree( None, dt, V, True, 10 ).train( None, H, _Tester.F_S )
         Tree( None, _Tester.dt1, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
-    def test_ton_lot( self ) -> None:
+    def test_ton_lot_wanted_unlimited_sketch( self ) -> None:
         Tree( None, _Tester.dt2, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
-    def test_unsw_nb15( self ):
+    def test_unsw_nb15_wanted_unlimited_sketch( self ):
         Tree( None, _Tester.dt3, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+
+    dt1_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new_balancing_limited"
+    dt2_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches_new_balancing_limited"
+    dt3_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches_new_balancing_limited"
+    V_FULL_limited: List[ str ] = [
+        dt1_limited, dt2_limited, dt3_limited
+    ]
+
+    # TODO: Go over the code logic before running.
+    # Validation with wanted features and limited sketch
+    def test_bot_lot_wanted_limited_sketch( self ) -> None:
+        # Training is unlimited, but validation is limited.
+        Tree( None, _Tester.dt1, _Tester.V_FULL_limited, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+
+    def test_ton_lot_wanted_limited_sketch( self ) -> None:
+        Tree( None, _Tester.dt2, _Tester.V_FULL_limited, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+
+    def test_unsw_nb15_wanted_limited_sketch( self ):
+        Tree( None, _Tester.dt3, _Tester.V_FULL_limited, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
 
 if __name__ == '__main__':
-    unittest.main()
+    TEST_CASES_UNLIMITED: List[ str ] = [ "_Tester.test_bot_lot_wanted_unlimited_sketch", "_Tester.test_ton_lot_wanted_unlimited_sketch", "_Tester.test_unsw_nb15_wanted_unlimited_sketch" ]
+    unittest.main( argv = [ '' ], defaultTest = TEST_CASES_UNLIMITED )

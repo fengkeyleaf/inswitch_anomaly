@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from typing import (
+    List,
+    Dict,
+    Tuple
+)
+
 """
 file:
 description:
@@ -30,3 +36,18 @@ DST_TLS_STR = "dstTLS"
 # Label types
 GOOD_LABEL_STR = "0"
 BAD_LABEL_STR = "1" # attack pkt
+
+# Sketch strings
+RANGE_STR = "range"
+GOOD_LABEL = 0
+BAD_LABEL = 1 # attack pkt
+
+# current wanted feature names
+COLUMN_NAMES: List[ str ] = [
+    SRC_COUNT_STR, SRC_TLS_STR,
+    DST_COUNT_STR, DST_TLS_STR,
+    LABEL_STR
+]
+
+# Wanted feature names
+FEATURE_NAMES: List[ str ] = [ SRC_COUNT_STR, SRC_TLS_STR, DST_COUNT_STR, DST_TLS_STR ]

@@ -39,7 +39,7 @@ class Sketch:
         # Initialize the following global variables:
         # c <- 0 // Global IP counter.
         self.c: int = 0
-        # l <- 0 // non-positive, indicating that this sketch has limitation.
+        # l <- 0 // non-positive, indicating that this sketch has no limitation.
         self.l: int = l
         # S <- Array of size of n, each element in it is a dict[ src ip, its info ].
         self.S: Dict[ str, Dict[ str, int ] ] = {}
@@ -95,9 +95,11 @@ class Sketch:
         # assert that ip is not in dic.
         assert dic.get( ip ) is None
         # dic[ ip ][ IP_COUNT ] = 1
-        dic[ ip ][ IP_COUNT_STR ] = 1
         # dic[ ip ][ IP_TLS ] = 0
-        dic[ ip ][ TLS_STR ] = 0
+        dic[ ip ] = {
+            IP_COUNT_STR: 1,
+            TLS_STR: 0
+        }
 
     # Algorithm LOWESTCOUNT( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
@@ -161,7 +163,7 @@ class Sketch:
             self.D[ k ][ TLS_STR ] += 1
         self.c += 1
 
-        # if l > 0 and c >= 1000
+        # if this sketch has limitation and c >= 1000
         if self.l > 0 and self.c >= Sketch.TLS_THRESHOLD:
             # then Reset every element in T to 0, as well as c.
             for k in self.S.keys():
@@ -173,8 +175,8 @@ class Sketch:
     def getData( self, si: str, di: str ) -> List[ int ]:
         """
         Get one row of data.
-        @param si:
-        @param di:
+        @param si: src ip
+        @param di: dst ip
         @return: [ srcCount, srcTLS, dstCount, dstTLS ]
         """
         return [ self.S[ si ][ IP_COUNT_STR ], self.S[ si ][ TLS_STR ],

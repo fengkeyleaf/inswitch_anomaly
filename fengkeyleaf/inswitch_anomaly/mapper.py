@@ -16,6 +16,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
 
+# TODO: Put into my_pandas.my_dataframe
 class Mapper:
     """
     Class to get rid of unwanted features and mapping wanted ones to our favorite names.

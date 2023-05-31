@@ -60,7 +60,7 @@ class DataProcessor:
 
         @param da: Directory to the original data sets.
         @param h: Path to features(headers)
-        @param dm: Directory to the synthesised data sets.
+        @param dm: Directory to the synthesised data sets. No synthesised pkts added when dm is None or dm == ""
         @param D: List of directories to the processed data sets to test trees.
         @param ll: logging level
         """
@@ -72,8 +72,8 @@ class DataProcessor:
         self.l.debug( "dm: " + str( dm ) )
         self.l.debug( "D: " + str( D ) )
 
-        self.da: str = da
         assert da is not None
+        self.da: str = da
         # Initialize the three processors.
         self.pkt_processor: pkt_processor.PktProcessor = pkt_processor.PktProcessor(
             h,
@@ -123,11 +123,12 @@ class DataProcessor:
                     continue
 
                 self.tree.process(
-                    self.sketch_processor.process(
+                    fp,
+                    # https://realpython.com/python-kwargs-and-args/
+                    *self.sketch_processor.process(
                         self.pkt_processor.process( fp ),
                         fp
-                    )[ 0 ],
-                    fp
+                    )
                 )
 
     # TODO: csvparaser.TIMESTAMP_STR could vary.
@@ -174,7 +175,7 @@ class DataProcessor:
                     fp, encoding = my_files.UTF8,
                     errors = my_files.BACK_SLASH_REPLACE
             ) as f:
-                assert my_writer.get_extension( fp ).lower() == my_files.CSV, fp
+                assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION, fp
                 self.tree.process(
                     pandas.read_csv( f ),
                     self.tree.pd + "/" + my_writer.get_filename( fp )

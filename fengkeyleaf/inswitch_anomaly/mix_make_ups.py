@@ -72,7 +72,7 @@ class Mixer:
                     fp, encoding = my_files.UTF8,
                     errors = my_files.BACK_SLASH_REPLACE
             ) as f:
-                assert my_writer.get_extension( fp ).lower() == my_files.CSV
+                assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
                 df = Mixer._label( mapper.Mapper.mapping( pandas.read_csv( f ) ) )
 
             n -= my_dataframe.get_row_size( df )

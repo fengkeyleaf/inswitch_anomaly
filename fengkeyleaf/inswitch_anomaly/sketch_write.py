@@ -27,10 +27,6 @@ from fengkeyleaf.io import ( my_writer, my_files )
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.inswitch_anomaly import sketch
 
-RANGE_STR = "range"
-GOOD_LABEL = 0
-BAD_LABEL = 1 # attack pkt
-
 
 # https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
 class SketchWriter:
@@ -40,11 +36,6 @@ class SketchWriter:
     FOLDER_NAME: str = "/sketches/"
     SIGNATURE: str = "_sketch.csv"
     SIGNATURE_NEW: str = "_sketch_new.csv"
-    COLUMN_NAMES: List[ str ] = [
-        fkl_inswitch.SRC_COUNT_STR, fkl_inswitch.SRC_TLS_STR,
-        fkl_inswitch.DST_COUNT_STR, fkl_inswitch.DST_TLS_STR,
-        fkl_inswitch.LABEL_STR
-    ]
 
     def __init__(
             self, dir: str, pdir: str,
@@ -58,7 +49,7 @@ class SketchWriter:
         self.data: List = []
         self.labels: List = []
         # Data in the Builder will not be cleared after training.
-        self.b: my_dataframe.Builder = my_dataframe.Builder( C = SketchWriter.COLUMN_NAMES )
+        self.b: my_dataframe.Builder = my_dataframe.Builder( C = fkl_inswitch.COLUMN_NAMES )
 
         self.idx: int = 0
         # gc <- 0 // good pkt count
@@ -84,14 +75,14 @@ class SketchWriter:
         """
         if self.is_not_balancing: self.l.info( "Balancing is turned off." );
 
-        self.__counting( df )
-        self.__process( df )
-        return self.__write( f )
+        self._counting( df )
+        self._process( df )
+        return self._write( f )
 
     # Algorithm DATASAMPLING( P )
     # Input. P is input data set to generate a sketch csv file. Assuming we have labled data as our file.
     # Output. Balanced sketch csv file to train a decision tree.
-    def __process( self, df: DataFrame ) -> None:
+    def _process( self, df: DataFrame ) -> None:
         """
         Extract features from pkts and store the information into the sketch.
         Also Update the sketch with the data sampling applied.
@@ -124,13 +115,13 @@ class SketchWriter:
             s.add_dst( di )
 
             # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
-            assert df.at[ idx, fkl_inswitch.LABEL_STR ] == BAD_LABEL or df.at[ idx, fkl_inswitch.LABEL_STR ] == GOOD_LABEL, df.at[ idx, fkl_inswitch.LABEL_STR ]
-            self.__balancing( s.getData( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
+            assert df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL or df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL, df.at[ idx, fkl_inswitch.LABEL_STR ]
+            self._balancing( s.getData( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
 
         assert self._c.isBalanced()
         # return D
 
-    def __write( self, f: str ) -> Tuple[ DataFrame, DataFrame ]:
+    def _write( self, f: str ) -> Tuple[ DataFrame, DataFrame ]:
         """
         Write the sketches with labels to a file.
         @param s: File path where the result sketch file is written.
@@ -146,7 +137,7 @@ class SketchWriter:
 
         # https://www.geeksforgeeks.org/create-a-pandas-dataframe-from-lists/
         df_o: DataFrame = DataFrame( {
-            RANGE_STR: self.data,
+            fkl_inswitch.RANGE_STR: self.data,
             fkl_inswitch.LABEL_STR: self.labels
         } )
         self.l.info( "Writing old sketch to:\n" + f )
@@ -161,7 +152,7 @@ class SketchWriter:
         )
         return ( df_o, df_n )
 
-    def __counting( self, df: DataFrame ) -> None:
+    def _counting( self, df: DataFrame ) -> None:
         """
         Count good pkts and bad pkts.
         @param df:
@@ -175,27 +166,27 @@ class SketchWriter:
         # for every pkt, p, in P
         for ( i, s ) in df.iterrows():
             # do if p is a good one
-            if df.at[ i, fkl_inswitch.LABEL_STR ] == GOOD_LABEL:
+            if df.at[ i, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL:
                 # then gc++
                 self.gc += 1
             # else bc++
             else:
-                assert df.at[ i, fkl_inswitch.LABEL_STR ] == BAD_LABEL
+                assert df.at[ i, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL
                 self.bc += 1
 
         assert self.gc + self.bc == my_dataframe.get_row_size( df )
         if not self.is_not_balancing:
             self.l.debug( "gc(good count): %d, bc(bad count): %d, tc(total count): %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
 
-    def __balancing( self, D: List[ int ], l: int, gdp: float, bdp: float ) -> None:
+    def _balancing( self, D: List[ int ], l: int, gdp: float, bdp: float ) -> None:
         assert 0 <= gdp <= 1
         assert 0 <= bdp <= 1
-        assert l == GOOD_LABEL or l == BAD_LABEL
+        assert l == fkl_inswitch.GOOD_LABEL or l == fkl_inswitch.BAD_LABEL
 
         # ifAddGood <- p is a good one and randDoube() > gdp
-        if_add_good: bool = l == GOOD_LABEL and random.random() > gdp
+        if_add_good: bool = l == fkl_inswitch.GOOD_LABEL and random.random() > gdp
         # ifAddBad <- p is a bad one and randDoube() > bdp
-        if_add_bad: bool = l == BAD_LABEL and random.random() > bdp
+        if_add_bad: bool = l == fkl_inswitch.BAD_LABEL and random.random() > bdp
         # if ifAddGood or ifAddBad
         if self.is_not_balancing or ( if_add_good or if_add_bad ):
             # then d <- [
@@ -212,10 +203,10 @@ class SketchWriter:
 
             # Record actual good pkts.
             if if_add_good:
-                assert l == GOOD_LABEL
+                assert l == fkl_inswitch.GOOD_LABEL
                 self._c.addGood()
             if if_add_bad:
-                assert l == BAD_LABEL
+                assert l == fkl_inswitch.BAD_LABEL
                 self._c.addBad()
 
     def train( self ) -> None:
@@ -258,20 +249,23 @@ class SketchWriter:
 
 # https://www.digitalocean.com/community/tutorials/python-unittest-unit-test-example
 class _Tester( unittest.TestCase ):
-    IS_NOT_BALANCING: bool = True
+    IS_NOT_BALANCING: bool = False
 
+    # @unittest.skip
     def test_bot_lot( self ) -> None:
         dir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/re-formatted"
         pdir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/"
 
         SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
 
+    # @unittest.skip
     def test_ton_lot( self ):
         dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/re-formatted"
         pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/"
 
         SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
 
+    # @unittest.skip
     def test_unsw_nb15( self ):
         dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/re-formatted"
         pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/"
@@ -279,8 +273,8 @@ class _Tester( unittest.TestCase ):
         SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
 
 
+# https://docs.python.org/3/library/unittest.html#skipping-tests-and-expected-failures
 if __name__ == '__main__':
     unittest.main()
-    # unittest.main( argv = [ '' ], defaultTest = [ "_Tester.test_ton_lot" ] )z
 
 
