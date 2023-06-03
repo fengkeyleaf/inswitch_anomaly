@@ -145,15 +145,15 @@ class Tree:
         self.d = d
         self.pd = pd
 
-    def process( self, f: str, df_o: pandas.DataFrame, df_n: pandas.DataFrame,  ) -> None:
+    def process( self, f: str, df_o: pandas.DataFrame | None, df_n: pandas.DataFrame | None ) -> None:
         """
         Process pkt sketch csv file and train a tree.
         @param df_o: Pre-processed sketch dataframe, list form.
         @param df_n: Pre-processed sketch dataframe, individual column.
         @param f: File path to the original csv pkt file.
         """
-        self.get_tree_old( f, *_tree_evaluator.reformatting( df_o ) )
-        self.get_tree_new( f, df_n )
+        if df_o is not None: self.get_tree_old( f, *_tree_evaluator.reformatting( df_o ) );
+        if df_n is not None: self.get_tree_new( f, df_n );
 
     def get_tree_new( self, f: str, df: pandas.DataFrame ) -> None:
         d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
@@ -161,7 +161,7 @@ class Tree:
         f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
         self.l.info( "tree: " + f )
 
-        assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION
+        assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION, my_writer.get_extension( f ).lower()
         ( df, X, y ) = _tree_evaluator.get_data_dataframe(
             df,
             fkl_inswitch.FEATURE_NAMES
@@ -300,7 +300,8 @@ class Tree:
             F: List[ str ] | None = None
     ) -> None:
         """
-        Train a tree with designed features. No sketch applied.
+        Train a tree with designed features. No sketch applied in the validation process.
+        The name of the label feature must be Label.
         @param h: File paths to the testing header.
         @param H: List of file paths to the header.
         @param F: List of wanted features.
@@ -332,32 +333,45 @@ class Tree:
 
 
 class _Tester( unittest.TestCase ):
+    IS_WRITING: bool = True
+
     h1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
     h3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
-    H_FULL: List[ str ] = [ None, None, None ]
+    H_FULL: List[ str | None ] = [ None, None, None ]
 
+    # Feature name list
     F_S: List[ str ] = [ fkl_inswitch.SRC_COUNT_STR, fkl_inswitch.SRC_TLS_STR, fkl_inswitch.DST_COUNT_STR, fkl_inswitch.DST_TLS_STR ]
+    F_S_O: List[ str ] = [ fkl_inswitch.RANGE_STR ]
+
+    dt1_o: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches"
+    dt2_o: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches"
+    dt3_o: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches"
+    V_FULL_O: List[ str ] = [ dt1_o, dt2_o, dt3_o ]
 
     dt1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
     dt2: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches_new"
     dt3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches_new"
-    V_FULL: List[ str ] = [
-        dt1, dt2, dt3
-    ]
+    V_FULL: List[ str ] = [ dt1, dt2, dt3 ]
 
     # Validation with wanted features and unlimited sketch
+    # @unittest.skip
     def test_bot_lot_wanted_unlimited_sketch( self ) -> None:
         dt: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new"
         V: List[ str ] = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new" ]
         H: List[ str | None ] = [ None ]
 
         # Tree( None, dt, V, True, 10 ).train( None, H, _Tester.F_S )
+        # Tree( None, _Tester.dt1_o, _Tester.V_FULL_O, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S_O )
         Tree( None, _Tester.dt1, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
+    # @unittest.skip
     def test_ton_lot_wanted_unlimited_sketch( self ) -> None:
+        # Tree( None, _Tester.dt2_o, _Tester.V_FULL_O, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S_O )
         Tree( None, _Tester.dt2, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
-    def test_unsw_nb15_wanted_unlimited_sketch( self ):
+    # @unittest.skip
+    def test_unsw_nb15_wanted_unlimited_sketch( self ) -> None:
+        # Tree( None, _Tester.dt3_o, _Tester.V_FULL_O, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S_O )
         Tree( None, _Tester.dt3, _Tester.V_FULL, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
     dt1_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches_new_balancing_limited"
@@ -369,17 +383,19 @@ class _Tester( unittest.TestCase ):
 
     # TODO: Go over the code logic before running.
     # Validation with wanted features and limited sketch
+    @unittest.skip
     def test_bot_lot_wanted_limited_sketch( self ) -> None:
         # Training is unlimited, but validation is limited.
-        Tree( None, _Tester.dt1, _Tester.V_FULL_limited, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+        Tree( None, _Tester.dt1, _Tester.V_FULL_limited, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
+    @unittest.skip
     def test_ton_lot_wanted_limited_sketch( self ) -> None:
-        Tree( None, _Tester.dt2, _Tester.V_FULL_limited, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+        Tree( None, _Tester.dt2, _Tester.V_FULL_limited, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
+    @unittest.skip
     def test_unsw_nb15_wanted_limited_sketch( self ):
-        Tree( None, _Tester.dt3, _Tester.V_FULL_limited, True, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
+        Tree( None, _Tester.dt3, _Tester.V_FULL_limited, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S )
 
 
 if __name__ == '__main__':
-    TEST_CASES_UNLIMITED: List[ str ] = [ "_Tester.test_bot_lot_wanted_unlimited_sketch", "_Tester.test_ton_lot_wanted_unlimited_sketch", "_Tester.test_unsw_nb15_wanted_unlimited_sketch" ]
-    unittest.main( argv = [ '' ], defaultTest = TEST_CASES_UNLIMITED )
+    unittest.main()

@@ -71,3 +71,13 @@ Test cases:
 1. create_dataset.py attack_data benign_data result.csv ( Optionally )
 2. sketch_write.py result.csv sketch.csv
 3. tree.py sketch.csv tree.txt
+
+#  5. Data Folders
+
+1. Data: original data sets.
+2. original: processed without adding synthesized good pkts.
+3. processed: processed with adding synthesized good pkts.
+4. re-formatted: Get rid of unwanted features and mapping feature names.
+5. sketches: sketch csv files in one column, 4 features in a list.
+6. sketches_new: sketch csv files in separate column.
+7. trees: trained tree txt files.

@@ -87,13 +87,19 @@ class Mapper:
     DST_TLS_M: Dict[ str, str ] = {
         fkl_inswitch.DST_TLS_STR: fkl_inswitch.DST_TLS_STR
     }
+    # Four features in a list.
+    RANGE_M: Dict[ str, str ] = {
+        fkl_inswitch.RANGE_STR: fkl_inswitch.RANGE_STR
+    }
     D: List[ Dict ] = [
         # Pkt features mapping
         ID_M, SRC_IP_M, SRC_MAC_M,
         DST_IP_M, DST_MAC_M, LABEL_M, TIME_M,
         SRC_PKTS_M, DST_PKTS_M, SRC_BYTES_M, DST_BYTES_M,
         # Computed features mapping
-        SRC_COUNT_M, SRC_TLS_M, DST_COUNT_M, DST_TLS_M
+        SRC_COUNT_M, SRC_TLS_M, DST_COUNT_M, DST_TLS_M,
+        # 4 features in a list
+        RANGE_M
     ]
 
     @staticmethod
@@ -122,7 +128,6 @@ class Mapper:
         # print( dl )
         # d.drop( dl, axis = 1 )
         return df.drop( columns = dl )
-
 
     @staticmethod
     def _look_for_targeted_header( k: str ) -> str | None:

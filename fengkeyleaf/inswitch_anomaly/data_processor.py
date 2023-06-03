@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+import unittest
 from typing import List
 import pandas
 from pandas import (
@@ -17,19 +18,21 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+from fengkeyleaf.logging import my_logging
+from fengkeyleaf.annotations import deprecated
+import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.io import (
     my_files,
     my_writer
 )
-from fengkeyleaf.logging import my_logging
 from fengkeyleaf.inswitch_anomaly import (
     mapper,
     mix_make_ups,
     pkt_processor,
     sketch_write,
-    tree
+    tree,
+    _tree_evaluator
 )
-import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
 # parent-directory..
 #     | --> original_data..
@@ -52,9 +55,9 @@ class DataProcessor:
     3) tree processing;
     """
     def __init__(
-            self, da: str, h: str,
+            self, da: str, h: str | None,
             dm: str = None, D: List[ str ] = None,
-            ll: int = logging.INFO
+            is_writing: bool = False, ll: int = logging.INFO
     ) -> None:
         """
 
@@ -72,6 +75,7 @@ class DataProcessor:
         self.l.debug( "dm: " + str( dm ) )
         self.l.debug( "D: " + str( D ) )
 
+        self._is_writing = is_writing
         assert da is not None
         self.da: str = da
         # Initialize the three processors.
@@ -94,7 +98,7 @@ class DataProcessor:
             da + sketch_write.SketchWriter.FOLDER_NAME,
             da,
             D,
-            False,
+            is_writing,
             ll
         )
 
@@ -166,7 +170,7 @@ class DataProcessor:
     # TODO: merge into process() in this class or train() in the Tree class.
     def train_trees( self ) -> None:
         """
-        Train tree with given csv files.
+        Train tree with given csv files. The sketch format should be range and leabel.
         """
         self.l.info( "Start processing from generating trees." )
 
@@ -177,6 +181,46 @@ class DataProcessor:
             ) as f:
                 assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION, fp
                 self.tree.process(
+                    self.tree.pd + "/" + my_writer.get_filename( fp ),
                     pandas.read_csv( f ),
-                    self.tree.pd + "/" + my_writer.get_filename( fp )
+                    None
                 )
+
+        if self._is_writing:
+            self.tree.recorder.to_csv( self.da + _tree_evaluator.Evaluator.SIGNATURE )
+            self.tree.recorder.reset()
+
+class _Tester( unittest.TestCase ):
+    is_writing: bool = True
+
+    h1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+    h3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
+
+    dt1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/data"
+    dt2: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data"
+    dt3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data"
+    # Validation with testing sets
+    D = [
+        "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches",
+        "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches",
+        "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches"
+    ]
+
+    # Validation with training sets
+    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/processed/sketches" ]
+
+    # @unittest.skip
+    def test_bot_lot( self ):
+        DataProcessor( _Tester.dt1, _Tester.h1, None, _Tester.D, _Tester.is_writing, 10 ).train_trees()
+
+    # @unittest.skip
+    def test_ton_lot( self ):
+        DataProcessor( _Tester.dt2, None, None, _Tester.D, _Tester.is_writing, 10 ).train_trees()
+
+    # @unittest.skip
+    def test_unsw_nb15( self ):
+        DataProcessor( _Tester.dt3, _Tester.h3, None, _Tester.D, _Tester.is_writing, 10 ).train_trees()
+
+
+if __name__ == '__main__':
+    unittest.main()

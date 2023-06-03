@@ -43,7 +43,7 @@ def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ in
     data: List[ List[ int ] ] = [ ]
     labels: List[ int ] = [ ]
 
-    for (i, _) in df.iterrows():
+    for ( i, _ ) in df.iterrows():
         # print( df.loc[ i, sketch_write.RANGE_STR ] )
         # tmp1: List[ str ] = df.loc[ i, sketch_write.RANGE_STR ].strip( '][' ).split( ',' )
         # tmp2: List[ int ] = []
@@ -127,17 +127,15 @@ class Evaluator:
         @param t_data: Tree's training data.
         @param t_labels: Tree's label data
         """
-        self.l.debug( "Evaluate the tree with the 4 features and without the sketch" )
-
-        if len( self.file_list ) <= 0:
-            self.l.debug( "Accuracy of this tree: %.2f%%" % (t.score( t_data, t_labels ) * 100) )
-            return
-
-        self.l.debug( "Accuracy of this tree: %.2f%%" % (t.score( t_data, t_labels ) * 100) )
+        self.l.debug( "Evaluate the tree with the 4 features and without the limited sketch" )
+        self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
         # print( self.t.predict( self.X ) )
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
         self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
+
+        if self._is_writing: self.recorder.add_row_name( my_writer.get_filename( tf ) );
+
         for F in self.file_list:
             for fp in F:
                 with open(
@@ -145,9 +143,17 @@ class Evaluator:
                         errors = my_files.BACK_SLASH_REPLACE
                 ) as f:
                     assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
+
+                    test_file_name: str = my_writer.get_filename( fp )
+                    self.l.debug( test_file_name )
+
                     data, labels = reformatting( pandas.read_csv( f ) )
-                    self.l.debug( my_writer.get_filename( fp ) )
-                    self.l.debug( "Accuracy: %.2f%%" % ( t.score( data, labels ) * 100 ) )
+                    result: float = t.score( data, labels ) * 100
+                    self.l.debug( "Accuracy: %.2f%%" % result )
+
+                    if self._is_writing: self.recorder.add_column_name( test_file_name );
+                    if self._is_writing:
+                        self.recorder.append_element( str( result ), my_writer.get_filename( tf ), test_file_name )
 
     def evaluate_classic(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str ],

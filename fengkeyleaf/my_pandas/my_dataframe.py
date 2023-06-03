@@ -194,6 +194,15 @@ class Builder:
             self.C
         )
 
+    def size_col( self ) -> int:
+        return len( self.C )
+
+    def size_row( self ) -> int:
+        return len( self.R )
+
+    def size( self ) -> int:
+        return len( self.C ) * len( self.R )
+
     def __str__( self ) -> str:
         return str( self.C ) + "\n" + str( self.R ) + "\n" + str( self.D )
 
@@ -207,6 +216,9 @@ class _Checker:
             assert len( r ) == len( self.b.C ), "Not full row!\n" + str( self.b )
 
         return True
+
+    def check_col_num( self ) -> None:
+        pass
 
 
 class _Tester( unittest.TestCase ):

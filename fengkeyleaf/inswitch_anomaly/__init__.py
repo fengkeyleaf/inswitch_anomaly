@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    List,
-    Dict,
-    Tuple
-)
+from typing import List
 
 """
 file:
