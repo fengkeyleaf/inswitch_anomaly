@@ -45,5 +45,7 @@ COLUMN_NAMES: List[ str ] = [
     LABEL_STR
 ]
 
-# Wanted feature names
-FEATURE_NAMES: List[ str ] = [ SRC_COUNT_STR, SRC_TLS_STR, DST_COUNT_STR, DST_TLS_STR ]
+# Wanted sketch feature names
+SKETCH_FEATURE_NAMES: List[ str ] = [ SRC_COUNT_STR, SRC_TLS_STR, DST_COUNT_STR, DST_TLS_STR ]
+# Wanted pkt feature names
+PKT_FEATURE_NAMES: List[ str ] = [ SRC_ADDR_STR, DST_ADDR_STR ]

@@ -72,6 +72,8 @@ y = pima[ "Outcome" ]  # Target variable
 
 # print( X )
 # print( y )
+print( type( y ) ) # <class 'pandas.core.series.Series'>
+print( y.size )
 
 # Split dataset into training set and test set
 X_train, X_test, y_train, y_test = train_test_split( X, y, test_size = 0.3,

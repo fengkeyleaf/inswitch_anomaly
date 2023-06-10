@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import random
 from typing import (
     List, Dict, Callable
@@ -48,10 +49,10 @@ class Sketch:
 
     # Algorithm ADD( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
-    def add( self, dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
+    def _add( self, dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # else REPLACE( dic, ip )
         if dic.get( ip ) is None:
-            self.replace( dic, ip )
+            self._replace( dic, ip )
             return
 
         # if dic contains ip:
@@ -62,36 +63,36 @@ class Sketch:
 
     # Algorithm REPLACE( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
-    def replace( self, dic: Dict[ str, Dict[ str, int ] ], ip: str ):
+    def _replace( self, dic: Dict[ str, Dict[ str, int ] ], ip: str ):
         # if HASEMPTY( dic )
-        if self.has_empty( dic ):
+        if self._has_empty( dic ):
             # then TREACK( dic, ip )
-            Sketch.track( dic, ip )
+            Sketch._track( dic, ip )
             return
 
         # else r <- get a random number from 0 to 3, inclusive.
         r: int = random.randint( 0, 3 )
         # if r == 0 // Replace lowest count
         # then LOWESTCOUNT( dic, ip )
-        if r == 0: Sketch.lowest_count( dic, ip );
+        if r == 0: Sketch._lowest_count( dic, ip );
         # else if r == 1 // Highest TLS
         # then HIGHESTTLS( dic, ip )
-        elif r == 1: Sketch.highest_tls( dic, ip );
+        elif r == 1: Sketch._highest_tls( dic, ip );
         # else if r == 2 // smallest count and tls score, calculated by count * ( 1000 - tls )
         # then SMALLFESTTLS( dic, ip )
-        elif r == 2: Sketch.smallest_tls( dic, ip );
+        elif r == 2: Sketch._smallest_tls( dic, ip );
         # No replace when rand == 3
 
     # Algorithm HASEMPTY( dic )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ).
     # Output. To tell if the sketch has an empty spot or not.
-    def has_empty( self, dic: Dict[ str, Dict[ str, int ] ] ) -> bool:
+    def _has_empty( self, dic: Dict[ str, Dict[ str, int ] ] ) -> bool:
         return self.l <= 0 or len( dic ) < self.l
 
     # Algorithm TREACK( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
     @staticmethod
-    def track( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
+    def _track( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # assert that ip is not in dic.
         assert dic.get( ip ) is None
         # dic[ ip ][ IP_COUNT ] = 1
@@ -104,35 +105,35 @@ class Sketch:
     # Algorithm LOWESTCOUNT( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
     @staticmethod
-    def lowest_count( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
+    def _lowest_count( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # i <- Find the ip, i, so that dic[ i ][ IP_COUNT ] is the lowest in dic.
         ( k, _ ) = fkl_dict.find_min_value( dic, F_COUNT )
         # Remove the key-value pair with i as the key.
         dic.pop( k )
         # TREACK( dic, ip )
-        Sketch.track( dic, ip )
+        Sketch._track( dic, ip )
 
     # Algorithm HIGHESTTLS( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
     @staticmethod
-    def highest_tls( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
+    def _highest_tls( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # i <- Find the ip, i, so that dic[ i ][ IP_TLS ] is the highest in dic.
         ( k, _ ) = fkl_dict.find_max_value( dic, F_TLS )
         # Remove the key-value pair with i as the key.
         dic.pop( k )
         # TREACK( dic, ip )
-        Sketch.track( dic, ip )
+        Sketch._track( dic, ip )
 
     # Algorithm SMALLFESTTLS( dic, ip )
     # Input. A dict, dic, to store a key-value pair, ( ip, ip's info ), and an incoming ip.
     @staticmethod
-    def smallest_tls( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
+    def _smallest_tls( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # i <- Find the ip, i, so that dic[ i ][ IP_TLS ] is the smallest in dic.
         ( k, _ ) = fkl_dict.find_min_value( dic, F_TLS )
         # Remove the key-value pair with i as the key.
         dic.pop( k )
         # TREACK( dic, ip )
-        Sketch.track( dic, ip )
+        Sketch._track( dic, ip )
 
     def add_src( self, ip: str ) -> None:
         """
@@ -140,8 +141,8 @@ class Sketch:
         @param ip:
         @return:
         """
-        self.add( self.S, ip )
-        self.post_process()
+        self._add( self.S, ip )
+        self._post_process()
 
     def add_dst( self, ip: str ) -> None:
         """
@@ -149,10 +150,10 @@ class Sketch:
         @param ip:
         @return:
         """
-        self.add( self.D, ip )
-        self.post_process()
+        self._add( self.D, ip )
+        self._post_process()
 
-    def post_process( self ) -> None:
+    def _post_process( self ) -> None:
         """
         Increment TLS for all IPs.
         """
@@ -174,13 +175,24 @@ class Sketch:
 
     def getData( self, si: str, di: str ) -> List[ int ]:
         """
-        Get one row of data.
+        Get one row of data. Default value is 0.
         @param si: src ip
         @param di: dst ip
         @return: [ srcCount, srcTLS, dstCount, dstTLS ]
         """
-        return [ self.S[ si ][ IP_COUNT_STR ], self.S[ si ][ TLS_STR ],
-                 self.D[ di ][ IP_COUNT_STR ], self.D[ di ][ TLS_STR ] ]
+        # An ip is not in this sketch iff this sketch has limitation,
+        # meaning taking random replacement policy when no empty spot.
+        contains: bool = self.S.get( si ) is not None
+        assert contains or self.l > 0 , si + "\n" + str( self.S )
+        src_count: int = self.S[ si ][ IP_COUNT_STR ] if contains else 0
+        src_tls: int = self.S[ si ][ TLS_STR ] if contains else 0
+
+        contains = self.D.get( di ) is not None
+        assert contains or self.l > 0, di + "\n" + str( self.D )
+        dst_count: int = self.D[ di ][ IP_COUNT_STR ] if contains else 0
+        dst_tls: int = self.D[ di ][ TLS_STR ] if contains else 0
+
+        return [ src_count, src_tls, dst_count, dst_tls ]
 
     def clear( self ) -> None:
         self.c = 0

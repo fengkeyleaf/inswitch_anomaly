@@ -13,7 +13,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 
-# TODO: Put into my_pandas.my_dataframe
+
 class Parser:
     """
     Parse processed pkt csv files into a dict.

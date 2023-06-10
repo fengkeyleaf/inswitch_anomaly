@@ -190,6 +190,7 @@ class DataProcessor:
             self.tree.recorder.to_csv( self.da + _tree_evaluator.Evaluator.SIGNATURE )
             self.tree.recorder.reset()
 
+
 class _Tester( unittest.TestCase ):
     is_writing: bool = True
 

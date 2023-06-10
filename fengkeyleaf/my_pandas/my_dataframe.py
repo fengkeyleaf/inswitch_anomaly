@@ -3,7 +3,7 @@
 import unittest
 import numpy
 import pandas
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import logging
 
 """
@@ -103,7 +103,7 @@ class Builder:
                 self.C.append( n )
                 continue
 
-            self.l.warning( "Duplicate column name: " + n )
+            # self.l.warning( "Duplicate column name: " + n )
 
     def add_row_name( self, *args: str ) -> None:
         """
@@ -123,7 +123,7 @@ class Builder:
                 assert len( self.R ) == len( self.D )
                 continue
 
-            self.l.warning( "Duplicate row name: " + n )
+            # self.l.warning( "Duplicate row name: " + n )
 
     # TODO: Add the row name and column name as well.
     def append_element(
@@ -153,11 +153,11 @@ class Builder:
         @return:
         """
         if rn in self.R:
-            self.l.warning( "Duplicate row name: " + rn )
+            # self.l.warning( "Duplicate row name: " + rn )
             return
 
         if R is None:
-            self.l.warning( "Empty row" )
+            self.l.warning( "None row" )
             return
 
         assert len( R ) == len( self.C ), str( len( R ) ) + " | " + str( len( self.C ) ) + "\n" + str( self )
@@ -219,6 +219,44 @@ class _Checker:
 
     def check_col_num( self ) -> None:
         pass
+
+
+class Mapper:
+    def __init__( self, M: List[ Dict[ str, str ] ] ):
+        self._M: List[ Dict[ str, str ] ] = M
+
+    def mapping( self, df: pandas.DataFrame ) -> pandas.DataFrame:
+        """
+        Mapping feature names.
+        @param df:
+        @return:
+        """
+        dl: List[ str ] = [ ]
+        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
+        # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
+        for k in df.keys():
+            h = self._look_for_targeted_header( k )
+            # Skip the feature with the same name.
+            if h == k: continue;
+
+            # Replace feature name.
+            if h is not None:
+                # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rename.html
+                df = df.rename( columns = { k: h } )
+            else:
+                dl.append( k )
+
+        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop.html
+        # print( dl )
+        # d.drop( dl, axis = 1 )
+        return df.drop( columns = dl )
+
+    def _look_for_targeted_header( self, k: str ) -> str | None:
+        for d in self._M:
+            if d.get( k ) is not None:
+                return d.get( k )
+
+        return None
 
 
 class _Tester( unittest.TestCase ):

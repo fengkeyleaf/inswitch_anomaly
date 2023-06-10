@@ -3,7 +3,8 @@
 from typing import (
     Dict, List
 )
-from pandas import DataFrame
+
+import pandas
 
 """
 file:
@@ -14,9 +15,9 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+from fengkeyleaf.my_pandas import my_dataframe
 
 
-# TODO: Put into my_pandas.my_dataframe
 class Mapper:
     """
     Class to get rid of unwanted features and mapping wanted ones to our favorite names.
@@ -91,7 +92,7 @@ class Mapper:
     RANGE_M: Dict[ str, str ] = {
         fkl_inswitch.RANGE_STR: fkl_inswitch.RANGE_STR
     }
-    D: List[ Dict ] = [
+    D: List[ Dict[ str, str ] ] = [
         # Pkt features mapping
         ID_M, SRC_IP_M, SRC_MAC_M,
         DST_IP_M, DST_MAC_M, LABEL_M, TIME_M,
@@ -101,38 +102,9 @@ class Mapper:
         # 4 features in a list
         RANGE_M
     ]
+    M: my_dataframe.Mapper =  my_dataframe.Mapper( D )
 
     @staticmethod
-    def mapping( df: DataFrame ) -> DataFrame:
-        """
-        Mapping feature names.
-        @param df:
-        @return:
-        """
-        dl: List[ str ] = []
-        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
-        # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
-        for k in df.keys():
-            h = Mapper._look_for_targeted_header( k )
-            # Skip the feature with the same name.
-            if h == k: continue;
+    def mapping( df: pandas.DataFrame ) -> pandas.DataFrame:
+        return Mapper.M.mapping( df )
 
-            # Replace feature name.
-            if h is not None:
-                # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rename.html
-                df = df.rename( columns = { k: h } )
-            else:
-                dl.append( k )
-
-        # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop.html
-        # print( dl )
-        # d.drop( dl, axis = 1 )
-        return df.drop( columns = dl )
-
-    @staticmethod
-    def _look_for_targeted_header( k: str ) -> str | None:
-        for d in Mapper.D:
-            if d.get( k ) is not None:
-                return d.get( k )
-
-        return None

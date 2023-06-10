@@ -278,16 +278,14 @@ class _Comparator:
 
         for ( i, s ) in self.df.iterrows():
             idx: int = int( i )
-            assert len( self.D[ idx ] ) == len( fkl_inswitch.FEATURE_NAMES ), str( self.D[ idx ] ) + " | " + str( s )
+            assert len( self.D[ idx ] ) == len( fkl_inswitch.SKETCH_FEATURE_NAMES ), str( self.D[ idx ] ) + " | " + str( s )
 
             # Check if all features are the same.
             for j in range( len( self.D[ idx ] ) ):
-                assert my_typing.equals( self.D[ idx ][ j ], int( s.at[ fkl_inswitch.FEATURE_NAMES[ j ] ] ) )
-                assert self.D[ idx ][ j ] == int( s.at[ fkl_inswitch.FEATURE_NAMES[ j ] ] ), ( "row(idx-val): %d - %s | col(idx-val): %d - %s\n%s\n%s" ) % ( idx, self.D[ idx ][ j ], j, s.at[ fkl_inswitch.FEATURE_NAMES[ j ] ], str( self.D[ idx ] ), str( s ) )
+                assert my_typing.equals( self.D[ idx ][ j ], int( s.at[ fkl_inswitch.SKETCH_FEATURE_NAMES[ j ] ] ) ), ("row(idx-val): %d - %s | col(idx-val): %d - %s\n%s\n%s") % (idx, self.D[ idx ][ j ], j, s.at[ fkl_inswitch.SKETCH_FEATURE_NAMES[ j ] ], str( self.D[ idx ] ), str( s ))
 
             # Check if the label is the same.
-            # assert my_typing.equals( self.L[ idx ], int( s.at[ fkl_inswitch.LABEL_STR ] ) )
-            assert self.L[ idx ] == int( s.at[ fkl_inswitch.LABEL_STR ] )
+            assert my_typing.equals( self.L[ idx ], int( s.at[ fkl_inswitch.LABEL_STR ] ) )
 
         return True
 

@@ -6,6 +6,8 @@ from typing import (
     Dict,
     Tuple
 )
+
+import numpy
 import pandas
 import sklearn
 import ast
@@ -22,6 +24,7 @@ __version__ = "1.0"
 
 from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+from fengkeyleaf import my_typing
 from fengkeyleaf.io import (
     my_writer,
     my_files
@@ -62,13 +65,13 @@ def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ in
 # TODO: Put into my_pandas.my_dataframe
 def get_data_file(
         fp: str, h: str | None, F: List[ str ]
-) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.DataFrame ]:
+) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.Series ]:
     """
     Get data columns with wanted feature names
     @param fp: File path to the data set.
     @param h: File path to the header file.
     @param F:List of wanted features.
-    @return: ( dataFrame, feature dataFrame, labels )
+    @return: ( dataFrame containing the later two, feature dataFrame, labels dataframe )
     """
     df: pandas.DataFrame = mapper.Mapper.mapping( my_dataframe.add_header( h, fp ) )
     assert fkl_inswitch.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
@@ -79,19 +82,19 @@ def get_data_file(
 
 def _get_data(
         df: pandas.DataFrame, F: List[ str ]
-) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.DataFrame ]:
+) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.Series ]:
     # print( df )
     X: pandas.DataFrame = my_dataframe.get_feature_content( df, fkl_inswitch.LABEL_STR, F )
     # print( df[ csvparaser.LABEL_STR ] )
     # https://stackoverflow.com/a/76294033
-    y: pandas.DataFrame = df[ fkl_inswitch.LABEL_STR ].astype( int )
+    y: pandas.Series = df[ fkl_inswitch.LABEL_STR ].astype( int )
 
     return ( df, X, y )
 
 
 def get_data_dataframe(
         df: pandas.DataFrame, F: List[ str ]
-) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.DataFrame ]:
+) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.Series ]:
     return _get_data( df, F )
 
 
@@ -158,7 +161,7 @@ class Evaluator:
     def evaluate_classic(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str ],
             feature_list: List[ str ],
-            t_data: pandas.DataFrame, t_labels: pandas.DataFrame
+            t_data: pandas.DataFrame, t_labels: pandas.Series
     ) -> None:
         """
         Standard evaluation where validation sets are not pre-processed ( mainly feature mapping ).
@@ -201,8 +204,7 @@ class Evaluator:
 
     def evaluate_sketch(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str | None ],
-            feature_list: List[ str ], l: int,
-            t_data: pandas.DataFrame, t_labels: pandas.DataFrame
+            l: int, t_data: pandas.DataFrame, t_labels: pandas.Series
     ) -> None:
         """
         Evaluate a tree with the sketch applied.
@@ -211,28 +213,29 @@ class Evaluator:
         @param t: Decision tree classifier.
         @param tf: File path to the tree.
         @param H: List of file paths to the header.
-        @param feature_list: List of wanted features.
         @param l: Limitation for the sketch, l empty spots available for each IP container.
         @param t_data: training data set.
         @param t_labels: testing data set.
         """
-        self.l.debug( "Evaluate the tree with the sketch of the limitation " + str( l ) )
+        if l > 0: self.l.debug( "Evaluate the tree with the sketch of the limitation, %d " % l );
         self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
         self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
 
         if self._is_writing: self.recorder.add_row_name( my_writer.get_filename( tf ) );
 
+        # Go though all test groups.
         for i in range( len( self.file_list ) ):
-            s: sketch.Sketch = sketch.Sketch( l )
-            b: my_dataframe.Builder = my_dataframe.Builder( C = fkl_inswitch.COLUMN_NAMES )
-
+            # Iterate each test file in one test group.
             for fp in self.file_list[ i ]:
+                s: sketch.Sketch = sketch.Sketch( l )
+                b: my_dataframe.Builder = my_dataframe.Builder( C = fkl_inswitch.SKETCH_FEATURE_NAMES )
+
                 assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
 
-                ( df, X, y ) = get_data_file(
+                ( df, _, y ) = get_data_file(
                     fp,
                     H[ i ],
-                    feature_list
+                    fkl_inswitch.PKT_FEATURE_NAMES
                 )
 
                 for ( idx, series ) in df.iterrows():
@@ -247,7 +250,10 @@ class Evaluator:
                 test_file_name: str = my_writer.get_filename( fp )
                 self.l.debug( test_file_name )
                 # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
-                r: float = sklearn.metrics.accuracy_score( y, t.predict( b.to_dataframe() ) )
+                pre = t.predict( b.to_dataframe() )
+                # check inconsistent numbers of samples
+                assert my_typing.equals( y.size, len( pre ) ), "test file: %s, y size: %d, pre size: %d" % ( test_file_name, y.size, len( pre ) )
+                r: float = sklearn.metrics.accuracy_score( y, pre )
                 self.l.debug( "Accuracy: %.2f%%" % r )
 
                 if self._is_writing: self.recorder.add_column_name( test_file_name );
