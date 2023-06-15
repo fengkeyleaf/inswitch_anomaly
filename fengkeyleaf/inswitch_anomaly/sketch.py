@@ -2,7 +2,7 @@
 
 import random
 from typing import (
-    List, Dict, Callable
+    List, Dict, Callable, Tuple
 )
 
 """
@@ -193,6 +193,9 @@ class Sketch:
         dst_tls: int = self.D[ di ][ TLS_STR ] if contains else 0
 
         return [ src_count, src_tls, dst_count, dst_tls ]
+
+    def size( self ) -> Tuple[ int, int ]:
+        return ( len( self.D ), len( self.S ) )
 
     def clear( self ) -> None:
         self.c = 0

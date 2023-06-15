@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+
+from typing import List
+
+"""
+file:
+description:
+language: python3 3.11.3
+author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
+        Personal website: https://fengkeyleaf.com
+"""
+
+__version__ = "1.0"
+
+
+def find_median( N: List[ float | int ] ) -> float | None:
+    """
+    Find the median in the list of numbers.
+    @param N:
+    @return:
+    """
+    if N is None or len( N ) <= 0: return None
+
+    N = sorted( N )
+    l = len( N )
+    # Odd length
+    if l % 2 == 1:
+        return N[ l // 2 ]
+
+    # Even length
+    mid_right = l // 2
+    return ( N[ mid_right - 1 ] + N[ mid_right ] ) / 2.0

@@ -9,5 +9,8 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf.utils import (
-    my_collections
+    my_collections,
+    my_list,
+    my_dict,
+    my_math
 )

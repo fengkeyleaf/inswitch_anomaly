@@ -104,6 +104,7 @@ t = DecisionTreeClassifier().fit( X_train_list, y_train_list )
 # Predict the response for test dataset
 y_pred = clf.predict( X_test )
 
+print( type( y_pred ) ) # <class 'numpy.ndarray'>
 # Model Accuracy, how often is the classifier correct?
 print( "Accuracy:", metrics.accuracy_score( y_test, y_pred ) )
 print( "Accuracy:", clf.score( X_test, y_test ) )

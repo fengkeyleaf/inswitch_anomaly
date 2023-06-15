@@ -4,9 +4,9 @@ import logging
 from typing import (
     List,
     Dict,
-    Tuple
+    Tuple,
+    Set
 )
-
 import numpy
 import pandas
 import sklearn
@@ -25,13 +25,15 @@ __version__ = "1.0"
 from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf import my_typing
+from fengkeyleaf.utils import my_dict, my_math
 from fengkeyleaf.io import (
     my_writer,
     my_files
 )
 from fengkeyleaf.inswitch_anomaly import (
     mapper,
-    sketch
+    sketch,
+    sketch_write
 )
 
 
@@ -204,7 +206,7 @@ class Evaluator:
 
     def evaluate_sketch(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str | None ],
-            l: int, t_data: pandas.DataFrame, t_labels: pandas.Series
+            is_limited: bool, t_data: pandas.DataFrame, t_labels: pandas.Series
     ) -> None:
         """
         Evaluate a tree with the sketch applied.
@@ -213,49 +215,171 @@ class Evaluator:
         @param t: Decision tree classifier.
         @param tf: File path to the tree.
         @param H: List of file paths to the header.
-        @param l: Limitation for the sketch, l empty spots available for each IP container.
+        @param is_limited: Limitation for the sketch, l empty spots available for each IP container.
         @param t_data: training data set.
         @param t_labels: testing data set.
         """
-        if l > 0: self.l.debug( "Evaluate the tree with the sketch of the limitation, %d " % l );
-        self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
+        if is_limited: self.l.debug( "Evaluate the tree with the sketch limitation optimization process enabled" );
+        self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
         self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
 
         if self._is_writing: self.recorder.add_row_name( my_writer.get_filename( tf ) );
 
         # Go though all test groups.
         for i in range( len( self.file_list ) ):
-            # Iterate each test file in one test group.
-            for fp in self.file_list[ i ]:
-                s: sketch.Sketch = sketch.Sketch( l )
-                b: my_dataframe.Builder = my_dataframe.Builder( C = fkl_inswitch.SKETCH_FEATURE_NAMES )
+            # Evaluate with unlimited sketch
+            if not is_limited:
+                self._evaluate_sketch( t, self.file_list[ i ], -1, tf, H[ i ] )
+                continue
 
-                assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
+            # Evaluate with unlimited sketch and optimization process
+            op: _Optimizer = _Optimizer( self.file_list[ i ], self.l )
 
-                ( df, _, y ) = get_data_file(
-                    fp,
-                    H[ i ],
-                    fkl_inswitch.PKT_FEATURE_NAMES
+            # Optimization process.
+            while op.has_next():
+                l: int = op.next()
+                # Iterate each test file in one test group.
+                op.add( l, self._evaluate_sketch( t, self.file_list[ i ], l, tf, H[ i ] ) )
+                op.find_median( l )
+
+            self.l.debug( "limitation=%d, median accuracy=%.2f%%" % op.find_max() )
+
+    def _evaluate_sketch(
+            self, t: sklearn.tree.DecisionTreeClassifier,
+            F: List[ str ], l: int, tf: str, h: str
+    ) -> List[ float ]:
+        """
+
+        @param t: Decision tree classifier.
+        @param F: List of test file paths.
+        @param l: SKetch limitation
+        @param tf: File path to the tree.
+        @param h: File path to the header
+        @return: List of accuracy numbers for the test files in the file list, F.
+        """
+        A: List[ float ] = []
+
+        for fp in F:
+            sw: sketch_write.SketchWriter = sketch_write.SketchWriter( None, None, False, l, False, self.l.level )
+
+            assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
+            ( df, _, _ ) = get_data_file(
+                fp,
+                h,
+                fkl_inswitch.PKT_FEATURE_NAMES
+            )
+
+            ( _, df_n ) = sw.process( df, None )
+            A.append(
+                self._record(
+                    t, fp, tf, l, df_n
                 )
+            )
 
-                for ( idx, series ) in df.iterrows():
-                    si: str = series.at[ fkl_inswitch.SRC_ADDR_STR ]
-                    di: str = series.at[ fkl_inswitch.DST_ADDR_STR ]
-                    # Record p's srcIP and p's dstIP in s.
-                    s.add_src( si )
-                    s.add_dst( di )
+        return A
 
-                    b.add_row( str( idx ), [ str( n ) for n in s.getData( si, di ) ] )
+    def _record(
+            self, t: sklearn.tree.DecisionTreeClassifier,
+            fp: str, tf: str, l: int, df: pandas.DataFrame
+    ) -> float:
+        # filename + sketch limitation
+        test_file_name: str = my_writer.get_filename( fp ) + ( ( "_limit_of_" + str( l ) ) if l > 0 else "" )
+        # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
+        pre: numpy.ndarray = t.predict( df.drop( columns = [ fkl_inswitch.LABEL_STR ] ) )
+        # check inconsistent numbers of samples
+        assert my_typing.equals( df[ fkl_inswitch.LABEL_STR ].size, len( pre ) ), "test file: %s, y size: %d, pre size: %d" % ( test_file_name, df[ fkl_inswitch.LABEL_STR ].size, len( pre ))
+        r: float = sklearn.metrics.accuracy_score(
+            df[ fkl_inswitch.LABEL_STR ].astype( int ),
+            pre
+        ) * 100
 
-                test_file_name: str = my_writer.get_filename( fp )
-                self.l.debug( test_file_name )
-                # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
-                pre = t.predict( b.to_dataframe() )
-                # check inconsistent numbers of samples
-                assert my_typing.equals( y.size, len( pre ) ), "test file: %s, y size: %d, pre size: %d" % ( test_file_name, y.size, len( pre ) )
-                r: float = sklearn.metrics.accuracy_score( y, pre )
-                self.l.debug( "Accuracy: %.2f%%" % r )
+        # Accuracy Logging
+        self.l.debug( test_file_name )
+        self.l.debug( "Accuracy: %.2f%%" % r )
 
-                if self._is_writing: self.recorder.add_column_name( test_file_name );
-                if self._is_writing:
-                    self.recorder.append_element( str( r ), my_writer.get_filename( tf ), test_file_name )
+        # Writing Accuracy logging
+        if self._is_writing:
+            assert not self.recorder.contains_col_name( test_file_name ), test_file_name
+            self.recorder.add_column_name( test_file_name )
+        if self._is_writing:
+            self.recorder.append_element( str( r ), my_writer.get_filename( tf ), test_file_name )
+
+        return r
+
+
+class _Optimizer:
+    """
+    Class to find the optimal sketch limitation, empty spot for each src and dst ips.
+    """
+    def __init__( self, F: List[ str ], l: logging.Logger ) -> None:
+        assert F is not None
+        # Search range domain.
+        self.range: List[ int ] = _Optimizer._find_range( F )
+        self.res: Dict[ int, List[ float ] ] = {}
+        self.res_median: Dict[ int, float ] = {}
+
+        self.l: logging.Logger = l
+        self.l.debug( "Optimization range: [ %d, %d ]" % ( self.range[ 0 ], self.range[ 1 ] ) )
+
+    # TODO: Empty spot overflow.
+    @staticmethod
+    def _find_range( F: List[ str ] ) -> List[ int ]:
+        """
+        Find the search domain range, [ min, max ]
+        @param F: A group of data sets.
+        @return: [ min, max ], where min is usually 0,
+                 max is the maximum number between the max number of src ips and the that of dst ips.
+        """
+        S_src: Set[ str ] = set()
+        S_dst: Set[ str ] = set()
+        for f in F:
+            for ( _, s ) in pandas.read_csv( f ).iterrows():
+                _Optimizer._add( S_src, s.at[ fkl_inswitch.SRC_ADDR_STR ] )
+                _Optimizer._add( S_dst, s.at[ fkl_inswitch.DST_ADDR_STR ] )
+
+        # return [ 42, 43 ]
+        return [ 0, max( len( S_src ), len( S_dst ) ) ]
+
+    @staticmethod
+    def _add( S: Set[ str ], ip: str ) -> None:
+        if not ( ip in S ): S.add( ip );
+
+    def has_next( self ) -> bool:
+        """
+        Tell if there is the next limitation to evaluate.
+        @return:
+        """
+        return self.range[ 0 ] < self.range[ 1 ]
+
+    def next( self ) -> int:
+        """
+        Get the next limitation if there is a one.
+        @return:
+        """
+        self.range[ 0 ] += ( self.range[ 1 ] - self.range[ 0 ] + 1 ) // 2
+        assert self.range[ 0 ] <= self.range[ 1 ]
+        return self.range[ 0 ]
+
+    def add( self, l: int, R: List[ float ] ) -> None:
+        """
+        Add a list of accuracies with the limitation, l, to this optimizer.
+        @param l: The limitation.
+        @param R: List of accuracies
+        """
+        assert self.res.get( l ) is None
+        self.res[ l ] = R
+
+    def find_median( self, l: int ) -> None:
+        """
+        Find the median accuracy for the limitation, l.
+        @param l: The limitation.
+        """
+        assert self.res_median.get( l ) is None
+        self.res_median[ l ] = my_math.find_median( self.res[ l ] )
+
+    def find_max( self ) -> Tuple[ int, float ]:
+        """
+        Find the limitation with the maximum median accuracy in this optimizer.
+        @return: ( limitation, median accuracy )
+        """
+        return my_dict.find_max_value( self.res_median )

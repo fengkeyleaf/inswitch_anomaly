@@ -4,7 +4,8 @@ import unittest
 from typing import (
     Dict,
     Tuple,
-    Callable
+    Callable,
+    Any
 )
 
 """
@@ -18,7 +19,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 __version__ = "1.0"
 
 
-def find_min_value( D: Dict, k: Callable = lambda x: x[ 1 ] ) -> Tuple:
+def find_min_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tuple[ Any, Any ] | None:
     """
     Find the key-value pair in this dict with the min value
     @param D:
@@ -28,10 +29,12 @@ def find_min_value( D: Dict, k: Callable = lambda x: x[ 1 ] ) -> Tuple:
               or explicitly pass a comparator.
     @return: ( k, v ), where v is the min one in this dict.
     """
+    if D is None or len( D ) <= 0: return None
     return min( D.items(), key = k )
 
 
-def find_max_value( D: Dict, k: Callable = lambda x: x[ 1 ] ) -> Tuple:
+def find_max_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tuple[ Any, Any ] | None:
+    if D is None or len( D ) <= 0: return None
     return max( D.items(), key = k )
 
 

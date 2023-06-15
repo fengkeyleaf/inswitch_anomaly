@@ -41,13 +41,18 @@ class SketchWriter:
     SIGNATURE_NEW: str = "_sketch_new.csv"
 
     def __init__(
-            self, dir: str, pdir: str,
-            is_not_balancing: bool = False, ll: int = logging.INFO
+            self, dir: str | None, pdir: str | None,
+            is_not_balancing: bool = False, lim: int = -1,
+            is_writing: bool = True, ll: int = logging.INFO
     ) -> None:
         """
 
         @param dir: Directory to re-formatted pkt csv files.
         @param pdir: Directory to original pkt csv files.
+        @param is_not_balancing: Tell if the data sampling is enabled or not.
+        @param lim: Sketch limitation.
+        @param is_writing: Tell if writing the test result to a file.
+        @param ll: Logging level.
         """
         self.data: List[ List[ int ] ] = []
         self.labels: List[ int ] = []
@@ -59,8 +64,11 @@ class SketchWriter:
         self.gc: int = 0
         # bc <- 0 // bad pkt count
         self.bc: int = 0
+        # Sketch config
         self.is_not_balancing: bool = is_not_balancing
+        self.lim: int = lim
 
+        self.is_writing: bool = is_writing
         self.dir = dir
         self.pdir = pdir
 
@@ -68,7 +76,7 @@ class SketchWriter:
         self._c: SketchWriter._Checker = self._Checker( self.l )
 
     # TODO: return ( data, labels )
-    def process( self, df: DataFrame, f: str ) -> Tuple[ DataFrame, DataFrame ]:
+    def process( self, df: DataFrame, f: str | None ) -> Tuple[ DataFrame, DataFrame ]:
         """
         Process pre-processed csv pkt files and balancing the data set,
         and track some features with the sketch.
@@ -80,6 +88,8 @@ class SketchWriter:
 
         self._counting( df )
         self._process( df )
+
+        assert not self.is_writing or f is not None
         return self._write( f )
 
     # Algorithm DATASAMPLING( P )
@@ -103,7 +113,7 @@ class SketchWriter:
             self.l.debug( "gdp( bad Drop Percent ): %f, bdp( bad Drop Percent ): %f" % ( gdp, bdp ) )
 
         # s <- sketch without the limitation threshold.
-        s: sketch.Sketch = sketch.Sketch()
+        s: sketch.Sketch = sketch.Sketch( self.lim )
         # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
 
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
@@ -123,7 +133,7 @@ class SketchWriter:
             assert df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL or df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL, df.at[ idx, fkl_inswitch.LABEL_STR ]
             self._balancing( s.getData( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
 
-        assert self._c.isBalanced()
+        assert self._c.isBalanced( s )
         # return D
 
     def _write( self, f: str ) -> Tuple[ DataFrame, DataFrame ]:
@@ -131,12 +141,6 @@ class SketchWriter:
         Write the sketches with labels to a file.
         @param f: File path where the result sketch file is written.
         """
-        # Write to file
-        d: str = my_writer.get_dir( f )+ SketchWriter.FOLDER_NAME
-        my_writer.make_dir( d )
-        fn: str = my_writer.get_filename( f )
-        f = d + fn + SketchWriter.SIGNATURE
-
         if len( self.data ) == 0 or len( self.labels ) == 0:
             self.l.warning( "Sketch: No data written to the file!" )
 
@@ -149,6 +153,20 @@ class SketchWriter:
 
         assert _Comparator( self, df_n ).compare()
 
+        self._writing_to_file( f, df_o, df_n )
+        return ( df_o, df_n )
+
+    def _writing_to_file(
+            self, f: str, df_o: DataFrame, df_n: DataFrame
+    ) -> None:
+        if not self.is_writing: return;
+
+        # Write to file
+        d: str = my_writer.get_dir( f ) + SketchWriter.FOLDER_NAME
+        my_writer.make_dir( d )
+        fn: str = my_writer.get_filename( f )
+        f = d + fn + SketchWriter.SIGNATURE
+
         self.l.info( "Writing old sketch to:\n" + f )
         df_o.to_csv(
             f, index = False
@@ -157,8 +175,6 @@ class SketchWriter:
         df_n.to_csv(
             d + fn + SketchWriter.SIGNATURE_NEW, index = False
         )
-
-        return ( df_o, df_n )
 
     def _counting( self, df: DataFrame ) -> None:
         """
@@ -241,12 +257,16 @@ class SketchWriter:
 
             self.l = l
 
-        def isBalanced( self ) -> bool:
+        def isBalanced( self, s: sketch.Sketch ) -> bool:
+            # Balancing info
             self.l.info(
                 "R of gc: %0.2f, R of bc: %.2f, gc: %d, bc: %d, tc: %d" % (
                     self.gc / self.tc, self.bc / self.tc, self.gc, self.bc, self.tc
                 )
             )
+
+            # Size info, i.e. limitation info
+            self.l.debug( "Sketch size: src dict=%d, dst dict=%d" % s.size() )
             return True
 
         def addGood( self ) -> bool:
@@ -285,39 +305,9 @@ class _Comparator:
                 assert my_typing.equals( self.D[ idx ][ j ], int( s.at[ fkl_inswitch.SKETCH_FEATURE_NAMES[ j ] ] ) ), ("row(idx-val): %d - %s | col(idx-val): %d - %s\n%s\n%s") % (idx, self.D[ idx ][ j ], j, s.at[ fkl_inswitch.SKETCH_FEATURE_NAMES[ j ] ], str( self.D[ idx ] ), str( s ))
 
             # Check if the label is the same.
-            assert my_typing.equals( self.L[ idx ], int( s.at[ fkl_inswitch.LABEL_STR ] ) )
+            assert my_typing.equals( int( self.L[ idx ] ), int( s.at[ fkl_inswitch.LABEL_STR ] ) )
 
         return True
 
-
-# https://www.digitalocean.com/community/tutorials/python-unittest-unit-test-example
-class _Tester( unittest.TestCase ):
-    IS_NOT_BALANCING: bool = False
-
-    # @unittest.skip
-    def test_bot_lot( self ) -> None:
-        dir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/re-formatted"
-        pdir = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/"
-
-        SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
-
-    # @unittest.skip
-    def test_ton_lot( self ):
-        dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/re-formatted"
-        pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/"
-
-        SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
-
-    # @unittest.skip
-    def test_unsw_nb15( self ):
-        dir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/re-formatted"
-        pdir: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/"
-
-        SketchWriter( dir, pdir, _Tester.IS_NOT_BALANCING, 10 ).train()
-
-
-# https://docs.python.org/3/library/unittest.html#skipping-tests-and-expected-failures
-if __name__ == '__main__':
-    unittest.main()
 
 

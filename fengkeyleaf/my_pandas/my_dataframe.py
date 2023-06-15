@@ -53,7 +53,9 @@ def add_header( h: str, f: str ) -> pandas.DataFrame:
     return pandas.read_csv( f )
 
 
-def get_feature_content( df: pandas.DataFrame, l: str, F: List[ str ] = None ) -> pandas.DataFrame:
+def get_feature_content(
+        df: pandas.DataFrame, l: str | None = None, F: List[ str ] = None
+) -> pandas.DataFrame:
     """
     Get specific data with the given features, except for the label.
     @param df:
@@ -66,7 +68,7 @@ def get_feature_content( df: pandas.DataFrame, l: str, F: List[ str ] = None ) -
 
     if F is None or len( F ) <= 0:
         F = df.columns.values.tolist()
-        F.remove( l )
+        if l is not None: F.remove( l );
 
     return df[ F ]
 
@@ -202,6 +204,9 @@ class Builder:
 
     def size( self ) -> int:
         return len( self.C ) * len( self.R )
+
+    def contains_col_name( self, n: str ) -> bool:
+        return n in self.C
 
     def __str__( self ) -> str:
         return str( self.C ) + "\n" + str( self.R ) + "\n" + str( self.D )

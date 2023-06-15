@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import logging
 from typing import (
     List
@@ -19,6 +20,7 @@ import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.inswitch_anomaly import tree
 from fengkeyleaf.logging import my_logging
 
+
 # content of test_class.py
 class TestClass:
     @pytest.mark.skip
@@ -34,8 +36,7 @@ class TestClass:
         assert hasattr( x, "check" )
 
 
-#  pytest -n auto -s -q test_tree.py
-
+# pytest -n auto -s -q test_tree.py
 # https://docs.pytest.org/en/7.1.x/how-to/logging.html?highlight=log
 class Tester:
     IS_WRITING: bool = True
@@ -68,6 +69,7 @@ class Tester:
         # Tree( None, dt, V, True, 10 ).train( None, H, _Tester.F_S )
         # Tree( None, _Tester.dt1_o, _Tester.V_FULL_O, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S_O )
         tree.Tree( None, Tester.dt1, Tester.V_FULL, Tester.IS_WRITING, 10 ).train( None, Tester.H_FULL, Tester.F_S )
+        # tree.Tree( None, Tester.dt1, [ Tester.dt1 ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S )
 
     @pytest.mark.skip
     def test_ton_lot_wanted_unlimited_sketch( self ) -> None:
@@ -79,27 +81,28 @@ class Tester:
         # Tree( None, _Tester.dt3_o, _Tester.V_FULL_O, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S_O )
         tree.Tree( None, Tester.dt3, Tester.V_FULL, Tester.IS_WRITING, 10 ).train( None, Tester.H_FULL, Tester.F_S )
 
+    # Validation sets to test without balancing.
     dt1_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/re-formatted"
-    dt2_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/re-formatted"
+    dt2_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/202 p 3 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/re-formatted"
     dt3_limited: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/re-formatted"
     V_FULL_limited: List[ str ] = [
         dt1_limited, dt2_limited, dt3_limited
     ]
-    SKETCH_LIMITATION: int = 8
+    IS_LIMITED_SKETCH: bool = True
 
     # Validation with wanted features and limited sketch
     @pytest.mark.skip
     def test_bot_lot_wanted_limited_sketch( self ) -> None:
         # Training is unlimited, but validation is limited.
-        tree.Tree( None, Tester.dt1, [ Tester.dt1_limited ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S, Tester.SKETCH_LIMITATION )
+        tree.Tree( None, Tester.dt1, [ Tester.dt1_limited ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S, Tester.IS_LIMITED_SKETCH )
 
     @pytest.mark.skip
     def test_ton_lot_wanted_limited_sketch( self ) -> None:
-        tree.Tree( None, Tester.dt1, [ Tester.dt2_limited ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S, Tester.SKETCH_LIMITATION )
+        tree.Tree( None, Tester.dt1, [ Tester.dt2_limited ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S, Tester.IS_LIMITED_SKETCH )
         # Tree( None, _Tester.dt2, _Tester.V_FULL_limited, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S, _Tester.SKETCH_LIMITATION )
 
     # @pytest.mark.skip
     def test_unsw_nb15_wanted_limited_sketch( self ) -> None:
-        tree.Tree( None, Tester.dt1, [ Tester.dt3_limited ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S, Tester.SKETCH_LIMITATION )
+        tree.Tree( None, Tester.dt1, [ Tester.dt3_limited ], Tester.IS_WRITING, 10 ).train( None, [ None ], Tester.F_S, Tester.IS_LIMITED_SKETCH )
         # Tree( None, _Tester.dt3, _Tester.V_FULL_limited, _Tester.IS_WRITING, 10 ).train( None, _Tester.H_FULL, _Tester.F_S, _Tester.SKETCH_LIMITATION )
 
