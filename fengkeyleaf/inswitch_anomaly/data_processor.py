@@ -189,8 +189,8 @@ class DataProcessor:
                 )
 
         if self._is_writing:
-            self.tree.recorder.to_csv( self.da + _tree_evaluator.Evaluator.SIGNATURE )
-            self.tree.recorder.reset()
+            self.tree.acc_rec.to_csv( self.da + _tree_evaluator.Evaluator.ACCU_SIGNATURE )
+            self.tree.acc_rec.reset()
 
 
 class _Tester( unittest.TestCase ):

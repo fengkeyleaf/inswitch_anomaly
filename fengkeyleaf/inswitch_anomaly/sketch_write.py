@@ -35,6 +35,10 @@ from fengkeyleaf.inswitch_anomaly import sketch
 class SketchWriter:
     """
     Generate sketch csv files to train trees.
+    Format of sketch file:
+            srcCount srcTLS dstCount dstTLS Label -> Columns
+    Rows |
+         v
     """
     FOLDER_NAME: str = "/sketches/"
     SIGNATURE: str = "_sketch.csv"

@@ -84,6 +84,7 @@ class Builder:
     ) -> None:
         self.C: List[ str ] = [] if C is None else C
         self.R: List[ str ] = [] if R is None else R
+        self.r_idx: int = 0
         self.D: List[ List[ str ] ] = []
 
         self.l: logging.Logger = my_logging.get_logger( ll )
@@ -94,6 +95,7 @@ class Builder:
     def add_column_name( self, *args: str ) -> None:
         """
         Add column name(s) into this builder.
+        Note that None and "" will be ignored.
         @param args:
         """
         for n in args:
@@ -110,6 +112,7 @@ class Builder:
     def add_row_name( self, *args: str ) -> None:
         """
         Add row name(s) into this builder.
+        Note that None and "" will be ignored.
         @param args:
         """
         for n in args:
@@ -147,15 +150,18 @@ class Builder:
         assert col_name is None or col_name == self.C[ len( self.D[ -1 ] ) - 1 ]
         return ( len( self.D ) - 1, len( self.D[ -1 ] ) - 1 )
 
-    def add_row( self, rn: str, R: List[ str ] | None = None ) -> None:
+    def add_row( self, rn: str | None = None, R: List[ str ] | None = None ) -> None:
         """
-        Add en entire rwo into this builder. THe new row name is required.
+        Add en entire rwo into this builder.
+        Note that row data to be added would be ignored if its row name is already in this builder.
+        Default row name( index starting at 0 ) will be use if None is provided.
         @param rn:
         @param R:
         @return:
         """
         if rn in self.R:
             # self.l.warning( "Duplicate row name: " + rn )
+            assert rn is not None
             return
 
         if R is None:
@@ -167,6 +173,10 @@ class Builder:
         assert self._c.is_full_row()
 
         self.D.append( R )
+
+        if rn is None:
+            rn = str( self.r_idx )
+            self.r_idx += 1
         self.add_row_name( rn )
 
     def reset( self ) -> None:
@@ -175,6 +185,7 @@ class Builder:
         """
         self.C = []
         self.R = []
+        self.r_idx = 0
         self.D = []
 
     def to_csv( self, f: str ) -> None:
@@ -236,7 +247,7 @@ class Mapper:
         @param df:
         @return:
         """
-        dl: List[ str ] = [ ]
+        dl: List[ str ] = []
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.keys.html#pandas.DataFrame.keys
         # todo: be careful with d.keys(), and we change d in the loop, this is not good, but not bad effect.
         for k in df.keys():

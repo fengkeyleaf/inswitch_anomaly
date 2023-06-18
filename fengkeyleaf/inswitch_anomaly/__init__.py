@@ -49,3 +49,23 @@ COLUMN_NAMES: List[ str ] = [
 SKETCH_FEATURE_NAMES: List[ str ] = [ SRC_COUNT_STR, SRC_TLS_STR, DST_COUNT_STR, DST_TLS_STR ]
 # Wanted pkt feature names
 PKT_FEATURE_NAMES: List[ str ] = [ SRC_ADDR_STR, DST_ADDR_STR ]
+
+# Tree Evaluation
+LIMITATION_STR: str = "lims"
+MEDIAN_ACCURACY_STR: str = "med_acc"
+
+# Evaluation feature names
+SKETCH_LIMITATION_OPTI_FEATURE_NAMES: List[ str ] = [ LIMITATION_STR, MEDIAN_ACCURACY_STR ]
+
+# Sketch configs
+# Parameters
+IS_SKETCHING_STR: str = "is_sket"
+IS_OPTIMIZING_STR: str = "is_opti"
+LIMITATION_STR: str = "lims"
+OPTI_FUNCTION_CONFIG_STR: str = "op_f_config"
+
+# Optimization function names
+BINARY_OP: int = 0
+LINEAR_OP: int = 1
+
+

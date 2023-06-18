@@ -2,12 +2,12 @@
 
 import logging
 import math
-import unittest
 from collections import OrderedDict
 from typing import (
     List,
     Dict,
-    Tuple
+    Tuple,
+    Any
 )
 import numpy as np
 import pandas
@@ -30,7 +30,6 @@ __version__ = "1.0"
 
 
 from fengkeyleaf.logging import my_logging
-from fengkeyleaf import annotations
 from fengkeyleaf.io import (
     my_writer,
     my_files
@@ -137,8 +136,12 @@ class Tree:
         @param ll: logging level
         """
         self.l = my_logging.get_logger( ll )
-        self.recorder: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
-        self.e = _tree_evaluator.Evaluator( self.l, D, self.recorder )
+        # Record accuracies computed by one data set as training set and the other as validation set.
+        self.acc_rec: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
+        # Record sketch limitation optimization data.
+        self.lim_opti_rec: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
+
+        self.e = _tree_evaluator.Evaluator( self.l, D, self.acc_rec, self.lim_opti_rec )
         self._is_writing: bool = is_writing
         self.e.set_is_writing( is_writing )
 
@@ -170,11 +173,14 @@ class Tree:
         t = DecisionTreeClassifier().fit( X, y )
 
         self.e.set_is_writing( True )
+        # TODO: Check parameters.
         self.e.evaluate_sketch(
             t, f,
             [ None for _ in range( len( self.e.file_list ) ) ],
-            False,
-            X, y
+            X, y,
+            {
+                fkl_inswitch.IS_OPTIMIZING_STR: False
+            }
         )
 
         # TODO: Missing converting the tree into a txt file format.
@@ -264,41 +270,14 @@ class Tree:
         get_lineage( decision_tree, feature_names, output )
         output.close()
 
-    # Initial Test
-    # F = [ [ "pkts", "bytes", "ltime"  ] ]
-    # L = [ "attack" ]
-    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training"
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate" ]
+    @staticmethod
+    def _sketches( c: Dict[ str, Any ] ) -> bool:
+        return c is not None and c.get( fkl_inswitch.IS_SKETCHING_STR ) is not None and c.get( fkl_inswitch.IS_SKETCHING_STR )
 
-    # BoT-IoT
-    # F1 = [ "spkts", "dpkts", "sbytes", "dbytes" ]
-    # h1 = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/training_large"
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate_large" ]
-
-    # TON_IoT
-    # F2 = [ "src_bytes", "dst_bytes", "src_pkts", "dst_pkts" ]
-    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/large_test"
-
-    # UNSW-NB15
-    # F3 = [ "sbytes", "dbytes", "Spkts", "Dpkts" ]
-    # h3 = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
-    # da = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data"
-
-    # L = [ "attack", "label", "Label" ]
-    # F = [ F1, F2, F3 ]
-    # F = [ fengkeyleaf.csvparaser.SRC_PKTS_STR, fengkeyleaf.csvparaser.SRC_BYTES_STR, fengkeyleaf.csvparaser.DST_PKTS_STR, fengkeyleaf.csvparaser.DST_BYTES_STR ]
-    # H = [ h1, None, h3 ]
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/validate_large", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/large_test", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
-
-    # Full test
-    # Handle NaN
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/training_without_sketch/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data" ]
-
-    # fengkeyleaf.tree.Tree( None, da, D, True, 10 ).train( h, H, F )
     def train(
             self, h: str | None, H: List[ str | None ],
-            F: List[ str ] | None = None, is_limited: bool = False
+            F: List[ str ] | None = None,
+            sketch_config: Dict[ str, Any ] | None = None
     ) -> None:
         """
         Train a tree with designed features. No sketch applied in the validation process.
@@ -306,7 +285,15 @@ class Tree:
         @param h: File paths to the testing header.
         @param H: List of file paths to the header.
         @param F: List of wanted features.
-        @param is_limited: Tell if Sketch limitation is enabled.
+        @param is_optimizing: Tell if Sketch limitation optimization is enabled.
+        @param sketch_config: Sketch configuration dict.
+               {
+                    fkl_inswitch.IS_SKETCHING_STR: bool,
+                    fkl_inswitch.IS_OPTIMIZING_STR: bool,
+                    fkl_inswitch.LIMITATION_STR: int,
+                    fkl_inswitch.OPTI_FUNCTION_CONFIG_STR: int,
+                }
+                Parameters other than shown above are useless.
         """
         self.l.info( "Normally training tree......" )
 
@@ -328,9 +315,36 @@ class Tree:
             t: DecisionTreeClassifier = DecisionTreeClassifier().fit( X, y )
             self.e.set_is_writing( True )
             # Validate trees with unlimited or limited sketch.
-            if is_limited: self.e.evaluate_sketch( t, f, H, is_limited, X, y );
+            if Tree._sketches( sketch_config ):
+                self.e.evaluate_sketch(
+                    t, f, H, X, y,
+                    sketch_config
+                )
             else: self.e.evaluate_classic( t, f, H, F, X, y );
 
+            # Write limitation optimization results per training file.
+            if self._is_writing:
+                # Output filename: filename of the training set  + "_ske_opti_result.csv"
+                self.lim_opti_rec.to_csv(
+                    "{}/{}{}".format(
+                        self.pd,
+                        my_writer.get_filename( f ),
+                        _tree_evaluator.Evaluator.SKETCH_LIMI_OPTI_SIGNATURE
+                    )
+                )
+                self.lim_opti_rec.reset()
+
+        # Write accuracy results
         if self._is_writing:
-            self.recorder.to_csv( self.pd + _tree_evaluator.Evaluator.SIGNATURE )
-            self.recorder.reset()
+            self.acc_rec.to_csv( self.pd + _tree_evaluator.Evaluator.ACCU_SIGNATURE )
+            self.acc_rec.reset()
+
+
+class _Optimizer:
+    def __init__( self, r: my_dataframe.Builder | None = None, f: str | None = None ):
+
+        pass
+
+    def optimize( self ) -> Tuple[ int, float ]:
+
+        pass
