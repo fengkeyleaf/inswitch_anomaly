@@ -88,7 +88,7 @@ class SketchWriter:
         @param f: File path to the original pkt csv file.
         @return:
         """
-        if self.is_not_balancing: self.l.info( "Balancing is turned off." );
+        if self.is_not_balancing: self.l.info( "Balancing is turned off in SketchWriter." );
 
         self._counting( df )
         self._process( df )

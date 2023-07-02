@@ -95,7 +95,7 @@ class Builder:
     def add_column_name( self, *args: str ) -> None:
         """
         Add column name(s) into this builder.
-        Note that None and "" will be ignored.
+        Note that None and "" and duplicate column name will be ignored.
         @param args:
         """
         for n in args:
@@ -193,8 +193,8 @@ class Builder:
         Save this builder into a csv file.
         @param f:
         """
-        self.l.info( "Saving dataframe to:\n" + f )
         self.to_dataframe().to_csv( f )
+        self.l.info( "Saving dataframe to:\n" + f )
 
     def to_dataframe( self ) -> pandas.DataFrame:
         """

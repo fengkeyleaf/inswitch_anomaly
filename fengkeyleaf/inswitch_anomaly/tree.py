@@ -148,7 +148,10 @@ class Tree:
         self.d = d
         self.pd = pd
 
-    def process( self, f: str, df_o: pandas.DataFrame | None, df_n: pandas.DataFrame | None ) -> None:
+    def process(
+            self, f: str,
+            df_o: pandas.DataFrame | None, df_n: pandas.DataFrame | None
+    ) -> None:
         """
         Process pkt sketch csv file and train a tree.
         @param df_o: Pre-processed sketch dataframe, list form.
@@ -272,7 +275,13 @@ class Tree:
 
     @staticmethod
     def _sketches( c: Dict[ str, Any ] ) -> bool:
-        return c is not None and c.get( fkl_inswitch.IS_SKETCHING_STR ) is not None and c.get( fkl_inswitch.IS_SKETCHING_STR )
+        return c is not None and \
+            c.get( fkl_inswitch.IS_SKETCHING_STR ) is not None and c.get( fkl_inswitch.IS_SKETCHING_STR )
+
+    def _is_writing_sketch_opti( self, c: Dict[ str, Any ] ) -> bool:
+        return self._is_writing and \
+            Tree._sketches( c ) and \
+            c.get( fkl_inswitch.IS_OPTIMIZING_STR ) is not None and c.get( fkl_inswitch.IS_OPTIMIZING_STR )
 
     def train(
             self, h: str | None, H: List[ str | None ],
@@ -323,7 +332,7 @@ class Tree:
             else: self.e.evaluate_classic( t, f, H, F, X, y );
 
             # Write limitation optimization results per training file.
-            if self._is_writing:
+            if self._is_writing_sketch_opti( sketch_config ):
                 # Output filename: filename of the training set  + "_ske_opti_result.csv"
                 self.lim_opti_rec.to_csv(
                     "{}/{}{}".format(

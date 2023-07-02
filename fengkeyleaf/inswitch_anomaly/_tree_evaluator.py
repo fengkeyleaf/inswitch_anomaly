@@ -233,7 +233,26 @@ class Evaluator:
 
     @staticmethod
     def _not_optimizes( c: Dict[ str, Any ] ) -> bool:
+        """
+        Tell if to enable the sketch limitation optimization process.
+        @param c: Sketch configuration dict.
+        @return:
+        """
         return c.get( fkl_inswitch.IS_OPTIMIZING_STR ) is not None and not c.get( fkl_inswitch.IS_OPTIMIZING_STR )
+
+    @staticmethod
+    def _get_not_balancing( c: Dict[ str, Any ] ) -> bool:
+        return False if c.get( fkl_inswitch.IS_NOT_BALANCING_STR ) is None \
+            else c.get( fkl_inswitch.IS_NOT_BALANCING_STR )
+
+    @staticmethod
+    def _get_limitation( c: Dict[ str, Any ] ) -> int:
+        return -1 if c.get( fkl_inswitch.LIMITATION_STR ) is None else c[ fkl_inswitch.LIMITATION_STR ]
+
+    @staticmethod
+    def _get_optimization_function_config( c: Dict[ str, Any ] ) -> int:
+        return 0 if c.get( fkl_inswitch.OPTI_FUNCTION_CONFIG_STR ) is None \
+            else c[ fkl_inswitch.OPTI_FUNCTION_CONFIG_STR ]
 
     # TODO: Only support one validation data group to optimize the sketch limitation.
     def evaluate_sketch(
@@ -256,15 +275,11 @@ class Evaluator:
                     fkl_inswitch.IS_OPTIMIZING_STR: bool,
                     fkl_inswitch.LIMITATION_STR: int,
                     fkl_inswitch.OPTI_FUNCTION_CONFIG_STR: int,
+                    fkl_inswitch.IS_NOT_BALANCING_STR: bool,
                 }
                 Parameters other than shown above are useless.
         """
-        assert sketch_config is not None
-
-        if not Evaluator._not_optimizes( sketch_config ):
-            self.l.debug( "Evaluate the tree with the sketch limitation optimization process enabled" );
-        self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100 ) )
-        self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
+        self._logging( tf, t.score( t_data, t_labels ) * 100, sketch_config )
 
         if self._is_writing:
             # Add one row name, file name of the training set, to the recorder.
@@ -276,12 +291,14 @@ class Evaluator:
         for i in range( len( self.file_list ) ):
             # Evaluate with unlimited sketch or limited sketch with designed sketch limitation.
             if Evaluator._not_optimizes( sketch_config ):
+                self.l.debug( "Evaluating with the sketch of the limitation of %d" % ( -1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None else sketch_config[ fkl_inswitch.LIMITATION_STR ] ) )
                 self._evaluate_sketch(
                     t,
                     self.file_list[ i ],
-                    -1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None else sketch_config[ fkl_inswitch.LIMITATION_STR ],
+                    Evaluator._get_limitation( sketch_config ),
                     tf,
-                    H[ i ]
+                    H[ i ],
+                    Evaluator._get_not_balancing( sketch_config )
                 )
                 continue
 
@@ -290,7 +307,7 @@ class Evaluator:
                 self.file_list[ i ],
                 self.l,
                 Evaluator._get_optimization_function(
-                    0 if sketch_config.get( fkl_inswitch.OPTI_FUNCTION_CONFIG_STR ) is None else sketch_config[ fkl_inswitch.OPTI_FUNCTION_CONFIG_STR ]
+                    Evaluator._get_optimization_function_config( sketch_config )
                 )
             )
 
@@ -298,13 +315,38 @@ class Evaluator:
             while op.has_next():
                 l: int = op.next()
                 # Iterate each test file in one test group.
-                op.add( l, self._evaluate_sketch( t, self.file_list[ i ], l, tf, H[ i ] ) )
+                op.add(
+                    l,
+                    self._evaluate_sketch(
+                        t, self.file_list[ i ], l, tf, H[ i ], Evaluator._get_not_balancing( sketch_config )
+                    )
+                )
                 m: float = op.find_median( l )
 
                 # One raw data: limitation -> median accuracy.
                 if self._is_writing: self.lim_opti_rec.add_row( R = [ str( l ), str( m ) ] );
 
             self.l.debug( "limitation=%d, median accuracy=%.2f%%" % op.find_max() )
+
+    def _logging(
+            self, tf: str, acc: float,
+            c: Dict[ str, Any ]
+    ):
+        """
+
+        @param tf:
+        @param acc: Accuracy of this current trained tree using the same training set to validate.
+        @param c:
+        """
+        assert c is not None
+
+        self.l.debug( "Evaluating the tree......" )
+        if not Evaluator._not_optimizes( c ):
+            self.l.debug( "Sketch limitation optimization process enabled" )
+        if Evaluator._get_not_balancing( c ):
+            self.l.debug( "Data sampling/balancing disabled" )
+        self.l.debug( "Accuracy of this tree: %.2f%%" % acc )
+        self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
 
     @staticmethod
     def _get_optimization_function( op_f_config: int ) -> Callable:
@@ -316,7 +358,8 @@ class Evaluator:
 
     def _evaluate_sketch(
             self, t: sklearn.tree.DecisionTreeClassifier,
-            F: List[ str ], l: int, tf: str, h: str
+            F: List[ str ], l: int, tf: str, h: str,
+            is_not_balancing: bool
     ) -> List[ float ]:
         """
 
@@ -330,7 +373,9 @@ class Evaluator:
         A: List[ float ] = []
 
         for fp in F:
-            sw: sketch_write.SketchWriter = sketch_write.SketchWriter( None, None, False, l, False, self.l.level )
+            sw: sketch_write.SketchWriter = sketch_write.SketchWriter(
+                None, None, is_not_balancing, l, False, self.l.level
+            )
 
             assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
             ( df, _, _ ) = get_data_file(
@@ -378,7 +423,7 @@ class Evaluator:
 
         # Writing Accuracy logging
         if self._is_writing:
-            assert not self.acc_rec.contains_col_name( test_file_name ), test_file_name
+            # assert not self.acc_rec.contains_col_name( test_file_name ), test_file_name
             self.acc_rec.add_column_name( test_file_name )
         if self._is_writing:
             self.acc_rec.append_element( str( r ), my_writer.get_filename( tf ), test_file_name )

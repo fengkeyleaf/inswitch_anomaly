@@ -109,7 +109,8 @@ class Tester:
             {
                 fkl_inswitch.IS_SKETCHING_STR: True,
                 fkl_inswitch.IS_OPTIMIZING_STR: False,
-                fkl_inswitch.LIMITATION_STR: 4
+                fkl_inswitch.LIMITATION_STR: 4,
+                fkl_inswitch.IS_NOT_BALANCING_STR: True
             }
         )
 

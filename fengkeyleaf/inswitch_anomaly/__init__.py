@@ -61,6 +61,7 @@ SKETCH_LIMITATION_OPTI_FEATURE_NAMES: List[ str ] = [ LIMITATION_STR, MEDIAN_ACC
 # Parameters
 IS_SKETCHING_STR: str = "is_sket"
 IS_OPTIMIZING_STR: str = "is_opti"
+IS_NOT_BALANCING_STR: str = "is_not_bal"
 LIMITATION_STR: str = "lims"
 OPTI_FUNCTION_CONFIG_STR: str = "op_f_config"
 
