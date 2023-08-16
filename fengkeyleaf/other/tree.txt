@@ -1,0 +1,4 @@
+Weekend = [0, 2147483648];
+Reservation = [0, 2147483648];
+ when Reservation<=0.5  then 0;
+ when Reservation>0.5  then 1;

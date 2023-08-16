@@ -24,88 +24,113 @@ from typing import (
     Tuple
 )
 
-def reformatting( df_f: pd.DataFrame, df_l: pd.Series, C: List[ str ] ) -> Tuple[ List[ List[ float ] ], List[ int ] ]:
-    """
-    formatting from the csv is kinda weird so it is explained here:
-    each line looks something like:
-        "[sketch]",label
-    so, we need to unpack the sketch back into a list from a string
-    and then also make sure each part of the sketch is read in as an integer
-    """
-    data: List[ List[ float ] ] = [ ]
-    labels: List[ int ] = []
 
-    assert len( df_f ) == len( df_l )
-    for ( i, s ) in df_f.iterrows():
-        # print( df.loc[ i, sketch_write.RANGE_STR ] )
-        # tmp1: List[ str ] = df.loc[ i, sketch_write.RANGE_STR ].strip( '][' ).split( ',' )
-        # tmp2: List[ int ] = []
-        # for item in tmp1:
-        #     tmp2.append( int( item ) )
+class Learner:
+    FILE_NAME: str = "./diabetes.csv"
+    FILE_NAME_SHORTER: str = "./diabetes_shorter.csv"
 
-        labels.append( df_l.loc[ i ] )
+    @staticmethod
+    def reformatting(
+            df_f: pd.DataFrame, df_l: pd.Series, C: List[ str ]
+    ) -> Tuple[ List[ List[ float ] ], List[ int ] ]:
+        """
+        formatting from the csv is kinda weird so it is explained here:
+        each line looks something like:
+            "[sketch]",label
+        so, we need to unpack the sketch back into a list from a string
+        and then also make sure each part of the sketch is read in as an integer
+        """
+        data: List[ List[ float ] ] = [ ]
+        labels: List[ int ] = []
 
-        # print( s )
-        L: List[ float ] = []
-        for c in C:
-            L.append( df_f.loc[ i, c ] )
+        assert len( df_f ) == len( df_l )
+        for ( i, s ) in df_f.iterrows():
+            # print( df.loc[ i, sketch_write.RANGE_STR ] )
+            # tmp1: List[ str ] = df.loc[ i, sketch_write.RANGE_STR ].strip( '][' ).split( ',' )
+            # tmp2: List[ int ] = []
+            # for item in tmp1:
+            #     tmp2.append( int( item ) )
 
-        data.append( L )
+            labels.append( df_l.loc[ i ] )
 
-    return ( data, labels )
+            # print( s )
+            L: List[ float ] = []
+            for c in C:
+                L.append( df_f.loc[ i, c ] )
 
-# Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
-col_names = [ 'Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction',
-              'Age', 'Outcome' ]
-# load dataset
-pima = pd.read_csv( "./diabetes.csv", header = None, names = col_names )
-pima = pd.read_csv( "./diabetes.csv" )
+            data.append( L )
 
-# pima.head()
+        return ( data, labels )
 
-# print( pima )
+    def test( self )-> None:
+        # Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
+        col_names = [
+            'Pregnancies', 'Glucose', 'BloodPressure',
+            'SkinThickness', 'Insulin', 'BMI',
+            'DiabetesPedigreeFunction', 'Age', 'Outcome'
+        ]
+        # load dataset
+        # pima = pd.read_csv( Learner.FILE_NAME_SHORTER, header=None, names=col_names)
+        pima = pd.read_csv( Learner.FILE_NAME_SHORTER )
 
-# split dataset in features and target variable
-feature_cols = [ 'Pregnancies', 'Insulin', 'BMI', 'Age', 'Glucose', 'BloodPressure', 'DiabetesPedigreeFunction' ]
-X = pima[ feature_cols ]  # Features
-y = pima[ "Outcome" ]  # Target variable
+        # pima.head()
+        print( pima )
 
-# print( X )
-# print( y )
-print( type( y ) ) # <class 'pandas.core.series.Series'>
-print( y.size )
+        # split dataset in features and target variable
+        feature_cols = [
+            'Pregnancies', 'Insulin', 'BMI',
+            'Age', 'Glucose',
+            'BloodPressure',
+            'DiabetesPedigreeFunction'
+        ]
+        X = pima[ feature_cols ]  # Features
+        y = pima[ "Outcome" ]  # Target variable
 
-# Split dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split( X, y, test_size = 0.3,
-                                                     random_state = 1 )  # 70% training and 30% test
+        print( X )
+        print( y )
+        # print( type( y ) ) # <class 'pandas.core.series.Series'>
+        # print( y.size )
 
-print( type( y_train ) ) # pandas.core.series.Series
+        # Split dataset into training set and test set
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.3, random_state=1
+        )  # 70% training and 30% test
 
-X_train_list, y_train_list = reformatting( X_train, y_train, feature_cols )
-X_test_list, y_test_list = reformatting( X_test, y_test, feature_cols )
-# print( X_train_list )
-# print( y_train_list )
-# print( X_test_list )
-# print( y_test_list )
+        print(type(y_train))  # pandas.core.series.Series
 
-# print( X_train )
-# print( type( X_train ) ) # pandas.core.frame.DataFrame
-# print( X_test )
-# print( y_train )
-# print( y_test )
+        X_train_list, y_train_list = Learner.reformatting(X_train, y_train, feature_cols)
+        X_test_list, y_test_list = Learner.reformatting(X_test, y_test, feature_cols)
+        # print( X_train_list )
+        # print( y_train_list )
+        # print( X_test_list )
+        # print( y_test_list )
 
-# Create Decision Tree classifer object
-clf = DecisionTreeClassifier()
+        # print( X_train )
+        # print( type( X_train ) ) # pandas.core.frame.DataFrame
+        # print( X_test )
+        # print( y_train )
+        # print( y_test )
 
-# Train Decision Tree Classifer
-clf = clf.fit( X_train, y_train )
-t = DecisionTreeClassifier().fit( X_train_list, y_train_list )
+        # Create Decision Tree classifer object
+        clf = DecisionTreeClassifier()
 
-# Predict the response for test dataset
-y_pred = clf.predict( X_test )
+        # Train Decision Tree Classifer
+        clf = clf.fit( X_train, y_train )
+        # t = DecisionTreeClassifier().fit(X_train_list, y_train_list)
+        print( "Threshold" )
+        print( clf.tree_.threshold )
+        print( "Features:" )
+        print( clf.tree_.feature )
 
-print( type( y_pred ) ) # <class 'numpy.ndarray'>
-# Model Accuracy, how often is the classifier correct?
-print( "Accuracy:", metrics.accuracy_score( y_test, y_pred ) )
-print( "Accuracy:", clf.score( X_test, y_test ) )
-print( "Accuracy:", t.score( X_test_list, y_test_list ) )
+        # Predict the response for test dataset
+        y_pred = clf.predict(X_test)
+
+        print(type(y_pred))  # <class 'numpy.ndarray'>
+        # Model Accuracy, how often is the classifier correct?
+        print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
+        print("Accuracy:", clf.score(X_test, y_test))
+        # print("Accuracy:", t.score(X_test_list, y_test_list))
+
+
+if __name__ == '__main__':
+    Learner().test()

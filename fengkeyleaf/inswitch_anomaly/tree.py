@@ -50,7 +50,7 @@ def get_lineage( tree, feature_names, file ):
     the last index of data is actually the label
     @param tree:
     @param feature_names:
-    @param file:
+    @param file: Output file path.
     @return:
     """
     left = tree.tree_.children_left
@@ -81,7 +81,7 @@ def get_lineage( tree, feature_names, file ):
             parent = np.where( right == child )[ 0 ].item()
             split = 'r'
 
-        lineage.append( ( parent, split, threshold[ parent ], features[ parent ] ) )
+        lineage.append( (parent, split, threshold[ parent ], features[ parent ]) )
         if parent == 0:
             lineage.reverse()
             return lineage
@@ -175,6 +175,7 @@ class Tree:
 
         t = DecisionTreeClassifier().fit( X, y )
 
+        # Evaluate the tree
         self.e.set_is_writing( True )
         # TODO: Check parameters.
         self.e.evaluate_sketch(
@@ -348,6 +349,8 @@ class Tree:
             self.acc_rec.to_csv( self.pd + _tree_evaluator.Evaluator.ACCU_SIGNATURE )
             self.acc_rec.reset()
 
+class Parser:
+    pass
 
 class _Optimizer:
     def __init__( self, r: my_dataframe.Builder | None = None, f: str | None = None ):
