@@ -45,7 +45,7 @@ class Learner:
         # tree_Tree instance
         thresholds: List[ int ] = t.tree_.threshold
         features_in_tree: List[ str ] = [ F[ i ] for i in t.tree_.feature ]
-        D: Dict[ str: List[ float ] ] = { f: [] for f in F }
+        D: Dict[ str: List[ float ] ] = { f: [ ] for f in F }
 
         for i, fe in enumerate( features_in_tree ):
             th: int = thresholds[ i ]
@@ -55,7 +55,7 @@ class Learner:
                 continue
 
             # Add split nodes' information.
-            assert t.tree_.feature[ i ] >= 0 # Cannot be -1, which is a leaf node.
+            assert t.tree_.feature[ i ] >= 0  # Cannot be -1, which is a leaf node.
             D[ fe ].append( th )
 
         # Wash and filter the information.
@@ -112,6 +112,11 @@ class Learner:
 
     @staticmethod
     def test( f: str, FC: List[ str ] ) -> None:
+        """
+
+        @param f: File path to the data set.
+        @param FC: List of feature names, excluding the classification label.
+        """
         df: pd.DataFrame = pd.read_csv( f )
         print( df )
 
@@ -122,6 +127,16 @@ class Learner:
         Learner.print_info( t )
         Learner.traverse( t )
         Learner.convert_to_file( t, FC, "./tree.txt" )
+        tree.Deparser.deparse( "./tree.txt", FC, Learner._feature_reg( FC ) )
+
+    @staticmethod
+    def _feature_reg( F: List[ str ] ) -> str:
+        r: str = r"("
+        for f in F:
+            r += f + "|"
+
+        # Discard the last "|" before appending ")"
+        return r[ : len( r ) - 1 ] + ")"
 
     @staticmethod
     def print_info( t: DecisionTreeClassifier ) -> None:
@@ -145,6 +160,7 @@ class Learner:
         print( "the impurity at node i" )
         print( t.tree_.impurity )
 
+    # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html#sphx-glr-auto-examples-tree-plot-unveil-tree-structure-py
     @staticmethod
     def traverse( clf: DecisionTreeClassifier ):
         n_nodes = clf.tree_.node_count
@@ -153,34 +169,34 @@ class Learner:
         feature = clf.tree_.feature
         threshold = clf.tree_.threshold
 
-        node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
-        is_leaves = np.zeros(shape=n_nodes, dtype=bool)
-        stack = [(0, 0)]  # start with the root node id (0) and its depth (0)
-        while len(stack) > 0:
+        node_depth = np.zeros( shape = n_nodes, dtype = np.int64 )
+        is_leaves = np.zeros( shape = n_nodes, dtype = bool )
+        stack = [ (0, 0) ]  # start with the root node id (0) and its depth (0)
+        while len( stack ) > 0:
             # `pop` ensures each node is only visited once
             node_id, depth = stack.pop()
-            node_depth[node_id] = depth
+            node_depth[ node_id ] = depth
 
             # If the left and right child of a node is not the same we have a split
             # node
-            is_split_node = children_left[node_id] != children_right[node_id]
+            is_split_node = children_left[ node_id ] != children_right[ node_id ]
             # If a split node, append left and right children and depth to `stack`
             # so we can loop through them
             if is_split_node:
-                stack.append((children_left[node_id], depth + 1))
-                stack.append((children_right[node_id], depth + 1))
+                stack.append( (children_left[ node_id ], depth + 1) )
+                stack.append( (children_right[ node_id ], depth + 1) )
             else:
-                is_leaves[node_id] = True
+                is_leaves[ node_id ] = True
 
         print(
             "The binary tree structure has {n} nodes and has "
-            "the following tree structure:\n".format(n=n_nodes)
+            "the following tree structure:\n".format( n = n_nodes )
         )
-        for i in range(n_nodes):
-            if is_leaves[i]:
+        for i in range( n_nodes ):
+            if is_leaves[ i ]:
                 print(
                     "{space}node={node} is a leaf node.".format(
-                        space=node_depth[i] * "\t", node=i
+                        space = node_depth[ i ] * "\t", node = i
                     )
                 )
             else:
@@ -188,12 +204,12 @@ class Learner:
                     "{space}node={node} is a split node: "
                     "go to node {left} if X[:, {feature}] <= {threshold} "
                     "else to node {right}.".format(
-                        space=node_depth[i] * "\t",
-                        node=i,
-                        left=children_left[i],
-                        feature=feature[i],
-                        threshold=threshold[i],
-                        right=children_right[i],
+                        space = node_depth[ i ] * "\t",
+                        node = i,
+                        left = children_left[ i ],
+                        feature = feature[ i ],
+                        threshold = threshold[ i ],
+                        right = children_right[ i ],
                     )
                 )
 

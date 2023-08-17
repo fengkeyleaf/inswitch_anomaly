@@ -2,12 +2,13 @@
 
 import logging
 import math
+import re
 from collections import OrderedDict
 from typing import (
     List,
     Dict,
     Tuple,
-    Any
+    Any, Generator
 )
 import numpy as np
 import pandas
@@ -17,17 +18,16 @@ from sklearn.tree import (
 )
 
 """
-file: file that takes training data as input and produces a tree as output
-description: file to do sketch building and write results to a csv file
-language: python3 3.11.3
-author: @sean bergen,
+File: file that takes training data as input and produces a tree as output
+Description: file to do sketch building and write results to a csv file
+Language: python3 3.11.3
+Authors: @sean bergen,
         @Riley,
         @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
 __version__ = "1.0"
-
 
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.io import (
@@ -116,6 +116,7 @@ def get_lineage( tree, feature_names, file ):
 
 
 # TODO: Use pandas
+# TODO: Give the Parse class, relative to the Deparse class.
 class Tree:
     """
     Train decision trees with sketch csv files.
@@ -168,7 +169,7 @@ class Tree:
         self.l.info( "tree: " + f )
 
         assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION, my_writer.get_extension( f ).lower()
-        ( df, X, y ) = _tree_evaluator.get_data_dataframe(
+        (df, X, y) = _tree_evaluator.get_data_dataframe(
             df,
             fkl_inswitch.SKETCH_FEATURE_NAMES
         )
@@ -220,7 +221,7 @@ class Tree:
         features = [ feature_names[ i ] for i in decision_tree.tree_.feature ]
         # print( features )
 
-        F: Dict[ str: List ] = { f: [] for f in feature_names }
+        F: Dict[ str: List ] = { f: [ ] for f in feature_names }
 
         # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html#sphx-glr-auto-examples-tree-plot-unveil-tree-structure-py
         # tree.plot_tree( decision_tree )
@@ -317,7 +318,7 @@ class Tree:
             self.l.debug( "Processing data set file: " + my_writer.get_filename( f ) )
             assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION
 
-            ( df, X, y ) = _tree_evaluator.get_data_file( f, h, F )
+            (df, X, y) = _tree_evaluator.get_data_file( f, h, F )
             self.l.debug( "DataFrame:\n" + str( df ) )
             self.l.debug( "Training:\n" + str( X ) )
             self.l.debug( "Testing:\n" + str( y ) )
@@ -330,7 +331,8 @@ class Tree:
                     t, f, H, X, y,
                     sketch_config
                 )
-            else: self.e.evaluate_classic( t, f, H, F, X, y );
+            else:
+                self.e.evaluate_classic( t, f, H, F, X, y );
 
             # Write limitation optimization results per training file.
             if self._is_writing_sketch_opti( sketch_config ):
@@ -349,14 +351,108 @@ class Tree:
             self.acc_rec.to_csv( self.pd + _tree_evaluator.Evaluator.ACCU_SIGNATURE )
             self.acc_rec.reset()
 
-class Parser:
-    pass
+
+# https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/simple_example/decision_tree/mycontroller.py
+class Deparser:
+    # TODO: Merge ones in the p4ml.py.
+    @staticmethod
+    def _find_classification(
+            tf: str, F: List, FS: List[ str ], fr: str
+    ) -> Generator[ list[ Any ], Any, None ]:
+        """
+        :param tf: decision tree txt file.
+        :param F: list of features.
+        :param FS: list of feature names in string.
+        :param fr: regular exp of feature names.
+        :return: A generator containing ( feature1, feature2, ..., featureN, classification )
+        """
+        fea = []
+        sign = []
+        num = []
+        with open( tf, "r" ) as f:
+            for line in f:
+                n = re.findall( r"when", line )
+                if n:
+                    fea.append( re.findall( fr, line ) )
+                    sign.append( re.findall( r"(<=|>)", line ) )
+                    num.append( re.findall( r"\d+\.?\d*", line ) )
+
+        FL = [ [ ] for _ in range( len( F ) + 1 ) ]
+
+        print( "fea=%s\nsign=%s\nnum=%s\nFL=%s\nFS=%s" % ( fea, sign, num, FL, FS ) )
+        for i in range( len( fea ) ):
+            FLT = [ [ k for k in range( len( f ) + 1 ) ] for f in F ]
+            assert len( FLT ) == len( FS ), str( len( FLT ) ) + " " + str( len( FS ) )
+            assert len( FS ) == len( F )
+
+            # print( fea[ i ] )
+            for j, feature in enumerate( fea[ i ] ):
+                # print( str( j ) + " " + str( feature ) )
+                for k in range( len( FS ) ):
+                    if feature == FS[ k ]:
+                        sig = sign[ i ][ j ]
+                        thres = int( float( num[ i ][ j ] ) )
+                        # print( str( num[ i ][ j ] ) + " " + str( F[ k ] ) + " " + str( thres ) )
+                        id = F[ k ].index( thres )
+                        if sig == "<=":
+                            while id < len( F[ k ] ):
+                                if id + 1 in FLT[ k ]:
+                                    FLT[ k ].remove( id + 1 )
+                                id = id + 1
+                        else:
+                            while id >= 0:
+                                if id in FLT[ k ]:
+                                    FLT[ k ].remove( id )
+                                id = id - 1
+                    # else:
+                    # https://www.geeksforgeeks.org/python-assert-keyword/
+                    # assert False, FS[ k ] + " " + feature
+
+            for k in range( len( FL ) ):
+                if (k == len( FL ) - 1):
+                    FL[ k ].append( num[ i ][ len( num[ i ] ) - 1 ] )
+                else:
+                    FL[ k ].append( FLT[ k ] )
+
+        return ( e for e in FL )
+
+    @staticmethod
+    def _find_feature( tf: str, n: int ) -> Generator[ list[ int ], Any, None ]:
+        """
+        :param tf: decision tree txt file.
+        :param n: # of features.
+        :return: A generator containing ( feature1, feature2, ..., featureN )
+        """
+        # https://www.geeksforgeeks.org/with-statement-in-python/
+        F: List = []
+        with open( tf, "r" ) as f:
+            for _ in range( n ):
+                F.append( re.findall( '\d+', f.readline() ) )
+
+        # print( F )
+        # https://docs.python.org/3.8/library/functions.html#map
+        # https://www.geeksforgeeks.org/python-map-function/
+        r = map( lambda l: [ int( i ) for i in l ], F )
+        return ( e for e in r )
+
+    @staticmethod
+    def deparse( f: str, FS: List[ str ], fr: str ) -> None:
+        """
+
+        @param f: Txt file path to the tree.
+        @param FS: List of feature names.
+        @param fr: Regular expression of the feature names.
+        """
+        # https://statisticsglobe.com/convert-generator-object-list-python
+        F = list( Deparser._find_feature( f, len( FS ) ) )
+        print( F )
+        print( *Deparser._find_classification( f, F, FS, fr ) )
+        # action = find_action( actionfile )
+
 
 class _Optimizer:
     def __init__( self, r: my_dataframe.Builder | None = None, f: str | None = None ):
-
         pass
 
     def optimize( self ) -> Tuple[ int, float ]:
-
         pass
