@@ -63,12 +63,12 @@ class Learner:
             v = [ int( i ) for i in v ]
             for n in v: assert n >= 0, v;
 
-            # Remove duplicates
             # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/
             # Add the lower bound and upper bound.
             v.append( 0 )
             v.append( int( math.pow( 2, 31 ) ) )
 
+            # Remove duplicates
             v = list( OrderedDict.fromkeys( v ) )
             v.sort()
 

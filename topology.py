@@ -3,7 +3,7 @@ import json
 import sklearn.tree
 
 """
-file:
+file: Generate network topology json file for p4 program to build the network.
 description:
 language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
