@@ -50,6 +50,10 @@ def get_if():
     return iface
 
 
+# In Scapy, IPOption is a class that represents Internet Protocol (IP) options in IP packets.
+# IP options are rarely used in modern networking and are typically found in the IP header.
+# These options allow for additional information or instructions to be included within an IP packet.
+# Common IP options include options for timestamping, security, and debugging.
 class IPOption_MRI( IPOption ):
     name = "MRI"
     option = 31

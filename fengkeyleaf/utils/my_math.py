@@ -30,3 +30,7 @@ def find_median( N: List[ float | int ] ) -> float | None:
     # Even length
     mid_right = l // 2
     return ( N[ mid_right - 1 ] + N[ mid_right ] ) / 2.0
+
+
+def assert_overflow( n: int | float, r: int | float ) -> bool:
+    return ( n >= 0 and r >= 0 ) or ( n <= 0 and r <= 0 )

@@ -24,6 +24,7 @@ class Neural:
         self.model = None
         self.loss_fn = None
         self.opti = None
+        self.lr = 0.001
 
     def load_data( self, f: str ):
         # load the dataset, split into input (X) and output (y) variables
@@ -52,38 +53,54 @@ class Neural:
         # https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam
         # self.opti = optim.Adam( self.model.parameters(), lr = 0.001 )
         # https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD
-        self.opti = optim.SGD( self.model.parameters(), lr = 0.001 )
+        self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self ):
-        n_epochs = 1
+        n_epochs = 100
         batch_size = 10
 
         # https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.parameters
         for epoch in range( n_epochs ):
             loss = None
 
-            for i in range( 0, 10, batch_size ):
+            for i in range( 0, len( self.X ), batch_size ):
                 self.opti.zero_grad()
 
                 Xbatch = self.X[ i:i + batch_size ]
+                # print( type( Xbatch ) )
                 y_pred = self.model( Xbatch )
+                # print( type( y_pred ) )
                 y_batch = self.y[ i:i + batch_size ]
+                # print( type( y_batch ) )
                 loss = self.loss_fn( y_pred, y_batch )
+                # print( type( loss ) )
                 loss.backward()
 
-                self.opti.step()
-                # with torch.no_grad():
-                #     for p in self.model.parameters():
-                #         print( p )
-                #         print( "p.grad" )
-                #         print( p.grad )
-                #         # new_val = update_function( p, p.grad, loss, other_params )
-                #         # p.copy_( new_val )
-                #         pass
+                # Accuracy 0.69921875
+                # self.opti.step()
+                # Accuracy 0.7161458134651184
+                self.manually_update_params()
 
-            print()
+            # print()
             print( f'Finished epoch {epoch}, latest loss {loss}' )
 
+    def manually_update_params( self ):
+        with torch.no_grad():
+            for p in self.model.parameters():
+                # print( p )
+                # print( p.grad )
+                new_val = Neural.update_function( p.clone(), p.grad, self.lr )
+                p.copy_( new_val )
+
+    @staticmethod
+    def update_function( P: torch.Tensor, G: torch.Tensor, lr: float ):
+        assert len( P ) == len( G )
+
+        for i in range( len( P ) ):
+            # p - lr * grad
+            P[ i ] = P[ i ] - lr * G[ i ]
+
+        return P
 
     def evaluate( self ):
         # compute accuracy (no_grad is optional)
