@@ -8,6 +8,8 @@
 #include "./includes/mlaas_preli/headers.p4"
 #include "./includes/mlaas_preli/parser.p4"
 #include "./includes/mlaas_preli/ingress.p4"
+#include "./includes/mlaas_preli/deparser.p4"
+#include "./includes/mlaas_preli/engress.p4"
 
 /*************************************************************************
 ***********************  S W I T C H  *******************************
