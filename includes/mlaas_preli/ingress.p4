@@ -34,14 +34,14 @@ control MyIngress(
         assert( -1 < hdr.mlass.idx && hdr.idx < POOL_SIZE );
         log_msg( "idx={}, ie={}, ik={}", { hdr.mlass.idx } );
 
-        P.read( r, hrd.mlass.idx );
+        P.read( r, hdr.mlass.idx );
         assert( assert_overflow( r, hdr.mlass.grad, r + hdr.mlass.grad ) );
         r = r + hdr.mlass.grad;
-        P.write( hrd.mlass.idx, r );
+        P.write( hdr.mlass.idx, r );
 
-        C.read( c, hrd.mlass.idx );
+        C.read( c, hdr.mlass.idx );
         c = c + 1;
-        C.write( hrd,.mlass.idx, c );
+        C.write( hdr.mlass.idx, c );
     }
 
     // TODO: How to ideal with a normal pkt?
@@ -59,15 +59,15 @@ control MyIngress(
 
     action grad_send() {
         hdr.mlass.grad = r;
-        P.write( hrd.mlass.idx, 0 );
+        P.write( hdr.mlass.idx, 0 );
         hdr.mlass.number_of_worker = c;
-        C.write( hrd,.mlass.idx, 0 );
-        send( hdr.ipv4.dstAddr, standard_metadata.ingress_port );
+        C.write( hdr.mlass.idx, 0 );
+        ipv4_forward( hdr.ipv4.dstAddr, standard_metadata.ingress_port );
     }
 
     table gradient_update_t {
         key = {
-            c: extract
+            c: exact;
         }
         actions = {
             grad_send;
@@ -76,7 +76,7 @@ control MyIngress(
         size = 1024;
         const entries = {
             ( NUMBER_OF_WORKER ): grad_send;
-            _: NoAction
+            _: NoAction;
         }
     }
 
