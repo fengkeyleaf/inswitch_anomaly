@@ -13,6 +13,7 @@ parser MyParser( packet_in pkt,
 
     state parse_ethernet {
         pkt.extract( hdr.ethernet );
+        log_msg( "etherType={}", { hdr.ethernet.etherType } );
         transition select( hdr.ethernet.etherType ) {
             TYPE_IPV4: parse_ipv4;
             default: accept;
@@ -21,6 +22,7 @@ parser MyParser( packet_in pkt,
 
     state parse_ipv4 {
         pkt.extract( hdr.ipv4 );
+        log_msg( "ipv4.dstAddr={}", { hdr.ipv4.dstAddr } );
         transition parse_mlass;
     }
 

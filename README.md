@@ -47,6 +47,8 @@ And then in h1's terminal, run:
 
 And you will see the information about pkts in h1's and h3's terminal.
 
+Note that s1-runtime.json should be configured in topology.json if outside runtime routing rules should be injected when initializing the network.
+
 # 3. Sketch Testing
 
 Assumptions: 

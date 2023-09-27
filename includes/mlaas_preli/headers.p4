@@ -26,9 +26,9 @@ header ipv4_h {
 // TODO: if a client doesn't the trainning data for a certain parameter,
 // do we count this client? i.e. # of grads plus one?
 header mlass_h {
-    bit<16> idx; // Param index
+    bit<32> idx; // Param index
     int32 grad; // Gradient for the param
-    bit<16> number_of_worker; // Number of worker to get the average gradient.
+    bit<16> numberOfWorker; // Number of worker to get the average gradient.
 }
 
 struct headers {

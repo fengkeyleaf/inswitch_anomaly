@@ -7,6 +7,7 @@
 #include "./includes/mlaas_preli/defines.p4"
 #include "./includes/mlaas_preli/headers.p4"
 #include "./includes/mlaas_preli/parser.p4"
+#include "./includes/mlaas_preli/checksum.p4"
 #include "./includes/mlaas_preli/ingress.p4"
 #include "./includes/mlaas_preli/deparser.p4"
 #include "./includes/mlaas_preli/engress.p4"
@@ -17,7 +18,9 @@
 
 V1Switch(
     MyParser(),
+    MyVerifyChecksum(),
     MyIngress(),
     MyEgress(),
+    MyComputeChecksum(),
     MyDeparser()
 ) main;

@@ -12,12 +12,13 @@ control MyIngress(
     register<int32>( POOL_SIZE ) P;  // Gradient pool
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
-    register<int32>( POOL_SIZE ) C;  // Worker Count
+    register<bit<16>>( POOL_SIZE ) C;  // Worker Count
 
-    // Current count for the current param.
-    bit<16> c;
+    // A Field variable must be initialized when it's used in a table key match,
     // Current cumulative gradient value.
-    int32 r;
+    int32 r = 0;
+    // Current count for the current param.
+    bit<16> c = 0;
 
     action drop() {
         mark_to_drop( standard_metadata );
@@ -31,8 +32,9 @@ control MyIngress(
     }
 
     action grad_add() {
-        assert( -1 < hdr.mlass.idx && hdr.idx < POOL_SIZE );
-        log_msg( "idx={}, ie={}, ik={}", { hdr.mlass.idx } );
+        // bit<32> is unsigned type, so no need to do: -1 < hdr.mlass.idx && 
+        assert( hdr.mlass.idx < POOL_SIZE );
+        log_msg( "idx={}", { hdr.mlass.idx } );
 
         P.read( r, hdr.mlass.idx );
         assert( assert_overflow( r, hdr.mlass.grad, r + hdr.mlass.grad ) );
@@ -47,22 +49,24 @@ control MyIngress(
     // TODO: How to ideal with a normal pkt?
     table gradient_addition_t {
         key = {
-            hdr.mlass.idx: exact;
+            hdr.mlass.idx: range;
         }
         actions = {
             grad_add;
-            ipv4_forward;
+            NoAction;
         }
-        size = 1024;
-        default_action = ipv4_forward;
+        default_action = NoAction;
+        const entries = {
+            ( 0 .. 7 ) : grad_add;
+        }
     }
 
     action grad_send() {
         hdr.mlass.grad = r;
         P.write( hdr.mlass.idx, 0 );
-        hdr.mlass.number_of_worker = c;
+        hdr.mlass.numberOfWorker = c;
         C.write( hdr.mlass.idx, 0 );
-        ipv4_forward( hdr.ipv4.dstAddr, standard_metadata.ingress_port );
+        ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
     }
 
     table gradient_update_t {
@@ -73,17 +77,37 @@ control MyIngress(
             grad_send;
             NoAction;
         }
-        size = 1024;
+        default_action = NoAction;
         const entries = {
-            ( NUMBER_OF_WORKER ): grad_send;
-            _: NoAction;
+            ( NUMBER_OF_WORKER ) : grad_send;
+            // DefaultExpression invalid key expression
+            // Maybe current complier doesn't support it.
+            // _ : NoAction;
         }
     }
 
-    apply {
-        if ( hdr.ipv4.isValid() && hdr.mlass.isValid() ) {
-            gradient_addition_t.apply();
-            gradient_update_t.apply();
+    table ipv4_lpm {
+        key = {
+            hdr.ipv4.dstAddr: lpm;
         }
+        actions = {
+            ipv4_forward;
+            drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = drop();
+    }
+
+    apply {
+        // Basic forwarding/routing.
+        if ( hdr.ipv4.isValid() ) {
+            ipv4_lpm.apply();
+        }
+
+    //     if ( hdr.ipv4.isValid() && hdr.mlass.isValid() ) {
+    //         gradient_addition_t.apply();
+    //         gradient_update_t.apply();
+    //     }
     }
 }

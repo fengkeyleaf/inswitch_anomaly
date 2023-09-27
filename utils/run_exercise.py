@@ -242,7 +242,7 @@ class ExerciseRunner:
 
         print( "Network program initialized...." )
         # wait for that to finish. Not sure how to do this better
-        sleep( 10 * 60 )
+        # sleep( 10 * 60 )
 
         # http://mininet.org/api/classmininet_1_1node_1_1Node.html#a6e1338af3c4a0348963a257ac548153b
         # https://www.geeksforgeeks.org/multithreading-python-set-1/
@@ -250,12 +250,12 @@ class ExerciseRunner:
         # t1 = threading.Thread( target = self.__listening, args = ( "h1", ) )
         # t1.start()
 
-        # sleep( 2 )
+        sleep( 2 )
         # self.__sending_pkts()
 
-        Supervisor.Supervisor( self.net, self.hosts ).send()
+        # Supervisor.Supervisor( self.net, self.hosts ).send()
 
-        sleep( 8 )
+        # sleep( 8 )
         self.do_net_cli()
         # stop right after the CLI is exited
         self.net.stop()
