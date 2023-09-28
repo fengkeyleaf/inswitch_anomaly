@@ -38,8 +38,12 @@ control MyIngress(
 
         P.read( r, hdr.mlass.idx );
         assert( assert_overflow( r, hdr.mlass.grad, r + hdr.mlass.grad ) );
+        int32 a = -100;
+        int32 b = -100000;
+        log_msg( "res={}", { a + b } );
         r = r + hdr.mlass.grad;
-        P.write( hdr.mlass.idx, r );
+        log_msg( "before: r={}", { r } );
+        P.write( hdr.mlass.idx, -1 );
 
         C.read( c, hdr.mlass.idx );
         c = c + 1;
@@ -66,6 +70,7 @@ control MyIngress(
         P.write( hdr.mlass.idx, 0 );
         hdr.mlass.numberOfWorker = c;
         C.write( hdr.mlass.idx, 0 );
+        // TODO: Boardcast the update.
         ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
     }
 
@@ -101,13 +106,13 @@ control MyIngress(
 
     apply {
         // Basic forwarding/routing.
-        if ( hdr.ipv4.isValid() ) {
-            ipv4_lpm.apply();
-        }
+        // if ( hdr.ipv4.isValid() ) {
+        //     ipv4_lpm.apply();
+        // }
 
-    //     if ( hdr.ipv4.isValid() && hdr.mlass.isValid() ) {
-    //         gradient_addition_t.apply();
-    //         gradient_update_t.apply();
-    //     }
+        if ( hdr.ipv4.isValid() && hdr.mlass.isValid() ) {
+            gradient_addition_t.apply();
+            gradient_update_t.apply();
+        }
     }
 }

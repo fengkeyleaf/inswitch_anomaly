@@ -47,7 +47,7 @@ And then in h1's terminal, run:
 
 And you will see the information about pkts in h1's and h3's terminal.
 
-Note that s1-runtime.json should be configured in topology.json if outside runtime routing rules should be injected when initializing the network.
+Note that s1-runtime.json should be configured in topology.json if outside runtime routing rules should be injected when initializing the network, something like: "runtime_json" : "pod-topo/s1-runtime.json".
 
 # 3. Sketch Testing
 
@@ -83,3 +83,10 @@ Test cases:
 5. sketches: sketch csv files in one column, 4 features in a list.
 6. sketches_new: sketch csv files in separate column.
 7. trees: trained tree txt files.
+
+# 6. Mlaas Pkt Testing
+
+1. Send and receive a random pkt.
+2. One host: two pkts to add on, three pkts to add on and five pkts to add on;
+3. Two hosts: two, three, five and ten pkts to add on;
+4. Overflow testing, both positive and negative.

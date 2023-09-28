@@ -3,7 +3,7 @@ import random
 import socket
 import sys
 
-from scapy.all import IP, TCP, Ether, get_if_hwaddr, get_if_list, sendp, bind_layers
+from scapy.all import IP, TCP, Ether, get_if_hwaddr, get_if_list, sendp
 
 import mlass_pkt
 
@@ -21,22 +21,33 @@ def get_if():
     return iface
 
 
-def send_TCP_pkt( iface, addr ):
+def get_TCP_pkt( iface, addr ):
     pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
     pkt = pkt /IP(dst=addr) / TCP(dport=1234, sport=random.randint(49152,65535)) / sys.argv[2]
     pkt.show2()
     return pkt
 
 
-def send_mlaas_pkt( iface, addr ):
-    pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-    pkt = pkt /IP(dst=addr) / mlass_pkt.Mlaas_p( idx = 0, grad = 1, numberOfWorker = 0 ) / sys.argv[2]
+def send_TCP_pkt( iface, addr ):
+    pkt = get_TCP_pkt( iface, addr )
+    sendp(pkt, iface=iface, verbose=False)
+
+
+def get_mlaas_pkt( iface, addr, idx: int, grad: int, number_of_worker: int ):
+    pkt =  Ether(src=get_if_hwaddr(iface), dst='08:00:00:00:01:11')
+    pkt = pkt /IP(dst=addr) / mlass_pkt.Mlaas_p( idx = idx, grad = grad, numberOfWorker = number_of_worker )
     pkt.show2()
     return pkt
 
 
-def main():
+def send_mlaas_2pkts( iface, addr ):
+    pkt = get_mlaas_pkt( iface, addr, 0, -100, 0 )
+    sendp( pkt, iface = iface, verbose = False )
+    # pkt = get_mlaas_pkt( iface, addr, 0, -1000000, 0 )
+    # sendp( pkt, iface = iface, verbose = False )
 
+
+def main():
     if len(sys.argv)<3:
         print('pass 2 arguments: <destination> "<message>"')
         exit(1)
@@ -45,9 +56,8 @@ def main():
     iface = get_if()
 
     print("sending on interface %s to %s" % (iface, str(addr)))
-    pkt = send_TCP_pkt( iface, addr )
-    # pkt = send_mlaas_pkt( iface, addr )
-    sendp(pkt, iface=iface, verbose=False)
+    send_mlaas_2pkts( iface, addr )
+    # send_TCP_pkt( iface, addr )
 
 
 if __name__ == '__main__':
