@@ -27,7 +27,10 @@ header ipv4_h {
 // do we count this client? i.e. # of grads plus one?
 header mlass_h {
     bit<32> idx; // Param index
-    int32 grad; // Gradient for the param
+    unsigned_int32 gradPos; // Positive Gradient for the param
+    unsigned_int32 gradNeg; // Negative Gradient for the param
+    bit<1> sign; // Gradient sign
+    bit<7> reserves; // Satisify: BMv2 target only supports headers with fields totaling a multiple of 8 bits
     bit<16> numberOfWorker; // Number of worker to get the average gradient.
 }
 

@@ -9,14 +9,14 @@ control MyIngress(
     inout metadata meta,
     inout standard_metadata_t standard_metadata 
 ) {
-    register<int32>( POOL_SIZE ) P;  // Gradient pool
+    // Note that register doesn't support signed integers.
+    register<unsigned_int32>( POOL_SIZE ) P_pos;  // Positive gradient pool
+    register<unsigned_int32>( POOL_SIZE ) P_neg; // Negative gradient pool
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
     register<bit<16>>( POOL_SIZE ) C;  // Worker Count
 
     // A Field variable must be initialized when it's used in a table key match,
-    // Current cumulative gradient value.
-    int32 r = 0;
     // Current count for the current param.
     bit<16> c = 0;
 
@@ -31,45 +31,75 @@ control MyIngress(
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
-    action grad_add() {
-        // bit<32> is unsigned type, so no need to do: -1 < hdr.mlass.idx && 
-        assert( hdr.mlass.idx < POOL_SIZE );
-        log_msg( "idx={}", { hdr.mlass.idx } );
-
-        P.read( r, hdr.mlass.idx );
-        assert( assert_overflow( r, hdr.mlass.grad, r + hdr.mlass.grad ) );
-        int32 a = -100;
-        int32 b = -100000;
-        log_msg( "res={}", { a + b } );
-        r = r + hdr.mlass.grad;
-        log_msg( "before: r={}", { r } );
-        P.write( hdr.mlass.idx, -1 );
-
+    action increment_worker() {
         C.read( c, hdr.mlass.idx );
         c = c + 1;
         C.write( hdr.mlass.idx, c );
+    }
+
+    action grad_add_pos() {
+        log_msg( "max={}", { MAX_UNSIGNED_INT } );
+        // bit<32> is unsigned type, so no need to do: -1 < hdr.mlass.idx && 
+        assert( hdr.mlass.idx < POOL_SIZE );
+        // log_msg( "idx={}", { hdr.mlass.idx } );
+
+        unsigned_int32 r = 0;
+        P_pos.read( r, hdr.mlass.idx );
+        assert( MAX_UNSIGNED_INT - r >= hdr.mlass.gradPos );
+        r = r + hdr.mlass.gradPos;
+        // log_msg( "before: r={}", { r } );
+        P_pos.write( hdr.mlass.idx, r );
+
+        increment_worker();
+    }
+
+    action grad_add_neg() {
+        // bit<32> is unsigned type, so no need to do: -1 < hdr.mlass.idx && 
+        assert( hdr.mlass.idx < POOL_SIZE );
+        // log_msg( "idx={}", { hdr.mlass.idx } );
+
+        unsigned_int32 r = 0;
+        P_neg.read( r, hdr.mlass.idx );
+        assert( MAX_UNSIGNED_INT - r >= hdr.mlass.gradNeg );
+        r = r + hdr.mlass.gradNeg;
+        // log_msg( "before: r={}", { r } );
+        P_neg.write( hdr.mlass.idx, r );
+
+        increment_worker();
     }
 
     // TODO: How to ideal with a normal pkt?
     table gradient_addition_t {
         key = {
             hdr.mlass.idx: range;
+            hdr.mlass.sign: exact;
         }
         actions = {
-            grad_add;
+            grad_add_pos;
+            grad_add_neg;
             NoAction;
         }
         default_action = NoAction;
         const entries = {
-            ( 0 .. 7 ) : grad_add;
+            ( 0 .. 7, 0 ) : grad_add_pos;
+            ( 0 .. 7, 1 ) : grad_add_neg;
         }
     }
 
+    // TODO: Asynchronous condition, pool idx may be incorrect.
     action grad_send() {
-        hdr.mlass.grad = r;
-        P.write( hdr.mlass.idx, 0 );
+        unsigned_int32 r = 0;
+        P_pos.read( r, hdr.mlass.idx );
+        hdr.mlass.gradPos = r;
+        P_pos.write( hdr.mlass.idx, 0 );
+
+        P_neg.read( r, hdr.mlass.idx );
+        hdr.mlass.gradNeg = r;
+        P_neg.write( hdr.mlass.idx, 0 );
+
         hdr.mlass.numberOfWorker = c;
         C.write( hdr.mlass.idx, 0 );
+
         // TODO: Boardcast the update.
         ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
     }

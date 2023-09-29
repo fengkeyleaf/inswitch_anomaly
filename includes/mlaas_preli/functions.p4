@@ -1,4 +1,4 @@
-bool assert_overflow( in int32 a, in int32 b, in int32 c ) {
+bool assert_overflow( in int<32> a, in int<32> b, in int<32> c ) {
     // log_msg( "a={}, b={}, c={}", { a, b, c } );
     // a and b have different sign or
     return ( a >= 0 && b <= 0 ) || ( a <= 0 && b >= 0 ) ||
