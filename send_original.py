@@ -21,6 +21,8 @@ def get_if():
     return iface
 
 
+#  pkt =  Ether() / IP( dst = "10.0.2.2" ) TCP(sport=5793, dport=80) / "HelloWorld"
+#  sendp( pkt, iface="veth0")
 def get_TCP_pkt( iface, addr ):
     pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
     pkt = pkt / IP(dst=addr) / TCP(dport=1234, sport=random.randint(49152,65535)) / sys.argv[2]
