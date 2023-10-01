@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import threading
+import random
+from typing import List
+# import math
+
 from scapy.all import IP, Ether, Packet
 import ptf
 import ptf.testutils as tu
@@ -186,7 +191,7 @@ class Mlaas_preli_test_1host_case1( Mlass_preli_test ):
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
-# @tu.disabled
+@tu.disabled
 class Mlaas_preli_test_1host_case2( Mlass_preli_test ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 100, 0, False, 0 )
@@ -198,7 +203,7 @@ class Mlaas_preli_test_1host_case2( Mlass_preli_test ):
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
-# @tu.disabled
+@tu.disabled
 class Mlaas_preli_test_1host_case3( Mlass_preli_test ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 5, True, 0 )
@@ -210,7 +215,7 @@ class Mlaas_preli_test_1host_case3( Mlass_preli_test ):
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
-# @tu.disabled
+@tu.disabled
 class Mlaas_preli_test_1host_case4( Mlass_preli_test ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 1, 1000000, True, 0 )
@@ -222,7 +227,7 @@ class Mlaas_preli_test_1host_case4( Mlass_preli_test ):
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
-# @tu.disabled
+@tu.disabled
 class Mlaas_preli_test_1host_case5( Mlass_preli_test ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 10, 0, False, 0 )
@@ -234,7 +239,7 @@ class Mlaas_preli_test_1host_case5( Mlass_preli_test ):
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
-# @tu.disabled
+@tu.disabled
 class Mlaas_preli_test_1host_case6( Mlass_preli_test ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 1000000, True, 0 )
@@ -264,3 +269,58 @@ class Mlaas_preli_test_2host_case1( Mlass_preli_test ):
         tu.send_packet( self, self.eg_port, pkt2 )
         exp_pkt2: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip2, 63, 1, 50, 40, True, 2 );
         tu.verify_packets( self, exp_pkt2, [ self.eg_port ] )
+
+
+# @tu.disabled
+class Mlaas_preli_test_2host_random( Mlass_preli_test ):
+    POOL_SIZE: int = 8
+    EXP: int = 3
+    MAX_INT: int = 2 ** EXP - 1
+    MIN_INT: int = -( 2 ** EXP )
+    # Sacling factor
+
+    @staticmethod
+    def convert_to_pkt( g: int ):
+        pos: int = 0
+        neg: int = 0
+        sign: bool = False # Positive
+
+        if g < 0:
+            sign = True
+            neg = abs( g )
+        else:
+            pos = g
+
+        return ( pos, neg, sign )
+
+    def training( self, n_workers: int ):
+        idx: int = random.randint( 0, Mlaas_preli_test_2host_random.POOL_SIZE - 1 )
+        G: List[ int ] = [ 
+            random.randint( Mlaas_preli_test_2host_random.MIN_INT, Mlaas_preli_test_2host_random.MAX_INT ) 
+            for _ in range( n_workers )
+        ]
+        s: int = sum( G )
+
+        s_pos: int = 0
+        s_neg: int = 0
+        # TODO: random ig_port
+        # TODO: boardcase updates
+        for g in G:
+            ( pos, neg, sign ) = Mlaas_preli_test_2host_random.convert_to_pkt( g )
+            s_pos += pos
+            s_neg += neg
+            pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, idx, pos, neg, sign, 0 )
+            tu.send_packet( self, self.ig_port, pkt )
+        
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, idx, s_pos, s_neg, False, n_workers )
+        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+
+        # TODO: Convert to int when verifying.
+        
+    def runTest( self ):
+        n_epochs: int = 100
+        n_workers: int = 8
+        
+        for _ in range( n_epochs ):
+            self.training( n_workers )
+    

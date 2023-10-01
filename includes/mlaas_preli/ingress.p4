@@ -100,6 +100,9 @@ control MyIngress(
         hdr.mlass.numberOfWorker = c;
         C.write( hdr.mlass.idx, 0 );
 
+        // Update pkt's sign is alwasy False, which is easy to verify.
+        hdr.mlass.sign = 0;
+
         // TODO: Boardcast the update.
         ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
     }
