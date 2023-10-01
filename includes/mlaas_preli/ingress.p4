@@ -139,13 +139,13 @@ control MyIngress(
 
     apply {
         // Basic forwarding/routing.
-        if ( hdr.ipv4.isValid() ) {
-            ipv4_lpm.apply();
-        }
-
-        // if ( hdr.ipv4.isValid() && hdr.mlass.isValid() ) {
-        //     gradient_addition_t.apply();
-        //     gradient_update_t.apply();
+        // if ( hdr.ipv4.isValid() ) {
+        //     ipv4_lpm.apply();
         // }
+
+        if ( hdr.ipv4.isValid() && hdr.mlass.isValid() ) {
+            gradient_addition_t.apply();
+            gradient_update_t.apply();
+        }
     }
 }
