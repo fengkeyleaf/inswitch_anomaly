@@ -273,8 +273,8 @@ class Mlaas_preli_test_2host_case1( Mlass_preli_test ):
 
 # @tu.disabled
 class Mlaas_preli_test_2host_random( Mlass_preli_test ):
-    POOL_SIZE: int = 8
-    EXP: int = 3
+    POOL_SIZE: int = 256
+    EXP: int = 16
     MAX_INT: int = 2 ** EXP - 1
     MIN_INT: int = -( 2 ** EXP )
     # Sacling factor
@@ -318,8 +318,8 @@ class Mlaas_preli_test_2host_random( Mlass_preli_test ):
         # TODO: Convert to int when verifying.
         
     def runTest( self ):
-        n_epochs: int = 100
-        n_workers: int = 8
+        n_epochs: int = 10000
+        n_workers: int = 16
         
         for _ in range( n_epochs ):
             self.training( n_workers )
