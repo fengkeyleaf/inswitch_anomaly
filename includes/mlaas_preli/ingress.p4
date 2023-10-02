@@ -81,8 +81,8 @@ control MyIngress(
         }
         default_action = NoAction;
         const entries = {
-            ( 0 .. 7, 0 ) : grad_add_pos;
-            ( 0 .. 7, 1 ) : grad_add_neg;
+            ( 0 .. POOL_SIZE - 1, 0 ) : grad_add_pos;
+            ( 0 .. POOL_SIZE - 1, 1 ) : grad_add_neg;
         }
     }
 
@@ -104,6 +104,7 @@ control MyIngress(
         hdr.mlass.sign = 0;
 
         // TODO: Boardcast the update.
+        assert( standard_metadata.ingress_port > 0 );
         ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
     }
 
@@ -113,9 +114,9 @@ control MyIngress(
         }
         actions = {
             grad_send;
-            NoAction;
+            drop;
         }
-        default_action = NoAction;
+        default_action = drop;
         const entries = {
             ( NUMBER_OF_WORKER ) : grad_send;
             // DefaultExpression invalid key expression
