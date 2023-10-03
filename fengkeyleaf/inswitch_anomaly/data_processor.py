@@ -55,7 +55,7 @@ class DataProcessor:
     3) tree processing;
     """
     def __init__(
-            self, da: str, h: str | None,
+            self, da: str, h: str,
             dm: str = None, D: List[ str ] = None,
             is_writing: bool = False, ll: int = logging.INFO
     ) -> None:

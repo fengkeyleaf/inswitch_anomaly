@@ -13,7 +13,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 __version__ = "1.0"
 
 
-def find_median( N: List[ float | int ] ) -> float | None:
+def find_median( N: List[ float ] ) -> float:
     """
     Find the median in the list of numbers.
     @param N:
@@ -32,5 +32,5 @@ def find_median( N: List[ float | int ] ) -> float | None:
     return ( N[ mid_right - 1 ] + N[ mid_right ] ) / 2.0
 
 
-def assert_overflow( n: int | float, r: int | float ) -> bool:
+def assert_overflow( n: float, r: float ) -> bool:
     return ( n >= 0 and r >= 0 ) or ( n <= 0 and r <= 0 )

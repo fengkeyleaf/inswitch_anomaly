@@ -19,7 +19,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 __version__ = "1.0"
 
 
-def find_min_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tuple[ Any, Any ] | None:
+def find_min_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tuple[ Any, Any ]:
     """
     Find the key-value pair in this dict with the min value
     @param D:
@@ -33,7 +33,7 @@ def find_min_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tup
     return min( D.items(), key = k )
 
 
-def find_max_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tuple[ Any, Any ] | None:
+def find_max_value( D: Dict[ Any, Any ], k: Callable = lambda x: x[ 1 ] ) -> Tuple[ Any, Any ]:
     if D is None or len( D ) <= 0: return None
     return max( D.items(), key = k )
 

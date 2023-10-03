@@ -67,7 +67,7 @@ def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ in
 
 # TODO: Put into my_pandas.my_dataframe
 def get_data_file(
-        fp: str, h: str | None, F: List[ str ]
+        fp: str, h: str, F: List[ str ]
 ) -> Tuple[ pandas.DataFrame, pandas.DataFrame, pandas.Series ]:
     """
     Get data columns with wanted feature names
@@ -256,7 +256,7 @@ class Evaluator:
 
     # TODO: Only support one validation data group to optimize the sketch limitation.
     def evaluate_sketch(
-            self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str | None ],
+            self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str ],
             t_data: pandas.DataFrame, t_labels: pandas.Series, sketch_config: Dict[ str, Any ]
     ) -> None:
         """

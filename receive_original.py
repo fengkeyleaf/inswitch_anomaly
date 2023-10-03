@@ -15,7 +15,7 @@ from scapy.all import (
 from scapy.layers.inet import _IPOption_HDR
 
 import mlass_pkt
-
+import numpy
 
 def get_if():
     ifs=get_if_list()

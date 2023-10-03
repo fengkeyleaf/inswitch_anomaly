@@ -31,7 +31,7 @@ class Sender:
         self.l: logging.Logger = my_logging.get_logger( ll )
 
     # p: str | bytes are both OK using scapy.packet.Raw( load = p ) to generate a pkt.
-    def send( self, ip: str, target_iface: str, p: str | bytes ) -> str:
+    def send( self, ip: str, target_iface: str, p: str ) -> str:
         """
         Send a pkt to the ip with target_interface and port.
         @param ip: Dst ip to which the pkt will be sent

@@ -125,7 +125,7 @@ class Tree:
     SIGNATURE: str = "_tree.txt"
 
     def __init__(
-            self, d: str | None, pd: str | None,
+            self, d: str, pd: str,
             D: List[ str ], is_writing: bool = False,
             ll: int = logging.INFO
     ) -> None:
@@ -151,7 +151,7 @@ class Tree:
 
     def process(
             self, f: str,
-            df_o: pandas.DataFrame | None, df_n: pandas.DataFrame | None
+            df_o: pandas.DataFrame, df_n: pandas.DataFrame
     ) -> None:
         """
         Process pkt sketch csv file and train a tree.
@@ -286,9 +286,9 @@ class Tree:
             c.get( fkl_inswitch.IS_OPTIMIZING_STR ) is not None and c.get( fkl_inswitch.IS_OPTIMIZING_STR )
 
     def train(
-            self, h: str | None, H: List[ str | None ],
-            F: List[ str ] | None = None,
-            sketch_config: Dict[ str, Any ] | None = None
+            self, h: str, H: List[ str ],
+            F: List[ str ] = None,
+            sketch_config: Dict[ str, Any ] = None
     ) -> None:
         """
         Train a tree with designed features. No sketch applied in the validation process.
@@ -358,7 +358,7 @@ class Deparser:
     @staticmethod
     def _find_classification(
             tf: str, F: List, FS: List[ str ], fr: str
-    ) -> Generator[ list[ Any ], Any, None ]:
+    ) -> Generator[ List[ Any ], Any, None ]:
         """
         :param tf: decision tree txt file.
         :param F: list of features.
@@ -417,7 +417,7 @@ class Deparser:
         return ( e for e in FL )
 
     @staticmethod
-    def _find_feature( tf: str, n: int ) -> Generator[ list[ int ], Any, None ]:
+    def _find_feature( tf: str, n: int ) -> Generator[ List[ int ], Any, None ]:
         """
         :param tf: decision tree txt file.
         :param n: # of features.
@@ -451,7 +451,7 @@ class Deparser:
 
 
 class _Optimizer:
-    def __init__( self, r: my_dataframe.Builder | None = None, f: str | None = None ):
+    def __init__( self, r: my_dataframe.Builder = None, f: str = None ):
         pass
 
     def optimize( self ) -> Tuple[ int, float ]:

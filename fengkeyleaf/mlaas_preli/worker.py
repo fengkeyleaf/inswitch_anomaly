@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# sudo pip3 install -U pandas
+# sudo pip3 install -U torch
+# sudo pip3 install -U numpy
 import logging
 import socket
 import math
@@ -45,6 +48,8 @@ class Worker:
 
     SLEEP_TIME: int = 1 # 1s
 
+    POOL_SIZE: int = 32
+
     # TODO: Put this class into the package, my_scapy.
     class _Sender:
         def __init__( self, l: logging.Logger ):
@@ -72,8 +77,8 @@ class Worker:
             # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Packet.show2
             return p.show2( dump = True )
 
-    def __init__( self, lr: float ) -> None:
-        self.l: logging.Logger = my_logging.get_logger( logging.INFO )
+    def __init__( self, lr: float, ll: int = logging.INFO ) -> None:
+        self.l: logging.Logger = my_logging.get_logger( ll )
 
         # Networking communication
         self.s: Worker._Sender = Worker._Sender( self.l )
@@ -83,7 +88,7 @@ class Worker:
         self.r.start()
 
         # Format: ( idx, grad( int ), number of worker )
-        self.res: Tuple = None
+        self.res: Tuple[ int, int, int ] = None
 
         # ML part
         self.X: torch.Tensor = None
@@ -102,6 +107,8 @@ class Worker:
         dataset: np.ndarray = np.loadtxt( f, delimiter = ',' )
         X: np.ndarray = dataset[ :, 0:8 ]
         y: np.ndarray = dataset[ :, 8 ]
+        # print( X )
+        # print( y )
 
         self.X = torch.tensor( X, dtype = torch.float32 )
         self.y = torch.tensor( y, dtype = torch.float32 ).reshape( -1, 1 )
@@ -116,7 +123,7 @@ class Worker:
             nn.Sigmoid()
         )
 
-        print( self.model )
+        self.l.info( self.model )
 
         self.loss_fn = nn.BCELoss()  # binary cross entropy
         # print( self.model.parameters() )
@@ -126,7 +133,7 @@ class Worker:
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self ) -> None:
-        n_epochs: int = 100
+        n_epochs: int = 1
         batch_size: int = 10
 
         # https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.parameters
@@ -151,30 +158,42 @@ class Worker:
     def manually_update_params( self ) -> None:
         with torch.no_grad():
             for P in self.model.parameters():
-                P.copy_( self.get_average_grad( P.clone() ) )
+                # print( P )
+                # print( P.grad )
+                P.copy_( self.get_average_grad( P.clone(), P.grad.clone() ) )
 
-    def get_average_grad( self, P: torch.Tensor ) -> torch.Tensor:
-        assert len( P ) == len( P.grad )
+    def get_average_grad( self, P: torch.Tensor, G: torch.Tensor ) -> torch.Tensor:
+        # print( P )
+        # print( G )
+        assert len( P ) == len( G )
 
-        for i in range( len( P ) ):
-            assert P.grad[ i ] * self.f <= Worker.MAX_INT
-            ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( P.grad[ i ] * self.f ) )
-            # TODO: Dst ip and dst interface.
-            self.s.send(
-                "10.0.1.1", "eth0",
-                mlaas_pkt.get_mlaas_pkt(
-                    "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
-                    i, pos, neg, sign, 0
+        for l in range( len( P ) ):
+            assert len( P[ l ] == G[ l ] )
+            for i in range( len( P[ l ] ) ):
+                assert i < Worker.POOL_SIZE
+                assert G[ l ][ i ] * self.f <= Worker.MAX_INT
+                
+                ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( G[ l ][ i ] * self.f ) )
+                # TODO: Dst ip and dst interface.
+                pkt_str: str = self.s.send(
+                    "10.0.1.1", "eth0",
+                    mlaas_pkt.get_mlaas_pkt(
+                        "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
+                        i, pos, neg, sign, 0
+                    )
                 )
-            )
+                self.l.debug( "Sent:" + pkt_str )
 
-            # TODO: synchronize worker and switch to get a gradient update pkt.
-            while self.res is None:
-                sleep( Worker.SLEEP_TIME )
+                # TODO: synchronize worker and switch to get a gradient update pkt.
+                while self.res is None:
+                    sleep( Worker.SLEEP_TIME )
 
-            assert self.res is not None
-            avg_grad: float = self.res[ 1 ] / ( self.f * self.res[ 2 ] )
-            P[ i ] = P[ i ] - self.lr * avg_grad
+                assert self.res is not None
+                self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
+                avg_grad: float = self.res[ 1 ] / ( self.f * self.res[ 2 ] )
+
+                self.res = None # Reset container to assert.
+                P[ l ][ i ] = P[ l ][ i ] - self.lr * avg_grad
 
         return P
 
@@ -184,6 +203,7 @@ class Worker:
         @param p: Received pkt from the switch.
         @rtype: None
         """
+        self.l.debug( "Rec:" + p.show2() )
         assert self.res is None
         self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
 
@@ -212,5 +232,6 @@ if __name__ == '__main__':
     lr: float = 0.001
     w: Worker = Worker( lr )
     w.build_model()
+    w.load_data( "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv" )
     w.training()
     w.evaluate()

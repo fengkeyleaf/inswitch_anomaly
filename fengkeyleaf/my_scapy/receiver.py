@@ -38,5 +38,6 @@ class Receiver( threading.Thread ):
         sys.stdout.flush()
         self.l.info( "sniffing on %s" % self.iface )
 
+    # https://stackoverflow.com/questions/24664893/python-scapy-sniff-only-incoming-packets/75405277#75405277
     def run( self ) -> None:
-        scapy.all.sniff( iface = self.iface, prn = self.prn )
+        scapy.all.sniff( iface = self.iface, filter = "inbound", prn = self.prn )

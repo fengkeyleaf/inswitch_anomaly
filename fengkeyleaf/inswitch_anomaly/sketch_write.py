@@ -45,7 +45,7 @@ class SketchWriter:
     SIGNATURE_NEW: str = "_sketch_new.csv"
 
     def __init__(
-            self, dir: str | None, pdir: str | None,
+            self, dir: str, pdir: str,
             is_not_balancing: bool = False, lim: int = -1,
             is_writing: bool = True, ll: int = logging.INFO
     ) -> None:
@@ -61,7 +61,7 @@ class SketchWriter:
         self.data: List[ List[ int ] ] = []
         self.labels: List[ int ] = []
         # Data in the Builder will not be cleared after training.
-        self.b: my_dataframe.Builder | None = None
+        self.b: my_dataframe.Builder = None
 
         self.idx: int = 0
         # gc <- 0 // good pkt count
@@ -80,7 +80,7 @@ class SketchWriter:
         self._c: SketchWriter._Checker = self._Checker( self.l )
 
     # TODO: return ( data, labels )
-    def process( self, df: DataFrame, f: str | None ) -> Tuple[ DataFrame, DataFrame ]:
+    def process( self, df: DataFrame, f: str ) -> Tuple[ DataFrame, DataFrame ]:
         """
         Process pre-processed csv pkt files and balancing the data set,
         and track some features with the sketch.

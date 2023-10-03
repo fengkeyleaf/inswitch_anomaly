@@ -54,7 +54,7 @@ def add_header( h: str, f: str ) -> pandas.DataFrame:
 
 
 def get_feature_content(
-        df: pandas.DataFrame, l: str | None = None, F: List[ str ] = None
+        df: pandas.DataFrame, l: str = None, F: List[ str ] = None
 ) -> pandas.DataFrame:
     """
     Get specific data with the given features, except for the label.
@@ -150,7 +150,7 @@ class Builder:
         assert col_name is None or col_name == self.C[ len( self.D[ -1 ] ) - 1 ]
         return ( len( self.D ) - 1, len( self.D[ -1 ] ) - 1 )
 
-    def add_row( self, rn: str | None = None, R: List[ str ] | None = None ) -> None:
+    def add_row( self, rn: str = None, R: List[ str ] = None ) -> None:
         """
         Add en entire rwo into this builder.
         Note that row data to be added would be ignored if its row name is already in this builder.
@@ -267,7 +267,7 @@ class Mapper:
         # d.drop( dl, axis = 1 )
         return df.drop( columns = dl )
 
-    def _look_for_targeted_header( self, k: str ) -> str | None:
+    def _look_for_targeted_header( self, k: str ) -> str:
         for d in self._M:
             if d.get( k ) is not None:
                 return d.get( k )
