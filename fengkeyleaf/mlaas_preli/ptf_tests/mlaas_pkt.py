@@ -1,4 +1,6 @@
-from scapy.all import IP, IntField, ShortField, BitField, Packet, bind_layers
+from scapy.all import IntField, ShortField, BitField, Packet, bind_layers
+from scapy.layers.inet import IP
+
 
 # TODO: Combine multiple files into one.
 # https://scapy.readthedocs.io/en/latest/build_dissect.html
@@ -14,5 +16,6 @@ class Mlaas_p( Packet ):
         BitField( "reserves", 0, 7 ),
         ShortField( "numberOfWorker", 0 )
     ]
+
 
 bind_layers( IP, Mlaas_p )

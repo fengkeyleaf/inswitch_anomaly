@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import socket
 import math
 import struct
 from time import sleep
@@ -10,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 # scapy imports
+import scapy.all
 import scapy.packet
 
 """
@@ -20,16 +23,21 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-import fengkeyleaf.utils.my_math as my_math
+from fengkeyleaf.logging import my_logging
 from fengkeyleaf.my_scapy import (
-    sender,
-    receiver
+    receiver,
+    get_if
 )
+from fengkeyleaf.mlaas_preli import mlaas_pkt
 
 __version__ = "1.0"
 
 
 class Worker:
+    EXP: int = 31
+    MAX_INT: int = 2 ** EXP - 1
+    MIN_INT: int = -( 2 ** EXP )
+
     # Format Characters
     # i - int - Integer - 4
     SEND_PAYLOAD_BYTE_PACK_FORMAT: str = "ii"
@@ -37,14 +45,44 @@ class Worker:
 
     SLEEP_TIME: int = 1 # 1s
 
+    # TODO: Put this class into the package, my_scapy.
+    class _Sender:
+        def __init__( self, l: logging.Logger ):
+            self.l: logging.Logger = l
+
+        # p: str | bytes are both OK using scapy.packet.Raw( load = p ) to generate a pkt.
+        def send( self, ip: str, target_iface: str, p: scapy.packet.Packet ) -> str:
+            """
+            Send a pkt to the ip with target_interface and port.
+            @param ip: Dst ip to which the pkt will be sent
+            @type ip: str
+            @param target_iface: Target Interface to which the pkt will be sent
+            @type target_iface: str
+            @param p: payload
+            @type p: str
+            @return: A hierarchical view of an assembled version of the packet
+            @rtype: str
+            """
+            addr: str = socket.gethostbyname( ip )
+            iface: str = get_if( target_iface )
+
+            self.l.info( "Sending on interface %s to %s" % ( iface, str( addr ) ) )
+            scapy.all.sendp( p, iface = iface, verbose = False )
+
+            # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Packet.show2
+            return p.show2( dump = True )
+
     def __init__( self, lr: float ) -> None:
+        self.l: logging.Logger = my_logging.get_logger( logging.INFO )
+
         # Networking communication
-        self.s: sender.Sender = sender.Sender()
+        self.s: Worker._Sender = Worker._Sender( self.l )
 
         self.r: receiver.Receiver = receiver.Receiver( self.process_rec_pkt )
         self.r.get_sniffing_iface()
         self.r.start()
 
+        # Format: ( idx, grad( int ), number of worker )
         self.res: Tuple = None
 
         # ML part
@@ -119,16 +157,23 @@ class Worker:
         assert len( P ) == len( P.grad )
 
         for i in range( len( P ) ):
+            assert P.grad[ i ] * self.f <= Worker.MAX_INT
+            ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( P.grad[ i ] * self.f ) )
             # TODO: Dst ip and dst interface.
-            self.s.send( "", "", self.get_send_data( i, P.grad[ i ] ) )
+            self.s.send(
+                "10.0.1.1", "eth0",
+                mlaas_pkt.get_mlaas_pkt(
+                    "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
+                    i, pos, neg, sign, 0
+                )
+            )
 
             # TODO: synchronize worker and switch to get a gradient update pkt.
             while self.res is None:
                 sleep( Worker.SLEEP_TIME )
 
             assert self.res is not None
-            assert my_math.assert_overflow( self.res[ 1 ], self.res[ 1 ] / self.f )
-            avg_grad: float = self.res[ 1 ] / (self.f * self.res[ 2 ])
+            avg_grad: float = self.res[ 1 ] / ( self.f * self.res[ 2 ] )
             P[ i ] = P[ i ] - self.lr * avg_grad
 
         return P
@@ -140,7 +185,7 @@ class Worker:
         @rtype: None
         """
         assert self.res is None
-        self.res = struct.unpack( Worker.REC_PAYLOAD_BYTE_PACK_FORMAT, p[ scapy.packet.Raw ].load )
+        self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
 
     def get_send_data( self, i: int, g: float ) -> bytes:
         """
@@ -148,7 +193,7 @@ class Worker:
         @param i: Index for the gradient, g.
         @param g: Gradient value in floating point number
         """
-        assert my_math.assert_overflow( g, g * self.f )
+        assert g * self.f <= Worker.MAX_INT
 
         grad: int = math.ceil( g * self.f )
         b: bytes = struct.pack( Worker.SEND_PAYLOAD_BYTE_PACK_FORMAT, i, grad )
@@ -161,3 +206,11 @@ class Worker:
 
         accuracy = ( y_pred.round() == self.y ).float().mean()
         print( f"Accuracy {accuracy}" )
+
+
+if __name__ == '__main__':
+    lr: float = 0.001
+    w: Worker = Worker( lr )
+    w.build_model()
+    w.training()
+    w.evaluate()
