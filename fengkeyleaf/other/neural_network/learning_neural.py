@@ -96,9 +96,19 @@ class Neural:
     def update_function( P: torch.Tensor, G: torch.Tensor, lr: float ):
         assert len( P ) == len( G )
 
-        for i in range( len( P ) ):
+        for l in range( len( P ) ):
             # p - lr * grad
-            P[ i ] = P[ i ] - lr * G[ i ]
+            # P[ l ] is a scalar.
+            if len( P[ l ].size() ) == 0:
+                assert len( G[ l ].size() ) == 0
+                P[ l ] = P[ l ] - lr * G[ l ]
+                continue
+
+            assert len( P[ l ].size() ) > 0, str( P[ l ] ) + " | " + str( G[ l ] )
+            assert len( P[ l ] ) == len( G[ l ] )
+            # P[ l ] is a vector.
+            for i in range( len( P[ l ] ) ):
+                P[ l ][ i ] = P[ l ][ i ] - lr * G[ l ][ i ]
 
         return P
 

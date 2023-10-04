@@ -163,41 +163,55 @@ class Worker:
                 # print( P.grad )
                 P.copy_( self.get_average_grad( P.clone(), P.grad.clone() ) )
 
+    def update_gard( self, i: int, g: float ) -> float:
+        assert i < Worker.POOL_SIZE
+        assert g * self.f <= Worker.MAX_INT
+
+        ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( g * self.f ) )
+        # TODO: Dst ip and dst interface.
+        pkt_str: str = self.s.send(
+            "10.0.1.1", "eth0",
+            mlaas_pkt.get_mlaas_pkt(
+                "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
+                i, pos, neg, sign, 0
+            )
+        )
+        self.l.debug( "Sent:" + pkt_str )
+
+        # TODO: synchronize worker and switch to get a gradient update pkt.
+        while self.res is None:
+            sleep( Worker.SLEEP_TIME )
+
+        assert self.res is not None
+        self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
+        avg_grad: float = self.res[ 1 ] / (self.f * self.res[ 2 ])
+
+        self.res = None  # Reset container to assert.
+        return avg_grad
+
     def get_average_grad( self, P: torch.Tensor, G: torch.Tensor ) -> torch.Tensor:
         # print( P )
         # print( G )
         assert len( P ) == len( G )
 
+        # TODO: l and i would conflict in the pool index?
         for l in range( len( P ) ):
+            # p - lr * grad
+            # P[ l ] is a scalar.
+            if len( P[ l ].size() ) == 0:
+                assert len( G[ l ].size() ) == 0
+                P[ l ] = P[ l ] - lr * self.update_gard( l, G[ l ] )
+                continue
+
+            # P[ l ] is a vector.
+            assert len( P[ l ].size() ) > 0, str( P[ l ] ) + " | " + str( G[ l ] )
             assert len( P[ l ] ) == len( G[ l ] )
             for i in range( len( P[ l ] ) ):
-                assert i < Worker.POOL_SIZE
-                assert G[ l ][ i ] * self.f <= Worker.MAX_INT
-                
-                ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( G[ l ][ i ] * self.f ) )
-                # TODO: Dst ip and dst interface.
-                pkt_str: str = self.s.send(
-                    "10.0.1.1", "eth0",
-                    mlaas_pkt.get_mlaas_pkt(
-                        "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
-                        i, pos, neg, sign, 0
-                    )
-                )
-                self.l.debug( "Sent:" + pkt_str )
-
-                # TODO: synchronize worker and switch to get a gradient update pkt.
-                while self.res is None:
-                    sleep( Worker.SLEEP_TIME )
-
-                assert self.res is not None
-                self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
-                avg_grad: float = self.res[ 1 ] / ( self.f * self.res[ 2 ] )
-
-                self.res = None # Reset container to assert.
-                P[ l ][ i ] = P[ l ][ i ] - self.lr * avg_grad
+                P[ l ][ i ] = P[ l ][ i ] - self.lr * self.update_gard( i, G[ l ][ i ] )
 
         return P
 
+    # TODO: pkt loss
     def process_rec_pkt( self, p: scapy.packet.Packet ) -> None:
         """
         Process the received pkt from the switch.
