@@ -17,6 +17,7 @@ import torch.optim as optim
 # scapy imports
 import scapy.all
 import scapy.packet
+from scapy.layers.inet import IP, Ether
 
 """
 file:
@@ -168,7 +169,7 @@ class Worker:
         assert len( P ) == len( G )
 
         for l in range( len( P ) ):
-            assert len( P[ l ] == G[ l ] )
+            assert len( P[ l ] ) == len( G[ l ] )
             for i in range( len( P[ l ] ) ):
                 assert i < Worker.POOL_SIZE
                 assert G[ l ][ i ] * self.f <= Worker.MAX_INT
@@ -203,9 +204,16 @@ class Worker:
         @param p: Received pkt from the switch.
         @rtype: None
         """
-        self.l.debug( "Rec:" + p.show2() )
-        assert self.res is None
-        self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
+        print( "process_rec_pkt" )
+        p.show2()
+        print( mlaas_pkt.Mlaas_p in p )
+        print( IP in p )
+        print( Ether in p )
+        # exit( 1 )
+        if mlaas_pkt.Mlaas_p in p:
+            self.l.debug( "Rec:" + p.show2( dump = True ) )
+            assert self.res is None
+            self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
 
     def get_send_data( self, i: int, g: float ) -> bytes:
         """
