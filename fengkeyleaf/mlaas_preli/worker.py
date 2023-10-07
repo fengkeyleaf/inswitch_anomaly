@@ -72,7 +72,7 @@ class Worker:
             addr: str = socket.gethostbyname( ip )
             iface: str = get_if( target_iface )
 
-            self.l.info( "Sending on interface %s to %s" % ( iface, str( addr ) ) )
+            self.l.debug( "Sending on interface %s to %s" % ( iface, str( addr ) ) )
             scapy.all.sendp( p, iface = iface, verbose = False )
 
             # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Packet.show2
@@ -134,7 +134,7 @@ class Worker:
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self ) -> None:
-        n_epochs: int = 1
+        n_epochs: int = 50
         batch_size: int = 10
 
         # https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.parameters
@@ -153,7 +153,7 @@ class Worker:
                 # self.opti.step()
                 self.manually_update_params()
 
-            print( f'Finished epoch {epoch}, latest loss {loss}' )
+            self.l.info( f'Finished epoch {epoch}, latest loss {loss}' )
 
     # https://pytorch.org/docs/stable/generated/torch.clone.html#torch.clone
     def manually_update_params( self ) -> None:
@@ -200,7 +200,7 @@ class Worker:
             # P[ l ] is a scalar.
             if len( P[ l ].size() ) == 0:
                 assert len( G[ l ].size() ) == 0
-                P[ l ] = P[ l ] - lr * self.update_gard( l, G[ l ] )
+                P[ l ] = P[ l ] - self.lr * self.update_gard( l, G[ l ] )
                 continue
 
             # P[ l ] is a vector.
@@ -218,11 +218,11 @@ class Worker:
         @param p: Received pkt from the switch.
         @rtype: None
         """
-        print( "process_rec_pkt" )
-        p.show2()
-        print( mlaas_pkt.Mlaas_p in p )
-        print( IP in p )
-        print( Ether in p )
+        # print( "process_rec_pkt" )
+        # p.show2()
+        # print( mlaas_pkt.Mlaas_p in p )
+        # print( IP in p )
+        # print( Ether in p )
         # exit( 1 )
         if mlaas_pkt.Mlaas_p in p:
             self.l.debug( "Rec:" + p.show2( dump = True ) )
@@ -247,7 +247,7 @@ class Worker:
             y_pred = self.model( self.X )
 
         accuracy = ( y_pred.round() == self.y ).float().mean()
-        print( f"Accuracy {accuracy}" )
+        self.l.info( f"Accuracy {accuracy}" )
 
 
 if __name__ == '__main__':

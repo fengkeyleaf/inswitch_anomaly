@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from time import sleep
 
 """
 file:
@@ -18,8 +19,12 @@ __version__ = "1.0"
 
 if __name__ == '__main__':
     lr: float = 0.001
-    w: Worker = Worker( lr, logging.DEBUG )
+    w: Worker = Worker( lr, logging.INFO )
     w.build_model()
-    w.load_data( "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv" )
+    f: str = "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv"
+    f = "./fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"
+    w.load_data( f )
+
+    sleep( 2 )
     w.training()
     w.evaluate()
