@@ -10,7 +10,9 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 __version__ = "1.0"
 
+import numpy
 import numpy as np
+from sklearn.datasets import load_svmlight_file
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -32,7 +34,21 @@ class Neural:
         X = dataset[ :, 0:8 ]
         y = dataset[ :, 8 ]
 
+        # https://www.geeksforgeeks.org/reshaping-a-tensor-in-pytorch/
         self.X = torch.tensor( X, dtype = torch.float32 )
+        self.y = torch.tensor( y, dtype = torch.float32 ).reshape( -1, 1 )
+
+    def load_data_youtube_vg( self, f: str ):
+        n_instances: int = 1000
+        n_features: int = 8
+
+        ( X, y ) = load_svmlight_file( f )
+        # https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html
+        X_dense: numpy.ndarray = X.toarray()[ : n_instances, 0 : n_features ]
+        y: numpy.ndarray = y[ : n_instances ]
+        assert len( X_dense ) == len( y )
+
+        self.X = torch.tensor( X_dense, dtype = torch.float32 )
         self.y = torch.tensor( y, dtype = torch.float32 ).reshape( -1, 1 )
 
     def build_model( self ):
@@ -56,7 +72,7 @@ class Neural:
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self ):
-        n_epochs = 100
+        n_epochs = 30
         batch_size = 10
 
         # https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.parameters
@@ -124,6 +140,7 @@ class Neural:
 if __name__ == '__main__':
     n = Neural()
     n.load_data( "./pima-indians-diabetes.data.csv" )
+    # n.load_data_youtube_vg( "D:/networking/dir_data/train/text_tag_unigrams.txt" )
     n.build_model()
     n.training()
     n.evaluate()
