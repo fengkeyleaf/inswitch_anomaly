@@ -134,7 +134,7 @@ class Worker:
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self ) -> None:
-        n_epochs: int = 50
+        n_epochs: int = 30
         batch_size: int = 10
 
         # https://pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.parameters

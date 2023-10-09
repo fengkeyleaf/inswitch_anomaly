@@ -21,10 +21,16 @@ if __name__ == '__main__':
     lr: float = 0.001
     w: Worker = Worker( lr, logging.INFO )
     w.build_model()
-    f: str = "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv"
-    f = "./fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"
+    # Full dataset     
+    f: str = "./fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"
+    # Partial dataset
+    # One client
+    f = "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_small.csv"
+    # Two clients
+    f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part1.csv"
+    f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
     w.load_data( f )
 
-    sleep( 2 )
+    sleep( 2 ) # Wait for the receiver to initialize.
     w.training()
     w.evaluate()
