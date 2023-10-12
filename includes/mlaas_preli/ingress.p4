@@ -86,6 +86,12 @@ control MyIngress(
         }
     }
 
+    // TODO: define `multicast` action to multicast packets to group 1
+    // Hint: Check v1model for multicast group
+    action multicast() {
+        standard_metadata.mcast_grp = 1;
+    }
+
     // TODO: Asynchronous condition, pool idx may be incorrect.
     action grad_send() {
         unsigned_int32 r = 0;
@@ -103,9 +109,12 @@ control MyIngress(
         // Update pkt's sign is alwasy False, which is easy to verify.
         hdr.mlass.sign = 0;
 
-        // TODO: Boardcast the update.
         assert( standard_metadata.ingress_port > 0 );
-        ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
+        // Send back to the ingress port
+        // ipv4_forward( hdr.ethernet.srcAddr, standard_metadata.ingress_port );
+
+        // Send back updates to port 2
+        multicast();
     }
 
     table gradient_update_t {

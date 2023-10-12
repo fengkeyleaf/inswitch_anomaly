@@ -13,9 +13,10 @@ from scapy.all import (
     sniff
 )
 from scapy.layers.inet import _IPOption_HDR
-
-import mlass_pkt
 import numpy
+
+
+import fengkeyleaf.mlaas_preli.mlaas_pkt as mlaas_pkt
 
 def get_if():
     ifs=get_if_list()
@@ -45,7 +46,7 @@ class IPOption_MRI(IPOption):
 
 
 def handle_pkt(pkt):
-    if TCP in pkt and pkt[TCP].dport == 1234 or mlass_pkt.Mlaas_p in pkt:
+    if TCP in pkt and pkt[TCP].dport == 1234 or mlaas_pkt.Mlaas_p in pkt:
         print("got a packet")
         pkt.show2()
     #    hexdump(pkt)

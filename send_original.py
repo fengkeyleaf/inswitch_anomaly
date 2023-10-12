@@ -5,7 +5,7 @@ import sys
 
 from scapy.all import IP, TCP, Ether, get_if_hwaddr, get_if_list, sendp
 
-import mlass_pkt
+import fengkeyleaf.mlaas_preli.mlaas_pkt as mlaas_pkt
 
 
 def get_if():
@@ -37,7 +37,7 @@ def send_TCP_pkt( iface, addr ):
 
 def get_mlaas_pkt( iface, addr, idx: int, gradPos: int, gradNeg: int, sign: bool, number_of_worker: int ):
     pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-    pkt = pkt / IP(dst=addr) / mlass_pkt.Mlaas_p( 
+    pkt = pkt / IP(dst=addr) / mlaas_pkt.Mlaas_p( 
         idx = idx, gradPos = gradPos, gradNeg = gradNeg, sign = sign
     )
     pkt.show2()
@@ -124,14 +124,14 @@ def main():
     print("sending on interface %s to %s" % (iface, str(addr)))
     # send_TCP_pkt( iface, addr )
 
-    # send_mlaas_2pkts_case1( iface, addr )
+    send_mlaas_2pkts_case1( iface, addr )
     # send_mlaas_2pkts_case2( iface, addr )
     # send_mlaas_2pkts_case3( iface, addr )
     # send_mlaas_2pkts_case4( iface, addr )
     # send_mlaas_2pkts_case5( iface, addr )
     # send_mlaas_2pkts_case6( iface, addr )
     # send_mlaas_pkts_2hosts_1( iface, addr )
-    send_mlaas_pkts_2hosts_2( iface, addr )
+    # send_mlaas_pkts_2hosts_2( iface, addr )
 
 
 if __name__ == '__main__':
