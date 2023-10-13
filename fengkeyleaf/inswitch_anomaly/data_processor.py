@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 import unittest
-from typing import List
+from typing import List, Iterator, Tuple
 import pandas
 from pandas import (
     DataFrame
@@ -117,10 +117,12 @@ class DataProcessor:
         # https://docs.python.org/3/library/os.html#os.walk
         # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
         # root, dirs, files
-        for s, d, F in os.walk( self.da ):
-            # print( s )
-            # print( d )
-            # print( F )
+        # Avoid to iterate newly-added directories.
+        it: Iterator[ Tuple[ str, List[ str ], List[ str ] ] ] = os.walk( self.da )
+        for s, d, F in it:
+            print( s )
+            print( d )
+            print( F )
             for f in F:
                 fp: str = os.path.join( s, f )
 

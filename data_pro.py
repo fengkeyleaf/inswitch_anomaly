@@ -23,6 +23,9 @@ from fengkeyleaf import data_processor, my_logging
 
 # UNSW-NB15
 # python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\UNSW-NB15-CSV\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\UNSW-NB15-CSV\NUSW-NB15_features_name.csv" -dm "D:\data"
+
+# Presentation, Milestone 2
+# python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\thesis\presentation\sketching_csv_examples" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
 if __name__ == '__main__':
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h
@@ -49,5 +52,6 @@ if __name__ == '__main__':
     assert not args.dir_data.endswith( "/" ) or not args.dir_data.endswith( "\\" )
     data_processor.DataProcessor(
         args.dir_data, args.header,
-        args.dir_madeup, None, my_logging.get_level_name( args.logging_level )
+        args.dir_madeup, None,
+        False, my_logging.get_level_name( args.logging_level )
     ).process()

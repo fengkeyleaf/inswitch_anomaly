@@ -37,6 +37,7 @@ from fengkeyleaf.mlaas_preli import mlaas_pkt
 __version__ = "1.0"
 
 
+# Reference material: https://www.usenix.org/conference/nsdi21/presentation/sapio
 class Worker:
     EXP: int = 31
     MAX_INT: int = 2 ** EXP - 1
@@ -163,6 +164,28 @@ class Worker:
                 # print( P.grad )
                 P.copy_( self.get_average_grad( P.clone(), P.grad.clone() ) )
 
+    def get_average_grad( self, P: torch.Tensor, G: torch.Tensor ) -> torch.Tensor:
+        # print( P )
+        # print( G )
+        assert len( P ) == len( G )
+
+        # TODO: l and i would conflict in the pool index?
+        for l in range( len( P ) ):
+            # p - lr * grad
+            # P[ l ] is a scalar.
+            if len( P[ l ].size() ) == 0:
+                assert len( G[ l ].size() ) == 0
+                P[ l ] = P[ l ] - self.lr * self.update_gard( l, G[ l ] )
+                continue
+
+            # P[ l ] is a vector.
+            assert len( P[ l ].size() ) > 0, str( P[ l ] ) + " | " + str( G[ l ] )
+            assert len( P[ l ] ) == len( G[ l ] )
+            for i in range( len( P[ l ] ) ):
+                P[ l ][ i ] = P[ l ][ i ] - self.lr * self.update_gard( i, G[ l ][ i ] )
+
+        return P
+
     def update_gard( self, i: int, g: float ) -> float:
         assert i < Worker.POOL_SIZE
         assert g * self.f <= Worker.MAX_INT
@@ -188,28 +211,6 @@ class Worker:
 
         self.res = None  # Reset container to assert.
         return avg_grad
-
-    def get_average_grad( self, P: torch.Tensor, G: torch.Tensor ) -> torch.Tensor:
-        # print( P )
-        # print( G )
-        assert len( P ) == len( G )
-
-        # TODO: l and i would conflict in the pool index?
-        for l in range( len( P ) ):
-            # p - lr * grad
-            # P[ l ] is a scalar.
-            if len( P[ l ].size() ) == 0:
-                assert len( G[ l ].size() ) == 0
-                P[ l ] = P[ l ] - self.lr * self.update_gard( l, G[ l ] )
-                continue
-
-            # P[ l ] is a vector.
-            assert len( P[ l ].size() ) > 0, str( P[ l ] ) + " | " + str( G[ l ] )
-            assert len( P[ l ] ) == len( G[ l ] )
-            for i in range( len( P[ l ] ) ):
-                P[ l ][ i ] = P[ l ][ i ] - self.lr * self.update_gard( i, G[ l ][ i ] )
-
-        return P
 
     # TODO: pkt loss
     def process_rec_pkt( self, p: scapy.packet.Packet ) -> None:

@@ -173,7 +173,7 @@ class Sketch:
                 self.D[ k ][ TLS_STR ] = 0
                 self.c = 0
 
-    def getData( self, si: str, di: str ) -> List[ int ]:
+    def get_data( self, si: str, di: str ) -> List[ int ]:
         """
         Get one row of data. Default value is 0.
         @param si: src ip

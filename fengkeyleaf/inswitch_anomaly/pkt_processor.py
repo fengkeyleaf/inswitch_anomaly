@@ -152,9 +152,9 @@ class PktProcessor:
             tc: int = 0
 
             for ( i, s ) in df.iterrows():
-                if df.loc[ i, fkl_inswitch.LABEL_STR ] == sketch_write.GOOD_LABEL:
+                if df.loc[ i, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL:
                     gc += 1
-                elif df.loc[ i, fkl_inswitch.LABEL_STR ] == sketch_write.BAD_LABEL:
+                elif df.loc[ i, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL:
                     bc += 1
                 else: assert False;
                 tc += 1

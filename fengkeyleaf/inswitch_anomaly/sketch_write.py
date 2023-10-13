@@ -135,7 +135,7 @@ class SketchWriter:
 
             # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
             assert df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL or df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL, df.at[ idx, fkl_inswitch.LABEL_STR ]
-            self._balancing( s.getData( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
+            self._balancing( s.get_data( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
 
         assert self._c.isBalanced( s )
         # return D
@@ -233,7 +233,6 @@ class SketchWriter:
             self.idx += 1
             assert self.idx == self.b.size_row(), "%d | %d" % ( self.idx, self.b.size_row() )
             assert self.b.size_row() == len( self.data ), "%d | %d" % ( self.b.size_row(), len( self.data ) )
-
 
             # Record actual good pkts.
             if if_add_good:

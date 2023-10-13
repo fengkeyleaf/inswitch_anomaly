@@ -160,7 +160,7 @@ class Tree:
         @param f: File path to the original csv pkt file.
         """
         if df_o is not None: self.get_tree_old( f, *_tree_evaluator.reformatting( df_o ) );
-        if df_n is not None: self.get_tree_new( f, df_n );
+        # if df_n is not None: self.get_tree_new( f, df_n );
 
     def get_tree_new( self, f: str, df: pandas.DataFrame ) -> None:
         d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
@@ -168,7 +168,7 @@ class Tree:
         f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
         self.l.info( "tree: " + f )
 
-        assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION, my_writer.get_extension( f ).lower()
+        assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION, f
         (df, X, y) = _tree_evaluator.get_data_dataframe(
             df,
             fkl_inswitch.SKETCH_FEATURE_NAMES
