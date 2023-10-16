@@ -50,7 +50,7 @@ class Worker:
 
     SLEEP_TIME: int = 1 # 1s
 
-    POOL_SIZE: int = 32
+    POOL_SIZE: int = 256
 
     # TODO: Put this class into the package, my_scapy.
     class _Sender:
@@ -206,6 +206,7 @@ class Worker:
             sleep( Worker.SLEEP_TIME )
 
         assert self.res is not None
+        assert self.res[ 0 ] == i
         self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
         avg_grad: float = self.res[ 1 ] / (self.f * self.res[ 2 ])
 
