@@ -15,7 +15,7 @@ __version__ = "1.0"
 from fengkeyleaf import data_processor, my_logging
 
 # BoT-IoT
-# python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data"
+# python .\data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
 # python .\data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
 
 # TON_IoT\Processed_Network_dataset

@@ -80,31 +80,53 @@ class Worker:
             return p.show2( dump = True )
 
     def __init__( self, lr: float, ll: int = logging.INFO ) -> None:
+        # Logging
         self.l: logging.Logger = my_logging.get_logger( ll )
 
         # Networking communication
-        self.s: Worker._Sender = Worker._Sender( self.l )
+        # Sender setting
+        self.sd: Worker._Sender = Worker._Sender( self.l )
 
-        self.r: receiver.Receiver = receiver.Receiver( self.process_rec_pkt )
-        self.r.get_sniffing_iface()
-        self.r.start()
+        # Receiver setting
+        self.rec: receiver.Receiver = receiver.Receiver( self.process_rec_pkt )
+        self.rec.get_sniffing_iface()
+        self.rec.start()
 
         # Format: ( idx, grad( int ), number of worker )
         self.res: Tuple[ int, int, int ] = None
 
         # ML part
-        self.X: torch.Tensor = None
-        self.y: torch.Tensor = None
+        self.X_train: torch.Tensor = None
+        self.y_train: torch.Tensor = None
+        self.X_valid: torch.Tensor = None
+        self.y_valid: torch.Tensor = None
+
         self.model: nn.Sequential = None
         self.loss_fn: nn.BCELoss = None
         self.opti: optim.SGD = None
         self.lr: float = lr
 
+        # Worker-side aggregation setting
+        self.s: int = Worker.POOL_SIZE # pool size
+        self.k: int = 1 # the size of the vector aggregated in each slot
+        self.n: int = -1 # size of U.
+
         # Scaling factor
         # TODO: How to select this f?
         self.f: int = 10000 # 10 ^ 4
 
-    def load_data( self, f: str ) -> None:
+    def load_data( self, f_training: str, f_valid: str = None ) -> None:
+        self.X_train, self.y_train = Worker._load_data( f_training )
+
+        if f_valid is None or f_valid == "":
+            self.X_valid = self.X_train
+            self.y_valid = self.y_train
+            return
+
+        self.X_valid, self.X_train = Worker._load_data( f_valid )
+
+    @staticmethod
+    def _load_data( f: str ) -> Tuple[ torch.Tensor, torch.Tensor ]:
         # load the dataset, split into input (X) and output (y) variables
         dataset: np.ndarray = np.loadtxt( f, delimiter = ',' )
         X: np.ndarray = dataset[ :, 0:8 ]
@@ -112,8 +134,10 @@ class Worker:
         # print( X )
         # print( y )
 
-        self.X = torch.tensor( X, dtype = torch.float32 )
-        self.y = torch.tensor( y, dtype = torch.float32 ).reshape( -1, 1 )
+        return (
+            torch.tensor( X, dtype = torch.float32 ),
+            torch.tensor( y, dtype = torch.float32 ).reshape( -1, 1 )
+        )
 
     def build_model( self ) -> None:
         self.model = nn.Sequential(
@@ -142,12 +166,12 @@ class Worker:
         for epoch in range( n_epochs ):
             loss: torch.Tensor = None
 
-            for i in range( 0, len( self.X ), batch_size ):
+            for i in range( 0, len( self.X_train ), batch_size ):
                 self.opti.zero_grad()
 
-                Xbatch: torch.Tensor = self.X[ i : i + batch_size ]
+                Xbatch: torch.Tensor = self.X_train[ i: i + batch_size ]
                 y_pred: torch.Tensor = self.model( Xbatch )
-                y_batch: torch.Tensor = self.y[ i : i + batch_size ]
+                y_batch: torch.Tensor = self.y_train[ i: i + batch_size ]
                 loss = self.loss_fn( y_pred, y_batch )
                 loss.backward()
 
@@ -162,12 +186,21 @@ class Worker:
             for P in self.model.parameters():
                 # print( P )
                 # print( P.grad )
-                P.copy_( self.get_average_grad( P.clone(), P.grad.clone() ) )
+                P.copy_(
+                    self.get_average_grad(
+                        P.clone(),
+                        P.grad.clone()
+                    )
+                )
 
     def get_average_grad( self, P: torch.Tensor, G: torch.Tensor ) -> torch.Tensor:
-        # print( P )
-        # print( G )
-        assert len( P ) == len( G )
+        """
+
+        @param P: List of lists of parameters.
+        @param G: List of lists of gradients.
+        @return:
+        """
+        assert len( P ) == len( G ), str( P ) + "\n" + str( G )
 
         # TODO: l and i would conflict in the pool index?
         for l in range( len( P ) ):
@@ -186,13 +219,33 @@ class Worker:
 
         return P
 
+    # Algorithm 2 Worker logic.
+    def send_grad( self, U: torch.Tensor ) -> None:
+        # 1: for i in 0 : s do
+        for i in range( self.s ):
+            # 2: p.idx <- i
+            # 3: p.off <- k · i
+            # 4: p.vector <- U[p.off : p.off + k]
+            g: float = U[ i ]
+            assert g * self.f <= Worker.MAX_INT
+            ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( g * self.f ) )
+            # 5: send p
+            pkt_str: str = self.sd.send(
+                "10.0.1.1", "eth0",
+                mlaas_pkt.get_mlaas_pkt(
+                    "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
+                    i, pos, neg, sign, 0
+                )
+            )
+            self.l.debug( "Sent:" + pkt_str )
+
     def update_gard( self, i: int, g: float ) -> float:
-        assert i < Worker.POOL_SIZE
+        assert i < self.s
         assert g * self.f <= Worker.MAX_INT
 
         ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( g * self.f ) )
         # TODO: Dst ip and dst interface.
-        pkt_str: str = self.s.send(
+        pkt_str: str = self.sd.send(
             "10.0.1.1", "eth0",
             mlaas_pkt.get_mlaas_pkt(
                 "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
@@ -206,7 +259,6 @@ class Worker:
             sleep( Worker.SLEEP_TIME )
 
         assert self.res is not None
-        assert self.res[ 0 ] == i
         self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
         avg_grad: float = self.res[ 1 ] / (self.f * self.res[ 2 ])
 
@@ -220,16 +272,33 @@ class Worker:
         @param p: Received pkt from the switch.
         @rtype: None
         """
-        # print( "process_rec_pkt" )
-        # p.show2()
-        # print( mlaas_pkt.Mlaas_p in p )
-        # print( IP in p )
-        # print( Ether in p )
+        if mlaas_pkt.Mlaas_p not in p:
+            return
+
+        self.l.debug( "Rec:" + p.show2( dump = True ) )
+        assert self.res is None
+        self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
+
+        # 6: repeat
+        # 7: receive p(idx, off, vector)
+        # 8: A[p.off : p.off +k] <- p.vector
+        # 9: p.off <- p.off + k · s
+        # p.off = p.off + self.k * self.s
+        # assert self.n >= 0
+        # 10: if p.off < size(U) then
+        # if p.off < self.n:
+        # 11: p.vector U[p.off : p.off + k]
+        # 12: send p
+        # 13: until A is incomplete
+
+    @staticmethod
+    def print_info_rec( p: scapy.packet.Packet ) -> None:
+        print( "process_rec_pkt" )
+        p.show2()
+        print( mlaas_pkt.Mlaas_p in p )
+        print( IP in p )
+        print( Ether in p )
         # exit( 1 )
-        if mlaas_pkt.Mlaas_p in p:
-            self.l.debug( "Rec:" + p.show2( dump = True ) )
-            assert self.res is None
-            self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
 
     def get_send_data( self, i: int, g: float ) -> bytes:
         """
@@ -246,9 +315,9 @@ class Worker:
     def evaluate( self ) -> None:
         # compute accuracy (no_grad is optional)
         with torch.no_grad():
-            y_pred = self.model( self.X )
+            y_pred = self.model( self.X_train )
 
-        accuracy = ( y_pred.round() == self.y ).float().mean()
+        accuracy = (y_pred.round() == self.y_train).float().mean()
         self.l.info( f"Accuracy {accuracy}" )
 
 

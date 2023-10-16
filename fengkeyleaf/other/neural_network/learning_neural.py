@@ -103,8 +103,8 @@ class Neural:
     def manually_update_params( self ):
         with torch.no_grad():
             for p in self.model.parameters():
-                # print( p )
-                # print( p.grad )
+                print( p )
+                print( p.grad )
                 new_val = Neural.update_function( p.clone(), p.grad, self.lr )
                 p.copy_( new_val )
 

@@ -160,21 +160,23 @@ class Tree:
         @param f: File path to the original csv pkt file.
         """
         if df_o is not None: self.get_tree_old( f, *_tree_evaluator.reformatting( df_o ) );
-        # if df_n is not None: self.get_tree_new( f, df_n );
+        if df_n is not None: self.get_tree_new( f, df_n );
 
     def get_tree_new( self, f: str, df: pandas.DataFrame ) -> None:
+        # Getting training data info.
         d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
         my_writer.make_dir( d )
-        f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
+        f = d + my_writer.get_filename( f ) + "_new" + Tree.SIGNATURE
         self.l.info( "tree: " + f )
 
-        assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION, f
-        (df, X, y) = _tree_evaluator.get_data_dataframe(
+        # assert my_writer.get_extension( f ).lower() == my_files.CSV_EXTENSION, f
+        ( df, X, y ) = _tree_evaluator.get_data_dataframe(
             df,
             fkl_inswitch.SKETCH_FEATURE_NAMES
         )
 
-        t = DecisionTreeClassifier().fit( X, y )
+        # Train a tree and evaluation.
+        t: DecisionTreeClassifier = DecisionTreeClassifier().fit( X, y )
 
         # Evaluate the tree
         self.e.set_is_writing( True )
@@ -189,6 +191,7 @@ class Tree:
         )
 
         # TODO: Missing converting the tree into a txt file format.
+        self.out_tree( t, f )
 
     # TODO: Return a DecisionTreeClassifier.
     def get_tree_old( self, f: str, data, labels ):
@@ -211,24 +214,32 @@ class Tree:
         # Evaluate the tree
         self.e.evaluate( decision_tree, f, data, labels )
 
+        self.out_tree( decision_tree, f )
+
+    def out_tree( self, t: DecisionTreeClassifier, f: str ) -> None:
+        """
+
+        @param t: Decision Tree Classifier
+        @param f: Output file path.
+        """
         # TODO: Configuration of features.
         feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
         # tree_Tree instance
-        threshold = decision_tree.tree_.threshold
+        threshold = t.tree_.threshold
         # print( threshold )
         # print( decision_tree.tree_.feature )
-        features = [ feature_names[ i ] for i in decision_tree.tree_.feature ]
+        features = [ feature_names[ i ] for i in t.tree_.feature ]
         # print( features )
 
-        F: Dict[ str: List ] = { f: [ ] for f in feature_names }
+        F: Dict[ str: List ] = { f: [] for f in feature_names }
 
         # https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html#sphx-glr-auto-examples-tree-plot-unveil-tree-structure-py
         # tree.plot_tree( decision_tree )
         # plt.show()
         # https://towardsdatascience.com/scikit-learn-decision-trees-explained-803f3812290d
         sklearn.tree.export_graphviz(
-            decision_tree,
+            t,
             out_file = "myTreeName.dot",
             filled = True,
             rounded = True
@@ -247,7 +258,7 @@ class Tree:
             F[ k ] = v
 
             if len( v ) <= 0:
-                self.l.warning( "Warning! Empty Feature: " + f )
+                self.l.warning( "Warning! " + k + " is empty Feature: " + f )
                 continue
 
             assert len( v ) > 0, str( k ) + " | " + str( v )
@@ -272,7 +283,7 @@ class Tree:
             output.write( str( v ) )
             output.write( ";\n" )
 
-        get_lineage( decision_tree, feature_names, output )
+        get_lineage( t, feature_names, output )
         output.close()
 
     @staticmethod
