@@ -5,7 +5,7 @@ from time import sleep
 
 """
 file:
-description:
+description: Start a worker from an outside directory to use the package spacename, fengkeyleaf.
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com

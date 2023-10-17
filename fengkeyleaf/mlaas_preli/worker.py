@@ -39,6 +39,9 @@ __version__ = "1.0"
 
 # Reference material: https://www.usenix.org/conference/nsdi21/presentation/sapio
 class Worker:
+    """
+    Worker side in SwitchML
+    """
     EXP: int = 31
     MAX_INT: int = 2 ** EXP - 1
     MIN_INT: int = -( 2 ** EXP )
@@ -54,6 +57,9 @@ class Worker:
 
     # TODO: Put this class into the package, my_scapy.
     class _Sender:
+        """
+        Sender to send pkts.
+        """
         def __init__( self, l: logging.Logger ):
             self.l: logging.Logger = l
 
@@ -116,6 +122,12 @@ class Worker:
         self.f: int = 10000 # 10 ^ 4
 
     def load_data( self, f_training: str, f_valid: str = None ) -> None:
+        """
+        Load datasets from files.
+        @param f_training: File path to the training dataset.
+        @param f_valid: File path to the validation dataset.
+        @return:
+        """
         self.X_train, self.y_train = Worker._load_data( f_training )
 
         if f_valid is None or f_valid == "":
@@ -148,7 +160,6 @@ class Worker:
             nn.Linear( 8, 1 ),
             nn.Sigmoid()
         )
-
         self.l.info( self.model )
 
         self.loss_fn = nn.BCELoss()  # binary cross entropy
@@ -182,6 +193,9 @@ class Worker:
 
     # https://pytorch.org/docs/stable/generated/torch.clone.html#torch.clone
     def manually_update_params( self ) -> None:
+        """
+        Manually compute gradients and then update parameters.
+        """
         with torch.no_grad():
             for P in self.model.parameters():
                 # print( P )
@@ -219,8 +233,13 @@ class Worker:
 
         return P
 
+    # TODO: Not implement.
     # Algorithm 2 Worker logic.
     def send_grad( self, U: torch.Tensor ) -> None:
+        """
+
+        @param U: List of gradients.
+        """
         # 1: for i in 0 : s do
         for i in range( self.s ):
             # 2: p.idx <- i
@@ -240,6 +259,13 @@ class Worker:
             self.l.debug( "Sent:" + pkt_str )
 
     def update_gard( self, i: int, g: float ) -> float:
+        """
+        Get a gradient value for each parameter and
+        send the value to the switch to do in-switch gradient aggregation.
+        @param i: Index
+        @param g: Gradient value.
+        @return:
+        """
         assert i < self.s
         assert g * self.f <= Worker.MAX_INT
 
