@@ -24,6 +24,7 @@ import json
 import os
 import subprocess
 from time import sleep
+import threading
 
 import p4runtime_lib.simple_controller
 from mininet.cli import CLI
@@ -32,7 +33,10 @@ from mininet.net import Mininet
 from mininet.topo import Topo
 from p4_mininet import P4Host, P4Switch
 from p4runtime_switch import P4RuntimeSwitch
-import Supervisor
+
+
+import supervisor
+
 
 def configureP4Switch(**switch_args):
     """ Helper class that is called by mininet to initialize
@@ -186,45 +190,6 @@ class ExerciseRunner:
         self.switch_json = switch_json
         self.bmv2_exe = bmv2_exe
 
-    def __listening( self, h:str ) -> None:
-        print( "Listening on %s" % ( self.net.get( h ) ) )
-        # print( self.net.get( h ).cmd( "./receive.py" ) )
-        self.net.get( h ).cmd( "./receive.py -c %s" % 0 )
-
-    def __get_sum_pkts( self ) -> int:
-        c:int = 0
-        for hn in self.hosts.keys():
-            c = c + len( self.hosts[ hn ][ "pkts" ] )
-
-        return c
-
-    def __sending_pkts( self ) -> None:
-        print( "Sending pkts" )
-
-        for hn in self.hosts.keys():
-            if ( hn == "h1" ):
-                continue
-            h = self.hosts[ hn ]
-            
-            self.net.get( hn ).cmdPrint( 
-                "./send.py -hj ./pod-topo/%s.json" % ( hn )
-            )
-            
-            # for ( pid, info ) in h[ "pkts" ].items():
-            #     # print( 
-            #     #     self.net.get( hn ).cmdPrint( 
-            #     #         "./send.py %s %s" % ( info[ "dstAddr" ], pid )
-            #     #     )
-            #     # )
-            #     self.net.get( hn ).cmdPrint( 
-            #         "./send.py %s %s" % ( info[ "dstAddr" ], pid )
-            #     )
-
-        print( "Done with sending %d pkts" % self.__get_sum_pkts() )
-        print( "Killing the listening host, h1" )
-        # https://github.com/mininet/mininet/blob/master/mininet/node.py#L328
-        self.net.get( "h1" ).sendInt()
-
     def run_exercise(self):
         """ 
         Sets up the mininet instance, programs the switches,
@@ -242,24 +207,16 @@ class ExerciseRunner:
 
         print( "Network program initialized...." )
         # wait for that to finish. Not sure how to do this better
-        # sleep( 10 * 60 )
+        # self._inswitch_anomaly_run()
 
-        # http://mininet.org/api/classmininet_1_1node_1_1Node.html#a6e1338af3c4a0348963a257ac548153b
-        # https://www.geeksforgeeks.org/multithreading-python-set-1/
-        # https://docs.python.org/3.8/library/threading.html
-        # t1 = threading.Thread( target = self.__listening, args = ( "h1", ) )
-        # t1.start()
-
-        sleep( 2 )
-        # self.__sending_pkts()
-
-        # Supervisor.Supervisor( self.net, self.hosts ).send()
-
-        # sleep( 8 )
+        sleep( 8 )
         self.do_net_cli()
         # stop right after the CLI is exited
         self.net.stop()
 
+    def _inswitch_anomaly_run( self ):
+        sleep( 10 * 60 )
+        supervisor.Supervisor( self.net, self.hosts ).send()
 
     def parse_links(self, unparsed_links):
         """ 

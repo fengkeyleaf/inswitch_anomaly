@@ -55,11 +55,13 @@ def main():
 
     with open( args.host_json, "r" ) as f:
         P: Dict = json.load( f )[ topo.PKT_STR ]
+        src_addr: str = socket.gethostbyname( P[ topo.IP_STR ] )
         for k in P:
-            addr: str = socket.gethostbyname( P[ k ][ topo.DST_IP_STR ] )
-            print( "sending on interface %s to %s" % (iface, str( addr )) )
+            dst_addr: str = socket.gethostbyname( P[ k ][ topo.DST_IP_STR ] )
+            print( "sending on interface %s to %s" % ( iface, str( dst_addr ) ) )
             pkt = Ether( src = get_if_hwaddr( iface ), dst = 'ff:ff:ff:ff:ff:ff' )
-            pkt = pkt / IP( dst = addr ) / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / k
+            pkt = pkt / IP( src = src_addr, dst = dst_addr )
+            pkt = pkt / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / k
             pkt.show2()
             sendp( pkt, iface = iface, verbose = False )
 

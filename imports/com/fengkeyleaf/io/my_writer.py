@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import os
+import logging
 
 """
 file: 
@@ -8,10 +11,25 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+from fengkeyleaf.logging import my_logging
+
 __version__ = "1.0"
 
 
+l: logging.Logger = my_logging.get_logger( logging.INFO )
+
+
 def write_to_file( fp: str, d: str ) -> None:
+    """
+    Write data to a file
+    @param fp: Output file path.
+    @param d: Data to be written.
+    @return:
+    """
+    if not os.path.exists( fp ):
+        l.warning( "File or directory is not invalid: " + fp )
+        return
+
     with open( fp, "w+" ) as f:
         f.write( d )
 

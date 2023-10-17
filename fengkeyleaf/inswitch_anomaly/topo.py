@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 from typing import (Dict, List, Tuple)
 
@@ -72,7 +74,7 @@ class CSVParaser:
             IP_STR: a,
             MAC_STR: m,
             COM_STR: [ "route add default gw " + a + " dev eth0" ],
-            PKT_STR: { }
+            PKT_STR: {}
         }
 
         # Add link
@@ -132,34 +134,38 @@ class CSVParaser:
             self, P: Dict[ float, Dict ], f: str
     ) -> Dict:
         """
-        {
-            "hosts": {
-                "host_name": {
-                        "ip": str,
-                        "mac": str,
-                        "commands": [ str ],
-                        "pkts": {
-                            "id": {
-                                "dstAddr": str,
-                                "dstMac": str,
-                                "label": Number( 0 or 1 )
-                                "payload": str
-                            }
+        @param P: Dict to store all pkt info.
+        @param f: File path to the output topology.
+                  If None, will not output the result to a file.
+        @return: Dict structure of the network topology:
+                {
+                    "hosts": {
+                        "host_name": {
+                                "ip": str,
+                                "mac": str,
+                                "commands": [ str ],
+                                "pkts": {
+                                    "id": {
+                                        "dstAddr": str,
+                                        "dstMac": str,
+                                        "label": Number( 0 or 1 )
+                                        "payload": str
+                                    }
+                                }
                         }
+                    },
+                    "switches": {
+                        "switch_name": {}
+                    },
+                    "links": [
+                        [ "host_name", "switch_port_of_host" ]
+                    ]
                 }
-            },
-            "switches": {
-                "switch_name": {}
-            },
-            "links": [ 
-                [ "host_name", "switch_port_of_host" ]
-            ]
-        }
         """
-        H: Dict[ str, Dict ] = { }
+        H: Dict[ str, Dict ] = {}
         id: int = 1  # host id
-        S = { "s1": { } }
-        L: List[ List ] = [ ]
+        S = { "s1": {} }
+        L: List[ List ] = []
 
         M = {
             "192.168.137.5": "08:00:00:00:01:11",

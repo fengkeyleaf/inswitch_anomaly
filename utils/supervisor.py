@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from typing import Dict, List
 import threading
 from time import sleep
+
+from mininet.net import Mininet
+from mininet.net import Host
 
 """
 file: 
@@ -9,9 +14,6 @@ language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
-
-from mininet.net import Mininet
-from mininet.net import Host
 
 
 class Supervisor:
@@ -27,6 +29,15 @@ class Supervisor:
     class __Sender( threading.Thread ):
         # https://stackoverflow.com/a/7445805
         def __init__( self, hn: str, h: Host, c: str, id: int, S: List[ bool ] ) -> None:
+            """
+
+            @param hn: Host name containing the src IP.
+            @param h: Host to actually send pkts.
+            @param c: Command line to send pkts.
+            @param id: Host mapping id, associated with S.
+            @param S: List of boolean values to tell
+                      whether it's done to send pkts on a host with the mapping id.
+            """
             super().__init__()
             self.hn: str = hn
             self.h: Host = h
@@ -43,7 +54,7 @@ class Supervisor:
             self.S[ self.id ] = True
 
     def __listening( self, h:str ) -> None:
-        print( "Listening on %s" % (self.__net.get( h )) )
+        print( "Listening on %s" % ( self.__net.get( h ) ) )
         # print( self.net.get( h ).cmd( "./receive.py" ) )
         self.__net.get( h ).cmd( "./receive.py -c %s" % 0 )
 
@@ -72,6 +83,9 @@ class Supervisor:
 
         sleep( 2 )
         print( "Sending pkts" )
+        # Always to use h2 to actually send a pkt, thus no need to initialize all hosts in the mininet topology.
+        h2: Host = self.__net.get( "h2" )
+        # Sending process
         for hn in self.__hosts.keys():
             if hn == Supervisor.LISTENING_HOST:
                 continue
@@ -79,10 +93,11 @@ class Supervisor:
             self.__S.append( False )
             print( "Start sending pkts on %s" % ( hn ) )
             self.__Sender(
-                hn, self.__net.get( hn ), "./send.py -hj ./pod-topo/%s.json" % ( hn ),
+                hn, h2, "./send.py -hj ./pod-topo/%s.json" % ( hn ),
                 len( self.__S ) - 1, self.__S
             ).start()
 
+        # Wait for all pkts to be sent.
         while self.__continues():
             sleep( Supervisor.SLEEP_TIME )
 

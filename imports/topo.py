@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import Dict, List, Tuple, Any
 
 """
 file: topo.py
@@ -79,7 +79,7 @@ class CSVParaser:
 
     def __get_host_json( 
         self, n: str, i: str, m: str, c:List[ str ]
-    ) -> Dict:
+    ) -> tuple[ str, Dict[ str, str ] ]:
         return ( n, {
             IP_STR: i,
             MAC_STR: m,
@@ -182,7 +182,6 @@ class CSVParaser:
             if H.get( da ) is None:
                 id = id + 1
                 self.__add_host( H, L, id, da, dm )
-
 
         res: Dict = {
             HOST_STR: self.__convert( H ),

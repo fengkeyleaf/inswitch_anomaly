@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+
 from typing import Dict
 import json
-import sklearn.tree
 
 """
 file: Generate network topology json file for p4 program to build the network.
@@ -16,8 +17,9 @@ from fengkeyleaf import (
     my_writer
 )
 
-def __get_host_json( d:Dict ) -> None:
-    d:Dict = d[ topo.HOST_STR ]
+
+def __get_host_json( d: Dict ) -> None:
+    d: Dict = d[ topo.HOST_STR ]
     for k in d:
         assert d.get( k ) is not None
         my_writer.write_to_file(
@@ -42,4 +44,4 @@ if __name__ == '__main__':
     cf = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
 
     P: Dict[ float, Dict ] = csvparaser.Parser().parse( cf )
-    __get_host_json( topo.CSVParaser().get_topo_json( P, "./pod-topo/topology.json" ) )
+    __get_host_json( topo.CSVParaser().get_topo_json( P, None ) )

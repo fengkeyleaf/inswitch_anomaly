@@ -40,4 +40,7 @@ class Receiver( threading.Thread ):
 
     # https://stackoverflow.com/questions/24664893/python-scapy-sniff-only-incoming-packets/75405277#75405277
     def run( self ) -> None:
+        """
+        Only sniff incoming pkts.
+        """
         scapy.all.sniff( iface = self.iface, filter = "inbound", prn = lambda x: self.prn( x ) )
