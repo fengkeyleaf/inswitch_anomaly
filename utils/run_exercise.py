@@ -207,7 +207,7 @@ class ExerciseRunner:
 
         print( "Network program initialized...." )
         # wait for that to finish. Not sure how to do this better
-        # self._inswitch_anomaly_run()
+        self._inswitch_anomaly_run()
 
         sleep( 8 )
         self.do_net_cli()
@@ -215,6 +215,9 @@ class ExerciseRunner:
         self.net.stop()
 
     def _inswitch_anomaly_run( self ):
+        """
+        Use this only want to send pkts in parallel.
+        """
         sleep( 10 * 60 )
         supervisor.Supervisor( self.net, self.hosts ).send()
 

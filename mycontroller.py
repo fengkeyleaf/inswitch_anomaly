@@ -44,11 +44,11 @@ inputfile = "./test/test_tree_4_features.txt"
 inputfile = "./config/tree.txt"
 
 # Real-world data Test
-inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_3_tree.txt"
-# inputfile = "/home/p4/tutorials/data/UNSW-NB15/UNSW-NB15_2_tree.txt"
+# inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_3_tree.txt"
+inputfile = "/home/p4/BoT-loT/trees/UNSW_2018_IoT_Botnet_Dataset_1_new_tree.txt"
 
 # Basic forwarding test
-inputfile = "/home/p4/tutorials/data/Bot-loT/processed/without_synthesised/UNSW_2018_IoT_Botnet_Dataset_3_reformatted_sketch_tree.txt"
+# inputfile = "/home/p4/tutorials/data/Bot-loT/processed/without_synthesised/UNSW_2018_IoT_Botnet_Dataset_3_reformatted_sketch_tree.txt"
 
 actionfile = '../decision_tree/action.txt'
 actionfile = "./config/action.txt"

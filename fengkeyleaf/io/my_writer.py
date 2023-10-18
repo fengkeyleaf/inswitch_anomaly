@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import os
+import logging
 
 """
 file: 
@@ -8,7 +10,12 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+from fengkeyleaf.logging import my_logging
+
 __version__ = "1.0"
+
+
+l: logging.Logger = my_logging.get_logger( logging.INFO )
 
 
 def write_to_file( fp: str, d: str ) -> None:
@@ -17,6 +24,10 @@ def write_to_file( fp: str, d: str ) -> None:
     @param fp:
     @param d:
     """
+    if fp is None or fp == "":
+        l.warning( "File path doesn't exit: " + fp )
+        return
+    
     with open( fp, "w+" ) as f:
         f.write( d )
 

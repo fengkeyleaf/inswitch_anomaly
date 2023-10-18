@@ -1,6 +1,6 @@
 import sys
 import json
-from typing import Dict
+from typing import Dict, Any
 import re
 
 """
@@ -70,7 +70,16 @@ def writeForwardingRules( p4info_helper, sw, range, port ) -> None:
 # Decision tree rules.
 
 def writeactionrule( p4info_helper, switch, a, b, c, d, action, port ):
-    para = get_actionpara( port )
+    # para = get_actionpara( port )
+    if port == 0:
+        para: Dict = {}
+    else:
+        assert port == 1
+        para: Dict[ str, Any ] = {
+            "dstAddr": "A0:36:BC:D1:8D:82",
+            "port": 1
+        }
+        
     # print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.decision_tree",

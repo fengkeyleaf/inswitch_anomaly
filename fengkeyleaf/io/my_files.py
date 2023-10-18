@@ -24,6 +24,7 @@ BACK_SLASH_REPLACE: str = "backslashreplace"
 
 # File extensions in lower case
 CSV_EXTENSION: str = ".csv"
+JSON_EXTENSION: str = ".json"
 
 
 def get_files_in_dir( dir: str ) -> List[ str ]:
