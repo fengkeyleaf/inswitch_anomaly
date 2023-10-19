@@ -19,7 +19,8 @@ from fengkeyleaf.inswitch_anomaly.api import (
     topo,
     p4ml,
     write_rules,
-    data_processor
+    data_processor,
+    filter
 )
 
 from fengkeyleaf.io.api import (

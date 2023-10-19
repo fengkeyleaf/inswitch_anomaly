@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
+from pandas import DataFrame
 
 """
 file:
@@ -68,5 +69,3 @@ OPTI_FUNCTION_CONFIG_STR: str = "op_f_config"
 # Optimization function names
 BINARY_OP: int = 0
 LINEAR_OP: int = 1
-
-

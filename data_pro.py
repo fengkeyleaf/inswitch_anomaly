@@ -12,7 +12,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 __version__ = "1.0"
 
-from fengkeyleaf import data_processor, my_logging
+from fengkeyleaf import data_processor, my_logging, filter
 
 # BoT-IoT
 # python .\data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
@@ -53,5 +53,6 @@ if __name__ == '__main__':
     data_processor.DataProcessor(
         args.dir_data, args.header,
         args.dir_madeup, None,
-        False, my_logging.get_level_name( args.logging_level )
+        False,  filter.ipv4_filter,
+        my_logging.get_level_name( args.logging_level )
     ).process()

@@ -4,9 +4,8 @@ import logging
 import math
 import re
 from typing import (
-    Dict, List, Set
+    Dict, List, Set, Callable
 )
-import pandas
 from pandas import (
     DataFrame
 )
@@ -26,12 +25,8 @@ from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.inswitch_anomaly import (
     mix_make_ups,
-    mapper,
-    sketch_write
+    mapper
 )
-
-
-IP_REG = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"  # raw string
 
 
 # TODO: too many for s, d, F in os.walk( da ):
@@ -44,7 +39,10 @@ class PktProcessor:
     FOLDER_NAME = "/re-formatted/"
     SIGNATURE = "_reformatted.csv"
 
-    def __init__( self, h: str, m: mix_make_ups.Mixer, ll: int = logging.INFO ) -> None:
+    def __init__(
+            self, h: str, m: mix_make_ups.Mixer,
+            fn: Callable = None, ll: int = logging.INFO
+    ) -> None:
         """
 
         @param h: Path to features(headers)
@@ -59,6 +57,8 @@ class PktProcessor:
         self.h: str = h  # header file path
         self.m: mix_make_ups.Mixer = m
 
+        self.fn: Callable = fn
+
     def process( self, f: str ) -> DataFrame:
         """
         Process a csv pkt file, adding header, mapping features, re-numbering and spoofing macs
@@ -66,12 +66,19 @@ class PktProcessor:
         @return:
         """
         df: DataFrame = my_dataframe.add_header( self.h, f )
+        # Mapping raw features to our features.
         df = mapper.Mapper.mapping( df )
+        # Mix with synthesised good pkts if provided.
         df = self.m.mix( df )
+        # Spoof macs and renumber.
         PktProcessor.spoof_macs( df )
         PktProcessor.renumber( df )
         assert PktProcessor._Checker.verify( df, f )
         assert self.c.statistics( df )
+        # Filtering.
+        if self.fn is not None:
+            self.l.info( "Pkt filter is enabled." )
+            df = self.fn( df )
 
         # Write to file
         self.write( df, f )
@@ -83,7 +90,7 @@ class PktProcessor:
         """
         Add to input csv to add dest MAC and src MAC
         MACs are consistent with IPs
-        @param D:
+        @param d:
         """
         # Create a dict to map IPs to MACs
         m: Dict[ str, str ] = { }
@@ -161,14 +168,6 @@ class PktProcessor:
 
             self.l.info( "Mixed dataset: gc = %d, bc = %d, tc = %d" % ( gc, bc, tc ) )
             return True
-
-    @staticmethod
-    def verify_ip( d: DataFrame ) -> bool:
-        for ( i, s ) in d.iterrows():
-            assert re.search( IP_REG, d.loc[ i , fkl_inswitch.SRC_ADDR_STR ] ), str( i ) + " " + d.loc[ i , fkl_inswitch.SRC_ADDR_STR ]
-            assert re.search( IP_REG, d.loc[ i , fkl_inswitch.DST_ADDR_STR ] ), str( i ) + " " + d.loc[ i , fkl_inswitch.DST_ADDR_STR ]
-
-        return True
 
     def write( self, df: DataFrame, f: str ) -> None:
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html

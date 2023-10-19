@@ -64,7 +64,7 @@ class Evaluator:
         :param k: pkt ID number
         :return:
         """
-        return re.match( pkt_processor.IP_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
+        return re.match( pkt_processor.IPV4_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
 
     def __evaluate( self ) -> None:
         gc: int = 0 # good count

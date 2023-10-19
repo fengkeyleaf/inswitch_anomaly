@@ -83,9 +83,6 @@ class Supervisor:
 
         sleep( 2 )
         print( "Sending pkts" )
-        # Always to use h2 to actually send a pkt, thus no need to initialize all hosts in the mininet topology.
-        h2: Host = self.__net.get( "h2" )
-        # Sending process
         for hn in self.__hosts.keys():
             if hn == Supervisor.LISTENING_HOST:
                 continue
@@ -93,11 +90,10 @@ class Supervisor:
             self.__S.append( False )
             print( "Start sending pkts on %s" % ( hn ) )
             self.__Sender(
-                hn, h2, "./send.py -hj ./pod-topo/%s.json" % ( hn ),
+                hn, self.__net.get( hn ), "./send.py -hj ./pod-topo/%s.json" % ( hn ),
                 len( self.__S ) - 1, self.__S
             ).start()
 
-        # Wait for all pkts to be sent.
         while self.__continues():
             sleep( Supervisor.SLEEP_TIME )
 

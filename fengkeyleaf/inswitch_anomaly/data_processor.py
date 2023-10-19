@@ -4,11 +4,9 @@ import logging
 import os
 import sys
 import unittest
-from typing import List, Iterator, Tuple
+from typing import List, Iterator, Tuple, Callable
 import pandas
-from pandas import (
-    DataFrame
-)
+from pandas import DataFrame
 
 """
 file:
@@ -57,7 +55,7 @@ class DataProcessor:
     def __init__(
             self, da: str, h: str,
             dm: str = None, D: List[ str ] = None,
-            is_writing: bool = False, ll: int = logging.INFO
+            is_writing: bool = False, fn: Callable = None, ll: int = logging.INFO
     ) -> None:
         """
 
@@ -86,6 +84,7 @@ class DataProcessor:
                 0 if dm is None or dm == "" else self.__get_original_relative_time( da, h ),
                 ll
             ),
+            fn,
             ll
         )
         self.sketch_processor: sketch_write.SketchWriter = sketch_write.SketchWriter(
@@ -104,13 +103,13 @@ class DataProcessor:
             ll
         )
 
-    def process( self, is_only_filter: bool = False ) -> None:
+    def process( self, is_only_preprocessing: bool = False ) -> None:
         """
         Process data sets and train trees. Start from beginning.
         1) Re-format csv data sets.
         2) Generate sketch csv files.
         3) Train a tree with the sketch files.
-        @param is_only_filter: True, only generate processed data sets.
+        @param is_only_preprocessing: True, only generate processed data sets.
         """
         self.l.info( "Start processing from the beginning." )
 
@@ -126,10 +125,12 @@ class DataProcessor:
             for f in F:
                 fp: str = os.path.join( s, f )
 
-                if is_only_filter:
+                # Only pre-process pkts.
+                if is_only_preprocessing:
                     self.pkt_processor.process( fp )
                     continue
 
+                # Pre-process, sketching and training.
                 self.tree.process(
                     fp,
                     # https://realpython.com/python-kwargs-and-args/
