@@ -72,7 +72,7 @@ class Supervisor:
 
         return False
 
-    def send( self ) -> None:
+    def _start_sniffing( self ) -> None:
         # http://mininet.org/api/classmininet_1_1node_1_1Node.html#a6e1338af3c4a0348963a257ac548153b
         # https://www.geeksforgeeks.org/multithreading-python-set-1/
         # https://docs.python.org/3.8/library/threading.html
@@ -82,7 +82,11 @@ class Supervisor:
         ).start()
 
         sleep( 2 )
-        print( "Sending pkts" )
+
+    def sends( self ) -> None:
+        self._start_sniffing()
+
+        print( "Sending pkts in parallel" )
         for hn in self.__hosts.keys():
             if hn == Supervisor.LISTENING_HOST:
                 continue
@@ -98,6 +102,26 @@ class Supervisor:
             sleep( Supervisor.SLEEP_TIME )
 
         print( "Done with sending %d pkts" % self.__get_sum_pkts() )
+        print( "Killing the listening host, %s" % ( Supervisor.LISTENING_HOST ) )
+        # https://github.com/mininet/mininet/blob/master/mininet/node.py#L328
+        self.__net.get( Supervisor.LISTENING_HOST ).sendInt()
+
+    SEDNING_HOST_NAME: str = "h2"
+
+    def send( self ) -> None:
+        self._start_sniffing()
+
+        print( "Sending pkts on host %s" % ( Supervisor.SEDNING_HOST_NAME ) )
+        self.__S.append( False )
+        self.__Sender(
+            Supervisor.SEDNING_HOST_NAME, self.__net.get( Supervisor.SEDNING_HOST_NAME ),
+            "./send.py -hjs ./pod-topo/hosts/",
+            len( self.__S ) - 1, self.__S
+        ).start()
+
+        while self.__continues():
+            sleep( Supervisor.SLEEP_TIME )
+
         print( "Killing the listening host, %s" % ( Supervisor.LISTENING_HOST ) )
         # https://github.com/mininet/mininet/blob/master/mininet/node.py#L328
         self.__net.get( Supervisor.LISTENING_HOST ).sendInt()

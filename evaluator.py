@@ -15,13 +15,13 @@ from fengkeyleaf import (
     my_json,
     my_logging,
     csvparaser,
-    pkt_processor
+    filter
 )
 import receive as rec
 
 RESULT_FILE = "./output.json" # result file path
 
-
+# TODO: Integrate this into the receive.py
 class Evaluator:
     def __init__( self, is_forwarding: bool = False, ll: int = logging.INFO ) -> None:
         """
@@ -64,7 +64,7 @@ class Evaluator:
         :param k: pkt ID number
         :return:
         """
-        return re.match( pkt_processor.IPV4_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
+        return re.match( filter.IPV4_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
 
     def __evaluate( self ) -> None:
         gc: int = 0 # good count
@@ -118,9 +118,9 @@ if __name__ == '__main__':
     # Evaluator().evaluate( "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv" )
     # f: str = "/home/p4/tutorials/data/Bot-loT/dataSet/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     # f = "/home/p4/tutorials/data/UNSW-NB15/dataSet/UNSW-NB15_3_reformatted.csv"
-    # f = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/re-formatted-mapping/UNSW-NB15_1_reformatted.csv"
+    f = "/home/p4/BoT-loT/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
+    Evaluator().evaluate( f )
 
     # Basic forwarding test
     f = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
-    Evaluator().evaluate( f )
     # Evaluator( True ).evaluate( f )

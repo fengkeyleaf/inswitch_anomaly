@@ -23,7 +23,7 @@ def __get_host_json( d: Dict ) -> None:
     for k in d:
         assert d.get( k ) is not None
         my_writer.write_to_file(
-             "./pod-topo/" + k + ".json",
+             "./pod-topo/hosts/" + k + ".json",
              json.dumps( d[ k ], indent = 4 )
         )
 

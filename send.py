@@ -58,7 +58,7 @@ def send_pkts_hosts( fp: str, iface: str ) -> None:
                     pkt = Ether( src = get_if_hwaddr( iface ), dst = 'ff:ff:ff:ff:ff:ff' )
                     pkt = pkt / IP( src = src_addr, dst = dst_addr )
                     pkt = pkt / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / k
-                    pkt.show2()
+                    # pkt.show2()
                     sendp( pkt, iface = iface, verbose = False )
                 print( "Done with sending pkts on %s" % ( src_addr ) )
 
