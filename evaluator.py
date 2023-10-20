@@ -119,6 +119,7 @@ if __name__ == '__main__':
     # f: str = "/home/p4/tutorials/data/Bot-loT/dataSet/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     # f = "/home/p4/tutorials/data/UNSW-NB15/dataSet/UNSW-NB15_3_reformatted.csv"
     f = "/home/p4/BoT-loT/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
+    f = "/home/p4/data/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     Evaluator().evaluate( f )
 
     # Basic forwarding test

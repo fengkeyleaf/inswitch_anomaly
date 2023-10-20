@@ -80,7 +80,7 @@ def writeactionrule( p4info_helper, switch, a, b, c, d, action, port ):
             "port": 1
         }
         
-    # print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
+    print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.decision_tree",
         match_fields = {
@@ -100,7 +100,7 @@ def writeactionrule( p4info_helper, switch, a, b, c, d, action, port ):
 
 
 def writefeature1rule( p4info_helper, switch, range, ind ):
-    # print( "F1: range=%s, ind=%s" % ( range, ind ) )
+    print( "F1: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.src_count_select_t",
         match_fields = {
@@ -117,7 +117,7 @@ def writefeature1rule( p4info_helper, switch, range, ind ):
 
 
 def writefeature2rule( p4info_helper, switch, range, ind ):
-    # print( "F2: range=%s, ind=%s" % ( range, ind ) )
+    print( "F2: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.src_tls_select_t",
         match_fields = {
@@ -133,7 +133,7 @@ def writefeature2rule( p4info_helper, switch, range, ind ):
 
 
 def writefeature3rule( p4info_helper, switch, range, ind ):
-    # print( "F3: range=%s, ind=%s" % ( range, ind ) )
+    print( "F3: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.dst_count_select_t",
         match_fields = {
@@ -149,7 +149,7 @@ def writefeature3rule( p4info_helper, switch, range, ind ):
 
 
 def writefeature4rule( p4info_helper, switch, range, ind ):
-    # print( "F4: range=%s, ind=%s" % ( range, ind ) )
+    print( "F4: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.dst_tls_select_t",
         match_fields = {
