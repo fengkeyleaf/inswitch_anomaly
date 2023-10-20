@@ -2,6 +2,8 @@
 
 import logging
 from typing import Any
+import sys
+import os
 
 # scapy imports
 import scapy.packet
@@ -20,9 +22,51 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf import my_logging
+# fengkeyleaf imports
+fp_fkl: str = os.path.join(
+        os.path.dirname( os.path.abspath(__file__) ),
+        '../../../'
+    )
+sys.path.append( fp_fkl )
+print( sys.path )
+from fengkeyleaf.logging import my_logging
+sys.path.remove( fp_fkl )
+print( sys.path )
 
 __version__ = "1.0"
+
+
+# p4c --target bmv2 --arch v1model -o ./build/ --p4runtime-files ./build/inswitch_anomaly.p4info.txt ./inswitch_anomaly.p4
+
+# sudo ./tools/veth_setup.sh
+
+# sudo simple_switch_grpc \
+#      --log-console \
+#      --log-flush \
+#      --dump-packet-data 10000 \
+#      -i 0@veth0 \
+#      -i 1@veth2 \
+#      -i 2@veth4 \
+#      -i 3@veth6 \
+#      -i 4@veth8 \
+#      -i 5@veth10 \
+#      -i 6@veth12 \
+#      -i 7@veth14 \
+#      --no-p4
+
+# simple_switch_CLI
+
+# sudo `which ptf`\
+#     -i 0@veth1 \
+#     -i 1@veth3 \
+#     -i 2@veth5 \
+#     -i 3@veth7 \
+#     -i 4@veth9 \
+#     -i 5@veth11 \
+#     -i 6@veth13 \
+#     -i 7@veth15 \
+#     --test-params="grpcaddr='localhost:9559';p4info='./build/inswitch_anomaly.p4info.txt';config='./build/inswitch_anomaly.json'" \
+#     --test-dir ./fengkeyleaf/inswitch_anomaly/ptf
 
 
 l: logging = my_logging.get_logger( logging.DEBUG )
@@ -33,7 +77,7 @@ l: logging = my_logging.get_logger( logging.DEBUG )
 class PtfTest( BaseTest ):
     TEST_NAME: str = "inswtich_anomaly"
 
-    def setUp( self ) -> None:
+    def setUp( self ):
         # Setting up PTF dataplane
         self.dataplane = ptf.dataplane_instance
         self.dataplane.flush()
@@ -56,7 +100,7 @@ class PtfTest( BaseTest ):
         #p4rtutil.dump_table("mac_da")
         #p4rtutil.dump_table("send_frame")
 
-    def tearDown( self ) -> None:
+    def tearDown( self ):
         l.debug( "PTF_Test( " + PtfTest.TEST_NAME + " ).tearDown()" )
         sh.teardown()
 
@@ -69,22 +113,24 @@ class PtfTest( BaseTest ):
 #   * For optional match: <self>['<f>'] = '<value>'
 
 
-class _InswtichAnomalyTestBasee( PtfTest ):
+class InswtichAnomalyTestBasee( PtfTest ):
     IP_ADDR_1: str = "192.168.100.1"
     IP_ADDR_2: str = "192.168.100.3"
 
+    # Action parameter value must be a string
     @staticmethod
     def _add_feature_rules(
-            t: str, a: str, m_n: str, m_v: str, p_n: str, p_v: Any
+            t: str, a: str, m_n: str, m_v: str, p_n: str, p_v: str
     ) -> None:
         te = sh.TableEntry( t )( action = a )
         te.match[ m_n ] = m_v
         te.action[ p_n ] = p_v
+        te.priority = 1
         te.insert()
 
 
 # Test cases
-class _InswtichAnomalyTest( _InswtichAnomalyTestBasee ):
+class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
 
     @staticmethod
     def _add_actions() -> None:
@@ -93,6 +139,7 @@ class _InswtichAnomalyTest( _InswtichAnomalyTestBasee ):
         te.match[ "meta.src_tls_select" ] = "1..1"
         te.match[ "meta.dst_count_select" ] = "1..2"
         te.match[ "meta.dst_tls_select" ] = "1..1"
+        te.priority = 1
         te.insert()
 
         te = sh.TableEntry( "MyIngress.decision_tree" )( action = "MyIngress.ipv4_forward" )
@@ -102,17 +149,18 @@ class _InswtichAnomalyTest( _InswtichAnomalyTestBasee ):
         te.match[ "meta.dst_tls_select" ] = "1..1"
         te.action[ "dstAddr" ] = "08:00:00:00:01:11"
         te.action[ "port" ] = "1"
+        te.priority = 1
         te.insert()
 
     @staticmethod
     def _add_rules() -> None:
-        _InswtichAnomalyTest._add_actions()
+        InswtichAnomalyTest._add_actions()
 
-        _InswtichAnomalyTest._add_feature_rules( "Sketch.src_count_select_t", "Sketch.src_count_select_a", "scv", "0..32", "v", 1 )
-        _InswtichAnomalyTest._add_feature_rules( "Sketch.src_tls_select_t", "Sketch.src_tls_select_a", "stv", "0..1", "v", 1 )
-        _InswtichAnomalyTest._add_feature_rules( "Sketch.dst_count_select_t", "Sketch.dst_count_select_a", "dcv", "1..5000", "v", 2 )
+        InswtichAnomalyTest._add_feature_rules( "MyIngress.s.src_count_select_t", "MyIngress.s.src_count_select_a", "scv", "0..32", "v", "1" )
+        InswtichAnomalyTest._add_feature_rules( "MyIngress.Sketch.src_tls_select_t", "MyIngress.Sketch.src_tls_select_a", "stv", "0..1", "v", "1" )
+        InswtichAnomalyTest._add_feature_rules( "MyIngress.Sketch.dst_count_select_t", "MyIngress.Sketch.dst_count_select_a", "dcv", "1..5000", "v", "2" )
 
-    def runtTest( self ) -> None:
+    def runTest( self ):
         l.info( "Testing with the dataset of 10 pkts" )
         ig_port: int = 2 # Host to send pkts.
         eg_port: int = 1 # Host to receive good pkts.
@@ -120,13 +168,13 @@ class _InswtichAnomalyTest( _InswtichAnomalyTestBasee ):
         # Before adding any table entries, the default behavior for
         # sending in an IPv4 packet is to drop it.
         pkt: scapy.packet.Packet = tu.simple_ip_packet(
-            ip_src = _InswtichAnomalyTest.IP_ADDR_1,
-            ip_dst = _InswtichAnomalyTest.IP_ADDR_2
+            ip_src = InswtichAnomalyTest.IP_ADDR_1,
+            ip_dst = InswtichAnomalyTest.IP_ADDR_2
         )
         tu.send_packet( self, ig_port, pkt )
         tu.verify_no_other_packets( self )
 
-        _InswtichAnomalyTest._add_rules()
+        InswtichAnomalyTest._add_rules()
 
         tu.send_packet( self, ig_port, pkt )
         tu.verify_packets( self, pkt, [ eg_port ] )

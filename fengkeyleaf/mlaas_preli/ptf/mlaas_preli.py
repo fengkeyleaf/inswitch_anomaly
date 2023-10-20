@@ -14,6 +14,7 @@ import ptf
 import ptf.testutils as tu
 from ptf.base_tests import BaseTest
 # p4runtime imports
+# sudo pip3 install p4runtimeshell
 import p4runtime_sh.shell as sh
 # import p4runtime_shell_utils as p4rtutil
 
