@@ -17,7 +17,6 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf.logging import my_logging
-from fengkeyleaf.annotations import deprecated
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.io import (
     my_files,
@@ -45,6 +44,7 @@ from fengkeyleaf.inswitch_anomaly import (
 # fengkeyleaf.data_processor.DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv", None, None, 20 ).process( True )
 # fengkeyleaf.data_processor.DataProcessor( "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data", None, None, None, 20 ).process( True )
 # TODO: Mix different group of data sets.
+# TODO: Config parameter in the constructor.
 class DataProcessor:
     """
     Class to do the all tree processing steps:
@@ -55,7 +55,8 @@ class DataProcessor:
     def __init__(
             self, da: str, h: str,
             dm: str = None, D: List[ str ] = None,
-            is_writing: bool = False, fn: Callable = None, ll: int = logging.INFO
+            is_writing: bool = False, fn: Callable = None,
+            ll: int = logging.INFO
     ) -> None:
         """
 
@@ -93,10 +94,11 @@ class DataProcessor:
             False,
             -1,
             True,
+            True,
             ll
         )
         self.tree: tree.Tree = tree.Tree(
-            da + sketch_write.SketchWriter.FOLDER_NAME,
+            da + sketch_write.SketchWriter.SKETCH_FOLDER_NAME,
             da,
             D,
             is_writing,

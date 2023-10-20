@@ -6,10 +6,14 @@ import random
 from typing import List
 # import math
 
-from scapy.all import IP, Ether, Packet
+# scapy imports
+from scapy.layers.inet import IP, Ether
+from scapy.packet import Packet
+# ptf imports
 import ptf
 import ptf.testutils as tu
 from ptf.base_tests import BaseTest
+# p4runtime imports
 import p4runtime_sh.shell as sh
 # import p4runtime_shell_utils as p4rtutil
 
@@ -52,7 +56,7 @@ import mlaas_pkt
 #     -i 6@veth13 \
 #     -i 7@veth15 \
 #     --test-params="grpcaddr='localhost:9559';p4info='./build/mlaas_preli.p4info.txt';config='./build/mlaas_preli.json'" \
-#     --test-dir ./fengkeyleaf/mlaas_preli/ptf_tests
+#     --test-dir ./fengkeyleaf/mlaas_preli/ptf
 
 # The effect achieved by the code below seems to be that many DEBUG
 # and higher priority logging messages go to the console, and also to
@@ -70,7 +74,7 @@ logger.addHandler(ch)
 
 
 # https://github.com/jafingerhut/p4-guide/blob/master/demo1/ptf/demo1.py
-class PTF_Test( BaseTest ):
+class PtfTest( BaseTest ):
     def setUp(self):
         # Setting up PTF dataplane
         self.dataplane = ptf.dataplane_instance
@@ -100,7 +104,7 @@ class PTF_Test( BaseTest ):
 
 
 @tu.disabled
-class Ipv4_lpm_Test( PTF_Test ):
+class Ipv4LpmTest( PtfTest ):
     @staticmethod
     def add_rules_ipv4_lpm():
          # table_set_default MyIngress.ipv4_lpm MyIngress.drop
@@ -139,7 +143,7 @@ class Ipv4_lpm_Test( PTF_Test ):
         tu.send_packet( self, ig_port, pkt )
         tu.verify_no_other_packets( self )
 
-        Ipv4_lpm_Test.add_rules_ipv4_lpm()
+        Ipv4LpmTest.add_rules_ipv4_lpm()
 
         # Check that the entry is hit, expected source and dest MAC
         # have been written into output packet, TTL has been
@@ -166,7 +170,7 @@ def get_mlaas_pkt(
 
 
 # Cannot be disabled.
-class Mlass_preli_test( PTF_Test ):
+class MlassPreliTest( PtfTest ):
     def __init__( self, methodName: str = "runTest" ) -> None:
         super().__init__( methodName )
 
@@ -178,9 +182,9 @@ class Mlass_preli_test( PTF_Test ):
         self.ip2: str = "10.0.2.2"
 
 
-# ptf--test-dir ./fengkeyleaf/mlaas_preli/ptf_tests --list
+# ptf--test-dir ./fengkeyleaf/mlaas_preli/ptf --list
 @tu.disabled
-class Mlaas_preli_test_1host_case1( Mlass_preli_test ):
+class MlaasPreliTest1hostCase1( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 0 )
@@ -192,7 +196,7 @@ class Mlaas_preli_test_1host_case1( Mlass_preli_test ):
 
 
 @tu.disabled
-class Mlaas_preli_test_1host_case2( Mlass_preli_test ):
+class MlaasPreliTest1hostCase2( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 100, 0, False, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 100000, 0, False, 0 )
@@ -204,7 +208,7 @@ class Mlaas_preli_test_1host_case2( Mlass_preli_test ):
 
 
 @tu.disabled
-class Mlaas_preli_test_1host_case3( Mlass_preli_test ):
+class MlaasPreliTest1hostCase3( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 5, True, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 15, True, 0 )
@@ -216,7 +220,7 @@ class Mlaas_preli_test_1host_case3( Mlass_preli_test ):
 
 
 @tu.disabled
-class Mlaas_preli_test_1host_case4( Mlass_preli_test ):
+class MlaasPreliTest1hostCase4( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 1, 1000000, True, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 2, 10000000, True, 0 )
@@ -228,7 +232,7 @@ class Mlaas_preli_test_1host_case4( Mlass_preli_test ):
 
 
 @tu.disabled
-class Mlaas_preli_test_1host_case5( Mlass_preli_test ):
+class MlaasPreliTest1hostCase5( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 10, 0, False, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 5, True, 0 )
@@ -240,7 +244,7 @@ class Mlaas_preli_test_1host_case5( Mlass_preli_test ):
 
 
 @tu.disabled
-class Mlaas_preli_test_1host_case6( Mlass_preli_test ):
+class MlaasPreliTest1hostCase6( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 1000000, True, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 50, 0, False, 0 )
@@ -252,7 +256,7 @@ class Mlaas_preli_test_1host_case6( Mlass_preli_test ):
 
 
 @tu.disabled
-class Mlaas_preli_test_2host_case1( Mlass_preli_test ):
+class MlaasPreliTest2hostCase1( MlassPreliTest ):
     def runTest( self ):
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 10, True, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 1, 50, 0, False, 0 )
@@ -272,7 +276,7 @@ class Mlaas_preli_test_2host_case1( Mlass_preli_test ):
 
 
 # @tu.disabled
-class Mlaas_preli_test_2host_random( Mlass_preli_test ):
+class MlaasPreliTest2hostRandom( MlassPreliTest ):
     POOL_SIZE: int = 256
     EXP: int = 16
     MAX_INT: int = 2 ** EXP - 1
@@ -294,9 +298,9 @@ class Mlaas_preli_test_2host_random( Mlass_preli_test ):
         return ( pos, neg, sign )
 
     def training( self, n_workers: int ):
-        idx: int = random.randint( 0, Mlaas_preli_test_2host_random.POOL_SIZE - 1 )
+        idx: int = random.randint( 0, MlaasPreliTest2hostRandom.POOL_SIZE - 1 )
         G: List[ int ] = [ 
-            random.randint( Mlaas_preli_test_2host_random.MIN_INT, Mlaas_preli_test_2host_random.MAX_INT ) 
+            random.randint( MlaasPreliTest2hostRandom.MIN_INT, MlaasPreliTest2hostRandom.MAX_INT )
             for _ in range( n_workers )
         ]
         s: int = sum( G )
@@ -306,7 +310,7 @@ class Mlaas_preli_test_2host_random( Mlass_preli_test ):
         # TODO: random ig_port
         # TODO: boardcase updates
         for g in G:
-            ( pos, neg, sign ) = Mlaas_preli_test_2host_random.convert_to_pkt( g )
+            ( pos, neg, sign ) = MlaasPreliTest2hostRandom.convert_to_pkt( g )
             s_pos += pos
             s_neg += neg
             pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, idx, pos, neg, sign, 0 )

@@ -6,13 +6,8 @@ from typing import (
     List,
     Tuple
 )
-import unittest
-
-import numpy
 import pandas
-from pandas import (
-    DataFrame
-)
+from pandas import DataFrame
 
 """
 file: sketch_write.py
@@ -40,14 +35,20 @@ class SketchWriter:
     Rows |
          v
     """
-    FOLDER_NAME: str = "/sketches/"
-    SIGNATURE: str = "_sketch.csv"
-    SIGNATURE_NEW: str = "_sketch_new.csv"
+    # Sketch file config
+    SKETCH_FOLDER_NAME: str = "/sketches/"
+    SKETCH_SIGNATURE: str = "_sketch.csv"
+    SKETCH_SIGNATURE_NEW: str = "_sketch_new.csv"
+
+    # Balanced original reformatted file config
+    BALANCED_FOLDER_NAME: str = "/balanced_reformatted/"
+    BALANCED_SIGNATURE: str = "_balanced_reformatted.csv"
 
     def __init__(
             self, dir: str, pdir: str,
             is_not_balancing: bool = False, lim: int = -1,
-            is_writing: bool = True, ll: int = logging.INFO
+            is_writing_sketch: bool = True, is_writing_balanced: bool = False,
+            ll: int = logging.INFO
     ) -> None:
         """
 
@@ -55,7 +56,7 @@ class SketchWriter:
         @param pdir: Directory to original pkt csv files.
         @param is_not_balancing: Tell if the data sampling is enabled or not.
         @param lim: Sketch limitation.
-        @param is_writing: Tell if writing the test result to a file.
+        @param is_writing_sketch: Tell if writing the test result to a file.
         @param ll: Logging level.
         """
         self.data: List[ List[ int ] ] = []
@@ -72,10 +73,13 @@ class SketchWriter:
         self.is_not_balancing: bool = is_not_balancing
         self.lim: int = lim
 
-        self.is_writing: bool = is_writing
+        # I/O config
+        self.is_writing_sketch: bool = is_writing_sketch
         self.dir = dir
         self.pdir = pdir
+        self.is_writing_balanced: bool = is_writing_balanced
 
+        # Logging and checker
         self.l: logging.Logger = my_logging.get_logger( ll )
         self._c: SketchWriter._Checker = self._Checker( self.l )
 
@@ -91,19 +95,22 @@ class SketchWriter:
         if self.is_not_balancing: self.l.info( "Balancing is turned off in SketchWriter." );
 
         self._counting( df )
-        self._process( df )
+        self._write_balanced(
+            self._process( df ),
+            f
+        )
 
-        assert not self.is_writing or f is not None
+        assert not self.is_writing_sketch or f is not None
         return self._write( f )
 
     # Algorithm DATASAMPLING( P )
     # Input. P is input data set to generate a sketch csv file. Assuming we have labled data as our file.
     # Output. Balanced sketch csv file to train a decision tree.
-    def _process( self, df: DataFrame ) -> None:
+    def _process( self, df: DataFrame ) -> DataFrame:
         """
         Extract features from pkts and store the information into the sketch.
-        Also Update the sketch with the data sampling applied.
-        @param df:
+        Also, Update the sketch with the data sampling applied.
+        @param df: Pre-processed ptt dataframe.
         """
         assert len( self.data ) <= 0 and len( self.labels ) <= 0
         assert self.b.size_row() <= 0 and self.b.size() <= 0
@@ -120,6 +127,7 @@ class SketchWriter:
         s: sketch.Sketch = sketch.Sketch( self.lim )
         # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
 
+        L: List[ int ] = []
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
         # for every pkt, p, in P
         for ( idx, _ ) in df.iterrows():
@@ -135,15 +143,41 @@ class SketchWriter:
 
             # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.at.html#pandas.DataFrame.at
             assert df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL or df.at[ idx, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL, df.at[ idx, fkl_inswitch.LABEL_STR ]
-            self._balancing( s.get_data( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp )
+            if not self._balancing( s.get_data( si, di ), df.at[ idx, fkl_inswitch.LABEL_STR ], gdp, bdp ):
+                L.append( idx )
 
         assert self._c.isBalanced( s )
+        return df.drop( L )
         # return D
+
+    def _write_balanced( self, df: DataFrame, f: str ) -> None:
+        """
+        Write balanced reformatted pkt dataframe into a csv file.
+        @param df: Balanced reformatted pkt dataframe.
+        @param f: File path where the original data file is located.
+        @return:
+        """
+        # Not save the balanced data if we don't want to or,
+        # data balancing is turned off at the first place.
+        if not self.is_writing_balanced or self.is_not_balancing: return;
+
+        # Write to file
+        d: str = my_writer.get_dir( f ) + SketchWriter.BALANCED_FOLDER_NAME
+        my_writer.make_dir( d )
+        fn: str = my_writer.get_filename( f )
+        f = d + fn + SketchWriter.BALANCED_SIGNATURE
+
+        self.l.info( "Writing balanced re-formatted original dataset to:\n" + f )
+        df.to_csv(
+            f, index = False
+        )
 
     def _write( self, f: str ) -> Tuple[ DataFrame, DataFrame ]:
         """
         Write the sketches with labels to a file.
-        @param f: File path where the result sketch file is written.
+        @param f: File path where the original data file is located.
+        @return ( sketch dataframe in the old format, sketch dataframe in the new format )
+        @rtype: Tuple[ DataFrame, DataFrame ]
         """
         if len( self.data ) == 0 or len( self.labels ) == 0:
             self.l.warning( "Sketch: No data written to the file!" )
@@ -163,21 +197,21 @@ class SketchWriter:
     def _writing_to_file(
             self, f: str, df_o: DataFrame, df_n: DataFrame
     ) -> None:
-        if not self.is_writing: return;
+        if not self.is_writing_sketch: return;
 
         # Write to file
-        d: str = my_writer.get_dir( f ) + SketchWriter.FOLDER_NAME
+        d: str = my_writer.get_dir( f ) + SketchWriter.SKETCH_FOLDER_NAME
         my_writer.make_dir( d )
         fn: str = my_writer.get_filename( f )
-        f = d + fn + SketchWriter.SIGNATURE
+        f = d + fn + SketchWriter.SKETCH_SIGNATURE
 
         self.l.info( "Writing old sketch to:\n" + f )
         df_o.to_csv(
             f, index = False
         )
-        self.l.info( "Writing new sketch to:\n" + d + fn + SketchWriter.SIGNATURE_NEW )
+        self.l.info( "Writing new sketch to:\n" + d + fn + SketchWriter.SKETCH_SIGNATURE_NEW )
         df_n.to_csv(
-            d + fn + SketchWriter.SIGNATURE_NEW, index = False
+            d + fn + SketchWriter.SKETCH_SIGNATURE_NEW, index = False
         )
 
     def _counting( self, df: DataFrame ) -> None:
@@ -208,7 +242,17 @@ class SketchWriter:
         if not self.is_not_balancing:
             self.l.debug( "gc(good count): %d, bc(bad count): %d, tc(total count): %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
 
-    def _balancing( self, D: List[ int ], l: int, gdp: float, bdp: float ) -> None:
+    def _balancing(
+            self, D: List[ int ], l: int, gdp: float, bdp: float
+    ) -> bool:
+        """
+        Data balancing process.
+        @param D: List of sketch data for a pkt record.
+        @param l: Label, 0 or 1.
+        @param gdp: Good pkt probability.
+        @param bdp: Bad pkt probability.
+        @return: To tell whether to add this pkt record or not.
+        """
         assert 0 <= gdp <= 1
         assert 0 <= bdp <= 1
         assert l == fkl_inswitch.GOOD_LABEL or l == fkl_inswitch.BAD_LABEL
@@ -218,15 +262,18 @@ class SketchWriter:
         # ifAddBad <- p is a bad one and randDoube() > bdp
         if_add_bad: bool = l == fkl_inswitch.BAD_LABEL and random.random() > bdp
         # if ifAddGood or ifAddBad
+        # IF START
         if self.is_not_balancing or ( if_add_good or if_add_bad ):
             # then d <- [
             #   			[ srcCount in s, srcTL in s, dstCount in s, dstTLS in s ],
             #               label
             #   	    ]
+            # Old format
             self.data.append( D )
             self.labels.append( l )
             assert len( self.data ) == len( self.labels )
 
+            # New format
             D_t: List = list( D )
             D_t.append( l )
             self.b.add_row( str( self.idx ), [ str( n ) for n in D_t ] )
@@ -234,13 +281,11 @@ class SketchWriter:
             assert self.idx == self.b.size_row(), "%d | %d" % ( self.idx, self.b.size_row() )
             assert self.b.size_row() == len( self.data ), "%d | %d" % ( self.b.size_row(), len( self.data ) )
 
-            # Record actual good pkts.
-            if if_add_good:
-                assert l == fkl_inswitch.GOOD_LABEL
-                self._c.addGood()
-            if if_add_bad:
-                assert l == fkl_inswitch.BAD_LABEL
-                self._c.addBad()
+            assert self._c.count( l, if_add_good, if_add_bad )
+            return True
+        # IF END
+
+        return False
 
     def train( self ) -> None:
         """
@@ -272,17 +317,27 @@ class SketchWriter:
             self.l.debug( "Sketch size: src dict=%d, dst dict=%d" % s.size() )
             return True
 
-        def addGood( self ) -> bool:
+        def _addGood( self ) -> bool:
             self.gc += 1
             return True
+
+        def _addBad( self ) -> None:
+            self.bc += 1
 
         def setLen( self, tc: int ) -> bool:
             self.tc = tc
             return True
 
-        def addBad( self ) -> None:
-            self.bc += 1
+        def count( self, l: int, is_good: bool, is_bad: bool ) -> bool:
+            # Record actual good pkts and bad pkts, i.e. count their numbers.
+            if is_good:
+                assert l == fkl_inswitch.GOOD_LABEL
+                self._addGood()
+            if is_bad:
+                assert l == fkl_inswitch.BAD_LABEL
+                self._addBad()
 
+            return True
 
 class _Comparator:
     """

@@ -108,7 +108,6 @@ class PktProcessor:
             assert m[ di ] is not None
             d.loc[ i, fkl_inswitch.DST_MAC_STR ] = m[ di ]
 
-
     @staticmethod
     def create_mac( m: Dict[ str, str ], I: List[ str ], id: int, s: Set[ str ] ) -> int:
         for i in I:
