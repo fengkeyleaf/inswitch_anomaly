@@ -37,7 +37,7 @@ from fengkeyleaf.io import (
 from fengkeyleaf.utils import my_collections
 from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
-from fengkeyleaf.inswitch_anomaly import _tree_evaluator
+from fengkeyleaf.inswitch_anomaly import _tree_evaluator, sketch
 
 
 # https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/framework/Machinelearning.py
@@ -222,8 +222,14 @@ class Tree:
         @param t: Decision Tree Classifier
         @param f: Output file path.
         """
-        # TODO: Configuration of features.
+        # TODO: Configuration of features and limits.
         feature_names = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
+        limits: Dict[ str, int ] = {
+            "srcCount": sketch.Sketch.COUNT_THRESHOLD,
+            "srcTLS": sketch.Sketch.TLS_THRESHOLD,
+            "dstCount": sketch.Sketch.COUNT_THRESHOLD,
+            "dstTLS": sketch.Sketch.TLS_THRESHOLD
+        }
 
         # tree_Tree instance
         threshold = t.tree_.threshold
@@ -252,24 +258,21 @@ class Tree:
         # print( F )
         for k, v in F.items():
             v = [ int( i ) for i in v if int( i ) > 0 ]
-            # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/
-            v = list( OrderedDict.fromkeys( v ) )
-            v.sort()
-            F[ k ] = v
 
             if len( v ) <= 0:
                 self.l.warning( "Warning! " + k + " is empty Feature: " + f )
-                continue
 
-            assert len( v ) > 0, str( k ) + " | " + str( v )
-            # TODO: simplify
-            if v[ 0 ] > 0:
-                v.insert( 0, int( 0 ) )
+            # Add thresholds.
+            v.append( 0 )
+            v.append( limits[ k ] )
 
-            assert v[ -1 ] < int( math.pow( 2, 31 ) )
-            v.append( int( math.pow( 2, 31 ) ) )
-
+            # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/
+            # Remove duplicate elements.
+            v = list( OrderedDict.fromkeys( v ) )
+            # Sort in descending order.
+            v.sort()
             assert my_collections.is_monotonic( v )
+            F[ k ] = v
 
         # Write to file
         # srcCount

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from typing import Any
 import sys
 import os
 
@@ -24,24 +23,25 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 # fengkeyleaf imports
 # Add path dependency
-fp_fkl: str = os.path.join(
+sys.path.append(
+    os.path.join(
         os.path.dirname( os.path.abspath(__file__) ),
         '../../../'
     )
-sys.path.append( fp_fkl )
+)
 # Import packages
 from fengkeyleaf.logging import my_logging
 
 __version__ = "1.0"
 
 # PTF commands
-# Complie
+# Compile
 # p4c --target bmv2 --arch v1model -o ./build/ --p4runtime-files ./build/inswitch_anomaly.p4info.txt ./inswitch_anomaly.p4
 
 # Add virtual network interfaces
 # sudo ./tools/veth_setup.sh
 
-# Start the swtich.
+# Start the switch.
 # sudo simple_switch_grpc \
 #      --log-console \
 #      --log-flush \

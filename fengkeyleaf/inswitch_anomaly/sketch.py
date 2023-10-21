@@ -13,7 +13,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-import fengkeyleaf.utils.my_dict as fkl_dict
+from fengkeyleaf.utils import my_dict, my_math
 
 IP_COUNT_STR = "count"
 TLS_STR = "TLS"
@@ -24,11 +24,14 @@ F_TLS: Callable = lambda p : p[ 1 ][ TLS_STR ]
 
 
 class Sketch:
-    TLS_THRESHOLD: int = 1000
-
     """
     Sketch class, Currently tracking src IP and dst IP.
     """
+    # TLS threshold for the sketching algorithm, also mapping to a tree.
+    TLS_THRESHOLD: int = 1000
+    # Count threshold for mapping to a tree.
+    COUNT_THRESHOLD: int = my_math.MAX_SIGNED_32_BIT_INT
+
     # Algorithm SKETCHCLASSIFICATION( p )
     # Input. Incomming packet, p.
     # Output. List of feature values extracted from the sketch based on the packet, p.
@@ -55,7 +58,7 @@ class Sketch:
             self._replace( dic, ip )
             return
 
-        # if dic contains ip:
+        # if dic contains the ip:
         # then dic[ ip ][ IP_COUNT ] += 1
         dic[ ip ][ IP_COUNT_STR ] += 1
         # dic[ ip ][ IP_TLS ] = 0
@@ -107,7 +110,7 @@ class Sketch:
     @staticmethod
     def _lowest_count( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # i <- Find the ip, i, so that dic[ i ][ IP_COUNT ] is the lowest in dic.
-        ( k, _ ) = fkl_dict.find_min_value( dic, F_COUNT )
+        ( k, _ ) = my_dict.find_min_value( dic, F_COUNT )
         # Remove the key-value pair with i as the key.
         dic.pop( k )
         # TREACK( dic, ip )
@@ -118,7 +121,7 @@ class Sketch:
     @staticmethod
     def _highest_tls( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # i <- Find the ip, i, so that dic[ i ][ IP_TLS ] is the highest in dic.
-        ( k, _ ) = fkl_dict.find_max_value( dic, F_TLS )
+        ( k, _ ) = my_dict.find_max_value( dic, F_TLS )
         # Remove the key-value pair with i as the key.
         dic.pop( k )
         # TREACK( dic, ip )
@@ -129,7 +132,7 @@ class Sketch:
     @staticmethod
     def _smallest_tls( dic: Dict[ str, Dict[ str, int ] ], ip: str ) -> None:
         # i <- Find the ip, i, so that dic[ i ][ IP_TLS ] is the smallest in dic.
-        ( k, _ ) = fkl_dict.find_min_value( dic, F_TLS )
+        ( k, _ ) = my_dict.find_min_value( dic, F_TLS )
         # Remove the key-value pair with i as the key.
         dic.pop( k )
         # TREACK( dic, ip )
@@ -171,7 +174,7 @@ class Sketch:
                 self.S[ k ][ TLS_STR ] = 0
             for k in self.D.keys():
                 self.D[ k ][ TLS_STR ] = 0
-                self.c = 0
+            self.c = 0
 
     def get_data( self, si: str, di: str ) -> List[ int ]:
         """

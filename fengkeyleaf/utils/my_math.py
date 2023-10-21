@@ -12,6 +12,9 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 __version__ = "1.0"
 
+# Max value for a 32-bit signed integer.
+MAX_SIGNED_32_BIT_INT: int = 2 ** 31 - 1
+
 
 def find_median( N: List[ float ] ) -> float:
     """
