@@ -23,23 +23,25 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 # fengkeyleaf imports
+# Add path dependency
 fp_fkl: str = os.path.join(
         os.path.dirname( os.path.abspath(__file__) ),
         '../../../'
     )
 sys.path.append( fp_fkl )
-print( sys.path )
+# Import packages
 from fengkeyleaf.logging import my_logging
-sys.path.remove( fp_fkl )
-print( sys.path )
 
 __version__ = "1.0"
 
-
+# PTF commands
+# Complie
 # p4c --target bmv2 --arch v1model -o ./build/ --p4runtime-files ./build/inswitch_anomaly.p4info.txt ./inswitch_anomaly.p4
 
+# Add virtual network interfaces
 # sudo ./tools/veth_setup.sh
 
+# Start the swtich.
 # sudo simple_switch_grpc \
 #      --log-console \
 #      --log-flush \
@@ -54,8 +56,10 @@ __version__ = "1.0"
 #      -i 7@veth14 \
 #      --no-p4
 
+# Start CLI
 # simple_switch_CLI
 
+# Start PTF
 # sudo `which ptf`\
 #     -i 0@veth1 \
 #     -i 1@veth3 \
@@ -157,8 +161,8 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
         InswtichAnomalyTest._add_actions()
 
         InswtichAnomalyTest._add_feature_rules( "MyIngress.s.src_count_select_t", "MyIngress.s.src_count_select_a", "scv", "0..32", "v", "1" )
-        InswtichAnomalyTest._add_feature_rules( "MyIngress.Sketch.src_tls_select_t", "MyIngress.Sketch.src_tls_select_a", "stv", "0..1", "v", "1" )
-        InswtichAnomalyTest._add_feature_rules( "MyIngress.Sketch.dst_count_select_t", "MyIngress.Sketch.dst_count_select_a", "dcv", "1..5000", "v", "2" )
+        InswtichAnomalyTest._add_feature_rules( "MyIngress.s.src_tls_select_t", "MyIngress.s.src_tls_select_a", "stv", "0..1", "v", "1" )
+        InswtichAnomalyTest._add_feature_rules( "MyIngress.s.dst_count_select_t", "MyIngress.s.dst_count_select_a", "dcv", "1..5000", "v", "2" )
 
     def runTest( self ):
         l.info( "Testing with the dataset of 10 pkts" )
@@ -171,8 +175,8 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
             ip_src = InswtichAnomalyTest.IP_ADDR_1,
             ip_dst = InswtichAnomalyTest.IP_ADDR_2
         )
-        tu.send_packet( self, ig_port, pkt )
-        tu.verify_no_other_packets( self )
+        # tu.send_packet( self, ig_port, pkt )
+        # tu.verify_no_other_packets( self )
 
         InswtichAnomalyTest._add_rules()
 

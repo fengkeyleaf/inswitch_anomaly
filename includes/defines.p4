@@ -1,7 +1,10 @@
 const bit<16> TYPE_IPV4 = 0x800;
 const int<32> MAX_COUNT = 1000;
 const int<32> MAX_TLS = MAX_COUNT * MAX_COUNT + 1; // count * ( 1000 - tls ) = 1000 * ( 1000 - 0 )
-const bit<32> ARRAY_LEN = 6; // legth of the registers( arraies ) in the sketch.
+// legth of the registers( arraies ) in the sketch.
+// Also the limitation of the sketch.
+// Half of the array is used by src IPs while other half of it is used by dst IPs
+const bit<32> ARRAY_LEN = 16; 
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;

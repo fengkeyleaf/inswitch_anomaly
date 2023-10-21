@@ -29,8 +29,14 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 import mlaas_pkt
 
+# PTF commands
+# Complie
 # p4c --target bmv2 --arch v1model -o ./build/ --p4runtime-files ./build/mlaas_preli.p4info.txt ./mlaas_preli.p4
 
+# Add virtual network interfaces
+# sudo ./tools/veth_setup.sh
+
+# Start the swtich.
 # sudo simple_switch_grpc \
 #      --log-console \
 #      --log-flush \
@@ -45,8 +51,10 @@ import mlaas_pkt
 #      -i 7@veth14 \
 #      --no-p4
 
+# Start CLI
 # simple_switch_CLI
 
+# Start PTF
 # sudo `which ptf`\
 #     -i 0@veth1 \
 #     -i 1@veth3 \
