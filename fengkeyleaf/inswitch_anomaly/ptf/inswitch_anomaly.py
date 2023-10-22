@@ -122,17 +122,51 @@ class InswtichAnomalyTestBasee( PtfTest ):
     SCAPY_DST_FIELD_NAME: str = "dst"
     SCAPY_DEFAULT_TTL: int = 64
 
-    MAX_SIGNED_INT: int = 0xffff
+    MAX_SIGNED_INT: int = 0xffffff
 
     SKETCH_SRC_COUNT_TABLE_NAME: str = "MyIngress.s.src_count_select_t"
     SKETCH_SRC_COUNT_ACTION_NAME: str = "MyIngress.s.src_count_select_a"
     SKETCH_SRC_COUNT_PRARM_NAME: str = "scv"
+    
+    IG_PORT: int = 2 # Host to send pkts.
+    EG_PORT: int = 1 # Host to receive good pkts.
     
     DST_MAC_ADDR: str = "08:00:00:00:01:11"
     IP_ADDR_1: str = "192.168.100.1"
     IP_ADDR_2: str = "192.168.100.3"
     PKT1: scapy.packet.Packet = tu.simple_ip_packet(
         ip_src = IP_ADDR_1,
+        ip_dst = IP_ADDR_2
+    )
+
+    IP_ADDR_3: str = "192.168.100.7"
+    IP_ADDR_4: str = "192.168.100.4"
+    PKT2: scapy.packet.Packet = tu.simple_ip_packet(
+        ip_src = IP_ADDR_3,
+        ip_dst = IP_ADDR_4
+    )
+
+    IP_ADDR_5: str = "192.168.100.149"
+    IP_ADDR_6: str = "27.124.125.250"
+    PKT3: scapy.packet.Packet = tu.simple_ip_packet(
+        ip_src = IP_ADDR_5,
+        ip_dst = IP_ADDR_6
+    )
+
+    PKT4: scapy.packet.Packet = tu.simple_ip_packet(
+        ip_src = IP_ADDR_4,
+        ip_dst = IP_ADDR_3
+    )
+
+    IP_ADDR_7: str = "192.168.100.27"
+    PKT5: scapy.packet.Packet = tu.simple_ip_packet(
+        ip_src = IP_ADDR_7,
+        ip_dst = IP_ADDR_1
+    )
+
+    IP_ADDR_8: str = "192.168.100.150"
+    PKT6: scapy.packet.Packet = tu.simple_ip_packet(
+        ip_src = IP_ADDR_8,
         ip_dst = IP_ADDR_2
     )
 
@@ -204,10 +238,26 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
             "dtv", "0..1000", "v", "1"
         )
 
+    def verify( self, p: scapy.packet.Packet, src: str, dst: str, is_rec: bool ) -> None:
+        tu.send_packet( self, InswtichAnomalyTest.IG_PORT, p )
+
+        exp_pkt: scapy.packet.Packet = tu.simple_ip_packet(
+            eth_src = p[ Ether ].fields[ InswtichAnomalyTest.SCAPY_DST_FIELD_NAME ],
+            eth_dst = InswtichAnomalyTest.DST_MAC_ADDR,
+            ip_src = src,
+            ip_dst = dst,
+            ip_ttl = InswtichAnomalyTest.SCAPY_DEFAULT_TTL - 1 
+        )
+
+        if is_rec:
+            tu.verify_packets( self, exp_pkt, [ InswtichAnomalyTest.EG_PORT ] )
+            return
+
+        tu.verify_no_other_packets( self )
+
     def runTest( self ):
         l.info( "Testing with the dataset of 10 pkts" )
-        ig_port: int = 2 # Host to send pkts.
-        eg_port: int = 1 # Host to receive good pkts.
+
 
         # Before adding any table entries, the default behavior for
         # sending in an IPv4 packet is to drop it.
@@ -216,14 +266,19 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
 
         InswtichAnomalyTest._add_rules()
 
-        tu.send_packet( self, ig_port, InswtichAnomalyTest.PKT1 )
+        # Good pkts. 
+        # 1st pkt.
+        # self.verify( InswtichAnomalyTest.PKT1, InswtichAnomalyTest.IP_ADDR_1, InswtichAnomalyTest.IP_ADDR_2, True )
+        # 2nd pkt.
+        self.verify( InswtichAnomalyTest.PKT2, InswtichAnomalyTest.IP_ADDR_3, InswtichAnomalyTest.IP_ADDR_4, True )
+        # 3nd pkt.
+        self.verify( InswtichAnomalyTest.PKT3, InswtichAnomalyTest.IP_ADDR_5, InswtichAnomalyTest.IP_ADDR_6, True )
+        # 4th pkt.
+        self.verify( InswtichAnomalyTest.PKT4, InswtichAnomalyTest.IP_ADDR_4, InswtichAnomalyTest.IP_ADDR_3, True )
+        # 5th pkt.
+        self.verify( InswtichAnomalyTest.PKT5, InswtichAnomalyTest.IP_ADDR_7, InswtichAnomalyTest.IP_ADDR_1, True )
 
-        exp_pkt: scapy.packet.Packet = tu.simple_ip_packet(
-            eth_src = InswtichAnomalyTest.PKT1[ Ether ].fields[ InswtichAnomalyTest.SCAPY_DST_FIELD_NAME ],
-            eth_dst = InswtichAnomalyTest.DST_MAC_ADDR,
-            ip_src = InswtichAnomalyTest.IP_ADDR_1,
-            ip_dst = InswtichAnomalyTest.IP_ADDR_2,
-            ip_ttl = InswtichAnomalyTest.SCAPY_DEFAULT_TTL - 1 
-        )
-        tu.verify_packets( self, exp_pkt, [ eg_port ] )
-
+        # Bad pkts.
+        # 6th ~ 10th pkts.
+        self.verify( InswtichAnomalyTest.PKT6, InswtichAnomalyTest.IP_ADDR_8, InswtichAnomalyTest.IP_ADDR_2, False )
+        # self.verify( InswtichAnomalyTest.PKT6, InswtichAnomalyTest.IP_ADDR_8, InswtichAnomalyTest.IP_ADDR_2, False )
