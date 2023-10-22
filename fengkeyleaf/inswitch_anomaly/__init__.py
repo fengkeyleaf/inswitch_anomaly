@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from typing import List
-from pandas import DataFrame
 
 """
 file:
@@ -10,6 +9,8 @@ language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
+
+from fengkeyleaf.io import my_writer
 
 # Pkt features
 ID_STR = "No."
@@ -69,3 +70,23 @@ OPTI_FUNCTION_CONFIG_STR: str = "op_f_config"
 # Optimization function names
 BINARY_OP: int = 0
 LINEAR_OP: int = 1
+
+
+# I/O
+def get_output_file_path( f: str, fdn: str, sig: str ) -> str:
+    """
+
+    @param f: File path where the original data file is located.
+    @param fdn: Folder name.
+    @param sig: File signature name.
+    @return:
+    """
+    # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
+    # print( len( df ) )
+    d: str = my_writer.get_dir( f ) + fdn
+    # https://blog.finxter.com/how-to-save-a-text-file-to-another-folder-in-python/
+    my_writer.make_dir( d )
+    fn: str = my_writer.get_filename( f )
+    fp: str = d + fn + sig
+
+    return fp

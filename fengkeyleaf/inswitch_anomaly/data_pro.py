@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import sys
+import os
 
 """
-file:
+file: Coordinator program to do the pkt data pre-processing and ML training,
+      including re-formatting, data sampling/balancing, sketching, and training.
 description:
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
@@ -12,7 +15,16 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 __version__ = "1.0"
 
-from fengkeyleaf import data_processor, my_logging, filter
+# fengkeyleaf imports
+# Add path dependency, which is allowed to exclude this file from the working directory.
+sys.path.append(
+    os.path.join(
+        os.path.dirname( os.path.abspath(__file__) ),
+        '../../'
+    )
+)
+from fengkeyleaf.logging import my_logging
+from fengkeyleaf.inswitch_anomaly import data_processor, filter
 
 # BoT-IoT
 # python .\data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"

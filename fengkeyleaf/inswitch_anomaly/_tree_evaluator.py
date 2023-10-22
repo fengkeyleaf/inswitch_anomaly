@@ -374,7 +374,7 @@ class Evaluator:
 
         for fp in F:
             sw: sketch_write.SketchWriter = sketch_write.SketchWriter(
-                None, None, is_not_balancing, l, False, self.l.level
+                None, None, l, False, self.l.level
             )
 
             assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION

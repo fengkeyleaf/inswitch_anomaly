@@ -23,7 +23,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 # fengkeyleaf imports
-# Add path dependency
+# Add path dependency, which is allowed to exclude this file from the working directory.
 sys.path.append(
     os.path.join(
         os.path.dirname( os.path.abspath(__file__) ),

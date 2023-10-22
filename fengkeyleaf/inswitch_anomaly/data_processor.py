@@ -91,9 +91,7 @@ class DataProcessor:
         self.sketch_processor: sketch_write.SketchWriter = sketch_write.SketchWriter(
             da + pkt_processor.PktProcessor.FOLDER_NAME,
             da,
-            False,
             -1,
-            True,
             True,
             ll
         )
