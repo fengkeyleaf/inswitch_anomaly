@@ -119,18 +119,27 @@ class PtfTest( BaseTest ):
 
 
 class InswtichAnomalyTestBasee( PtfTest ):
+    # Scapy
     SCAPY_DST_FIELD_NAME: str = "dst"
     SCAPY_DEFAULT_TTL: int = 64
 
+    # Numeric range 
     MAX_SIGNED_INT: int = 0xffffff
 
+    # P4 names 
     SKETCH_SRC_COUNT_TABLE_NAME: str = "MyIngress.s.src_count_select_t"
     SKETCH_SRC_COUNT_ACTION_NAME: str = "MyIngress.s.src_count_select_a"
     SKETCH_SRC_COUNT_PRARM_NAME: str = "scv"
+
+    SKETCH_DST_COUNT_TABLE_NAME: str = "MyIngress.s.dst_count_select_t"
+    SKETCH_DST_COUNT_ACTION_NAME: str = "MyIngress.s.dst_count_select_a"
+    SKETCH_DST_COUNT_PRARM_NAME: str = "dcv"
     
+    # Ports
     IG_PORT: int = 2 # Host to send pkts.
     EG_PORT: int = 1 # Host to receive good pkts.
     
+    # IPS and pkts.
     DST_MAC_ADDR: str = "08:00:00:00:01:11"
     IP_ADDR_1: str = "192.168.100.1"
     IP_ADDR_2: str = "192.168.100.3"
@@ -189,17 +198,17 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
     @staticmethod
     def _add_actions() -> None:
         te = sh.TableEntry( "MyIngress.decision_tree" )( action = "MyIngress.drop" )
-        te.match[ "meta.src_count_select" ] = "3..4"
+        te.match[ "meta.src_count_select" ] = "1..3"
         te.match[ "meta.src_tls_select" ] = "1..3"
-        te.match[ "meta.dst_count_select" ] = "1..3"
+        te.match[ "meta.dst_count_select" ] = "3..4"
         te.match[ "meta.dst_tls_select" ] = "1..3"
         te.priority = 1
         te.insert()
 
         te = sh.TableEntry( "MyIngress.decision_tree" )( action = "MyIngress.ipv4_forward" )
-        te.match[ "meta.src_count_select" ] = "1..2"
+        te.match[ "meta.src_count_select" ] = "1..3"
         te.match[ "meta.src_tls_select" ] = "1..3"
-        te.match[ "meta.dst_count_select" ] = "1..3"
+        te.match[ "meta.dst_count_select" ] = "1..2"
         te.match[ "meta.dst_tls_select" ] = "1..3"
         te.action[ "dstAddr" ] = InswtichAnomalyTest.DST_MAC_ADDR
         te.action[ "port" ] = "1"
@@ -213,14 +222,8 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
         InswtichAnomalyTest._add_feature_rules( 
             InswtichAnomalyTest.SKETCH_SRC_COUNT_TABLE_NAME,
             InswtichAnomalyTest.SKETCH_SRC_COUNT_ACTION_NAME,
-            InswtichAnomalyTest.SKETCH_SRC_COUNT_PRARM_NAME, "0..2",
+            InswtichAnomalyTest.SKETCH_SRC_COUNT_PRARM_NAME, "0.." + str( InswtichAnomalyTest.MAX_SIGNED_INT ),
             "v", "1"
-        )
-        InswtichAnomalyTest._add_feature_rules( 
-            InswtichAnomalyTest.SKETCH_SRC_COUNT_TABLE_NAME,
-            InswtichAnomalyTest.SKETCH_SRC_COUNT_ACTION_NAME,
-            InswtichAnomalyTest.SKETCH_SRC_COUNT_PRARM_NAME, "2.." + str( InswtichAnomalyTest.MAX_SIGNED_INT ), 
-            "v", "2"
         )
         InswtichAnomalyTest._add_feature_rules( 
             "MyIngress.s.src_tls_select_t", 
@@ -228,9 +231,15 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
             "stv", "0..1000", "v", "1"
         )
         InswtichAnomalyTest._add_feature_rules( 
-            "MyIngress.s.dst_count_select_t", 
-            "MyIngress.s.dst_count_select_a", 
-            "dcv", "0.." + str( InswtichAnomalyTest.MAX_SIGNED_INT ), "v", "1"
+            InswtichAnomalyTest.SKETCH_DST_COUNT_TABLE_NAME, 
+            InswtichAnomalyTest.SKETCH_DST_COUNT_ACTION_NAME, 
+            InswtichAnomalyTest.SKETCH_DST_COUNT_PRARM_NAME, "0..1", "v", "1"
+        )
+        InswtichAnomalyTest._add_feature_rules( 
+            InswtichAnomalyTest.SKETCH_DST_COUNT_TABLE_NAME, 
+            InswtichAnomalyTest.SKETCH_DST_COUNT_ACTION_NAME, 
+            InswtichAnomalyTest.SKETCH_DST_COUNT_PRARM_NAME, "1.." + str( InswtichAnomalyTest.MAX_SIGNED_INT ),
+            "v", "2"
         )
         InswtichAnomalyTest._add_feature_rules( 
             "MyIngress.s.dst_tls_select_t", 
@@ -268,7 +277,7 @@ class InswtichAnomalyTest( InswtichAnomalyTestBasee ):
 
         # Good pkts. 
         # 1st pkt.
-        # self.verify( InswtichAnomalyTest.PKT1, InswtichAnomalyTest.IP_ADDR_1, InswtichAnomalyTest.IP_ADDR_2, True )
+        self.verify( InswtichAnomalyTest.PKT1, InswtichAnomalyTest.IP_ADDR_1, InswtichAnomalyTest.IP_ADDR_2, True )
         # 2nd pkt.
         self.verify( InswtichAnomalyTest.PKT2, InswtichAnomalyTest.IP_ADDR_3, InswtichAnomalyTest.IP_ADDR_4, True )
         # 3nd pkt.

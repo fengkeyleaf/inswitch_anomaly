@@ -65,24 +65,24 @@ def find_classification( tf, F, FS, fr ):
                 sign.append( re.findall( r"(<=|>)", line ) )
                 num.append( re.findall( r"\d+\.?\d*", line ) )
 
-
+    # [ fea1, fea2, fea2, ......, feaN, classification ]
     FL = [ [] for _ in range( len( F ) + 1 ) ]
 
-    # print( "fea=%s\nsign=%s\nnum=%s\nFL=%s\nFS=%s" % ( fea, sign, num, FL, FS ) )
+    print( "fea=%s\nsign=%s\nnum=%s\nFL=%s\nFS=%s" % ( fea, sign, num, FL, FS ) )
     for i in range( len( fea ) ):
         FLT = [ [ k for k in range( len( f ) + 1 ) ] for f in F ]
         assert len( FLT ) == len( FS ), str( len( FLT ) ) + " " + str( len( FS ) )
         assert len( FS ) == len( F )
 
-        # print( fea[ i ] )
+        print( "fea[" + str( i ) + "]: " + str( fea[ i ] ) )
         for j, feature in enumerate( fea[ i ] ):
-            # print( str( j ) + " " + str( feature ) )
+            print( str( j ) + " " + str( feature ) )
             for k in range( len( FS ) ):
                 if feature == FS[ k ]:
                     sig = sign[ i ][ j ]
                     thres = int( float( num[ i ][ j ] ) )
-                    # print( str( num[ i ][ j ] ) + " " + str( F[ k ] ) + " " + str( thres ) )
                     id = F[ k ].index( thres )
+                    print( "fea=%s, sig=%s,thres=%s,id=%s" % ( feature, sig, thres, id ) )
                     if sig == "<=":
                         while id < len( F[ k ] ):
                             if id + 1 in FLT[ k ]:

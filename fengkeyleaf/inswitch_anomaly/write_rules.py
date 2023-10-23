@@ -233,10 +233,13 @@ def writeMLRules(
             b.append( b[ 0 ] )
 
         c = dstCountMap[ i ]
+        print( c )
         id = len( c ) - 1
         del c[ 1:id ]
+        print( c )
         if (len( c ) == 1):
             c.append( c[ 0 ] )
+        print( c )
 
         d = dstTLSMap[ i ]
         id = len( d ) - 1
@@ -249,6 +252,7 @@ def writeMLRules(
         a = [ i + 1 for i in a ]
         b = [ i + 1 for i in b ]
         c = [ i + 1 for i in c ]
+        print( c )
         d = [ i + 1 for i in d ]
 
         if ac == 0:
