@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import math
 import re
 from collections import OrderedDict
 from typing import (
@@ -30,10 +29,7 @@ Authors: @sean bergen,
 __version__ = "1.0"
 
 from fengkeyleaf.logging import my_logging
-from fengkeyleaf.io import (
-    my_writer,
-    my_files
-)
+from fengkeyleaf.io import my_writer, my_files
 from fengkeyleaf.utils import my_collections
 from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch

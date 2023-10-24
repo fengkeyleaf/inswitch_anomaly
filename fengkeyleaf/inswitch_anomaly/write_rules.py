@@ -135,67 +135,6 @@ def write_feature_rule(
     # print("Installed feature1 rule on %s" % switch.name)
 
 
-def writefeature1rule( p4info_helper, switch, range, ind ):
-    table_entry = p4info_helper.buildTableEntry(
-        table_name = "MyIngress.s.src_count_select_t",
-        match_fields = {
-            "scv": range
-        },
-        action_name = "MyIngress.s.src_count_select_a",
-        action_params = {
-            "v": ind,
-        },
-        priority = 1
-    )
-    switch.WriteTableEntry( table_entry )
-    # print("Installed feature1 rule on %s" % switch.name)
-
-
-def writefeature2rule( p4info_helper, switch, range, ind ):
-    table_entry = p4info_helper.buildTableEntry(
-        table_name = "MyIngress.s.src_tls_select_t",
-        match_fields = {
-            "stv": range },
-        action_name = "MyIngress.s.src_tls_select_a",
-        action_params = {
-            "v": ind,
-        },
-        priority = 1
-    )
-    switch.WriteTableEntry( table_entry )
-    # print("Installed feature2 rule on %s" % switch.name)
-
-
-def writefeature3rule( p4info_helper, switch, range, ind ):
-    table_entry = p4info_helper.buildTableEntry(
-        table_name = "MyIngress.s.dst_count_select_t",
-        match_fields = {
-            "dcv": range },
-        action_name = "MyIngress.s.dst_count_select_a",
-        action_params = {
-            "v": ind,
-        },
-        priority = 1
-    )
-    switch.WriteTableEntry( table_entry )
-    # print("Installed feature3 rule on %s" % switch.name)
-
-
-def writefeature4rule( p4info_helper, switch, range, ind ):
-    table_entry = p4info_helper.buildTableEntry(
-        table_name = "MyIngress.s.dst_tls_select_t",
-        match_fields = {
-            "dtv": range },
-        action_name = "MyIngress.s.dst_tls_select_a",
-        action_params = {
-            "v": ind,
-        },
-        priority = 1
-    )
-    switch.WriteTableEntry( table_entry )
-    # print("Installed feature4 rule on %s" % switch.name)
-
-
 #
 # Print out a switch information.
 #
