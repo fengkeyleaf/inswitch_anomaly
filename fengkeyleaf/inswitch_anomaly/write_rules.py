@@ -1,7 +1,8 @@
 import sys
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 import re
+import logging
 
 """
 file: 
@@ -12,6 +13,11 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf.inswitch_anomaly import topo
+from fengkeyleaf.logging import my_logging
+
+__version__ = "1.0"
+
+l: logging.Logger = my_logging.get_logger( logging.INFO )
 
 
 # Reference material about basic decision-tree combing packet re-forwading:
@@ -52,7 +58,7 @@ def get_actionpara( action: int ) -> Dict:
     return para[ action ]
 
 
-def writeForwardingRules( p4info_helper, sw, range, port ) -> None:
+def write_forwarding_rules( p4info_helper, sw, range, port ) -> None:
     para = get_actionpara( port )
     # print( range, para )
     table_entry = p4info_helper.buildTableEntry(
@@ -69,7 +75,7 @@ def writeForwardingRules( p4info_helper, sw, range, port ) -> None:
 
 # Decision tree rules.
 
-def writeactionrule( p4info_helper, switch, a, b, c, d, action, port ):
+def write_action_rule( p4info_helper, switch, a, b, c, d, action, port ):
     # para = get_actionpara( port )
     if port == 0:
         para: Dict = {}
@@ -79,8 +85,7 @@ def writeactionrule( p4info_helper, switch, a, b, c, d, action, port ):
             "dstAddr": "A0:36:BC:D1:8D:82",
             "port": 1
         }
-        
-    print( "A: a=%s, b=%s, c=%s, d=%s, action=%s, para=%s" % ( a, b, c, d, action, para ) )
+
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.decision_tree",
         match_fields = {
@@ -99,8 +104,38 @@ def writeactionrule( p4info_helper, switch, a, b, c, d, action, port ):
     # print("Installed action rule on %s" % switch.name)
 
 
+def write_feature_rule(
+        switch, p4info_helper,
+        t_n: str, m_n: str, a_n: str, a_param_n: str,
+        range: List[ int ], ind: int
+) -> None:
+    """
+
+    @param p4info_helper:
+    @param switch:
+    @param t_n: Table name.
+    @param m_n: Match fields name.
+    @param a_n: Action name.
+    @param a_param_n: Action parameter names.
+    @param range: parameter range.
+    @param ind: Range match value.
+    """
+    table_entry = p4info_helper.buildTableEntry(
+        table_name = t_n,
+        match_fields = {
+            m_n: range
+        },
+        action_name = a_n,
+        action_params = {
+            a_param_n: ind,
+        },
+        priority = 1
+    )
+    switch.WriteTableEntry( table_entry )
+    # print("Installed feature1 rule on %s" % switch.name)
+
+
 def writefeature1rule( p4info_helper, switch, range, ind ):
-    print( "F1: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.src_count_select_t",
         match_fields = {
@@ -117,7 +152,6 @@ def writefeature1rule( p4info_helper, switch, range, ind ):
 
 
 def writefeature2rule( p4info_helper, switch, range, ind ):
-    print( "F2: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.src_tls_select_t",
         match_fields = {
@@ -133,7 +167,6 @@ def writefeature2rule( p4info_helper, switch, range, ind ):
 
 
 def writefeature3rule( p4info_helper, switch, range, ind ):
-    print( "F3: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.dst_count_select_t",
         match_fields = {
@@ -149,7 +182,6 @@ def writefeature3rule( p4info_helper, switch, range, ind ):
 
 
 def writefeature4rule( p4info_helper, switch, range, ind ):
-    print( "F4: range=%s, ind=%s" % ( range, ind ) )
     table_entry = p4info_helper.buildTableEntry(
         table_name = "MyIngress.s.dst_tls_select_t",
         match_fields = {
@@ -205,88 +237,94 @@ def printGrpcError( e ):
 # Writing process.
 #######################
 
-
-def writeBasicForwardingRules( p4info_helper, s1 ):
+def write_basic_forwarding_rules( p4info_helper, s1 ):
     R = [ ("10.0.1.1", 32), ("10.0.2.2", 32), ("10.0.3.3", 32), ("10.0.4.4", 32) ]
     P = [ 1, 2, 3, 4 ]
     for i in range( len( R ) ):
         print( R[ i ], P[ i ] )
-        writeForwardingRules( p4info_helper, s1, R[ i ], P[ i ] )
+        write_forwarding_rules( p4info_helper, s1, R[ i ], P[ i ] )
 
 
-def writeMLRules(
-        dstTLS, srcCount, srcTLS, dstCount,
+def _process_fea_map( F: List[ List[ int ] ], i: int ) -> List[ int ]:
+    L = F[ i ]
+    id = len( L ) - 1
+    del L[ 1 : id ]
+    if len( L ) == 1:
+        L.append( L[ 0 ] )
+
+    return [ i + 1 for i in L ]
+
+
+def _write_actions(
+        s1, p4info_helper,
         srcCountMap, srcTLSMap, dstCountMap, dstTLSMap,
-        classfication, action, s1, p4info_helper
-):
+        classfication, action,
+        is_debug_mode: bool
+) -> None:
     for i in range( len( classfication ) ):
-        a = srcCountMap[ i ]
-        id = len( a ) - 1
-        del a[ 1:id ]
-        if (len( a ) == 1):
-            a.append( a[ 0 ] )
-
-        b = srcTLSMap[ i ]
-        id = len( b ) - 1
-        del b[ 1:id ]
-        if (len( b ) == 1):
-            b.append( b[ 0 ] )
-
-        c = dstCountMap[ i ]
-        id = len( c ) - 1
-        del c[ 1:id ]
-        if (len( c ) == 1):
-            c.append( c[ 0 ] )
-
-        d = dstTLSMap[ i ]
-        id = len( d ) - 1
-        del d[ 1: id ]
-        if (len( d ) == 1):
-            d.append( d[ 0 ] )
+        a = _process_fea_map( srcCountMap, i )
+        b = _process_fea_map( srcTLSMap, i )
+        c = _process_fea_map( dstCountMap, i )
+        d = _process_fea_map( dstTLSMap, i )
 
         ind = int( classfication[ i ] )
         ac = action[ ind ]
-        a = [ i + 1 for i in a ]
-        b = [ i + 1 for i in b ]
-        c = [ i + 1 for i in c ]
-        d = [ i + 1 for i in d ]
-
         if ac == 0:
-            writeactionrule( p4info_helper, s1, a, b, c, d, "MyIngress.drop", 0 )
+            l.debug( "A: a=%s,b=%s,c=%s,d=%s,ac=%s,ac=%d" % (a, b, c, d, "MyIngress.drop", ac) )
+            if not is_debug_mode: write_action_rule( p4info_helper, s1, a, b, c, d, "MyIngress.drop", 0 );
         else:
-            writeactionrule( p4info_helper, s1, a, b, c, d, "MyIngress.ipv4_forward", ac )
+            l.debug( "A: a=%s,b=%s,c=%s,d=%s,ac=%s,ac=%d" % (a, b, c, d, "MyIngress.ipv4_forward", ac) )
+            if not is_debug_mode: write_action_rule( p4info_helper, s1, a, b, c, d, "MyIngress.ipv4_forward", ac );
 
-    m: int = pow( 2, 31 )
-    if len( srcCount ) != 0:
-        # srcCount.append(0)
-        # srcCount.append( m )
-        srcCount.sort()
-        for i in range( len( srcCount ) - 1 ):
-            writefeature1rule( p4info_helper, s1, srcCount[ i:i + 2 ], i + 1 )
-    else:
-        writefeature1rule( p4info_helper, s1, [ 0, 32 ], 1 )
 
-    # TODO: min amd max values.
-    if len( srcTLS ) != 0:
-        # srcTLS.append(0)
-        # srcTLS.append( m )
-        srcTLS.sort()
-        for i in range( len( srcTLS ) - 1 ):
-            writefeature2rule( p4info_helper, s1, srcTLS[ i:i + 2 ], i + 1 )
+M: int = 0xffff
 
-    if len( dstCount ) != 0:
-        # dstCount.append(0)
-        # dstCount.append( m )
-        dstCount.sort()
-        for i in range( len( dstCount ) - 1 ):
-            writefeature3rule( p4info_helper, s1, dstCount[ i:i + 2 ], i + 1 )
 
-    if len( dstTLS ) != 0:
-        # dstTLS.append(0)
-        # dstTLS.append( m )
-        dstTLS.sort()
-        for i in range( len( dstTLS ) - 1 ):
-            writefeature4rule( p4info_helper, s1, dstTLS[ i:i + 2 ], i + 1 )
+def _write_fea_rules(
+    s1, p4info_helper,
+    t_n, m_n, a_n, a_param_n,
+    F: List[ int ], is_debug_mode: bool
+):
+    """
+
+    @param s1:
+    @param p4info_helper:
+    @param t_n: Table name.
+    @param m_n: Match fields name.
+    @param a_n: Action name.
+    @param a_param_n: Action parameter names.
+    @param F: List of feature values.
+    @param is_debug_mode:
+    """
+    if len( F ) != 0:
+        F.append( 0 )
+        F.append( M )
+        F.sort()
+        for i in range( len( F ) - 1 ):
+            l.debug( "%s: range=%s,ind=%s" % ( t_n, F[ i: i + 2 ], i + 1 ) )
+            if not is_debug_mode:
+                write_action_rule( s1, p4info_helper, t_n, m_n, a_n, a_param_n, F[ i: i + 2 ], i + 1 )
+
+        return
+
+    l.debug( "%s: range=%s,ind=%s" % ( t_n, [ 0, M ], 1 ) )
+    if not is_debug_mode:
+        write_action_rule( s1, p4info_helper, t_n, m_n, a_n, a_param_n, [ 0, M ], 1 )
+
+
+def write_ml_rules(
+        dstTLS, srcCount, srcTLS, dstCount,
+        srcCountMap, srcTLSMap, dstCountMap, dstTLSMap,
+        classfication, action,
+        s1 = None, p4info_helper = None,
+        is_debug_mode: bool = False
+):
+    _write_actions( s1, p4info_helper, srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication, action, is_debug_mode )
+
+    _write_fea_rules( s1, p4info_helper, "MyIngress.s.src_count_select_t", "scv", "MyIngress.s.src_count_select_a", "v", srcCount, is_debug_mode )
+    _write_fea_rules( s1, p4info_helper, "MyIngress.s.src_tls_select_t", "stv", "MyIngress.s.src_tls_select_a", "v", srcTLS, is_debug_mode )
+    _write_fea_rules( s1, p4info_helper, "MyIngress.s.dst_count_select_t", "dcv", "MyIngress.s.dst_count_select_a", "v", dstCount, is_debug_mode )
+    _write_fea_rules( s1, p4info_helper, "MyIngress.s.dst_tls_select_t", "dtv", "MyIngress.s.dst_tls_select_a", "v", dstTLS, is_debug_mode )
 
     # readTableRules(p4info_helper, s1)
-    print( "Done with injecting routing rules" )
+    l.info( "Done with injecting routing rules" )

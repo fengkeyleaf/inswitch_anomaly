@@ -248,7 +248,6 @@ class PktProcessor:
 
             # if ifAddGood or ifAddBad
             # Add a pkt
-            print( self._is_added( if_add_good, if_add_bad ) )
             if self._is_added( if_add_good, if_add_bad ):
                 assert self._cb.count( l, if_add_good, if_add_bad )
                 continue

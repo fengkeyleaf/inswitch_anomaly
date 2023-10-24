@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+
 import argparse
 import os
 import sys
-from time import sleep
 
 import grpc
 
@@ -103,7 +103,7 @@ def main( p4info_file_path, bmv2_file_path ):
         # Basic forwarding without the tree.
         # write_rules.write_basic_forwarding_rules_batch_test( p4info_helper, s1 )
 
-        write_rules.writeMLRules(
+        write_rules.write_ml_rules(
             srcCount = srcCount,
             srcCountMap = srcCountMap,
             srcTLS = srcTLS,

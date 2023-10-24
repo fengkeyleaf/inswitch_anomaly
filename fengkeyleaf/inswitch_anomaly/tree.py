@@ -259,12 +259,15 @@ class Tree:
         for k, v in F.items():
             v = [ int( i ) for i in v if int( i ) > 0 ]
 
-            if len( v ) <= 0:
-                self.l.warning( "Warning! " + k + " is empty Feature: " + f )
+            # Empty feature is fine at this point.
+            # if len( v ) <= 0:
+            #     self.l.warning( "Warning! " + k + " is empty Feature: " + f )
 
             # Add thresholds.
-            v.append( 0 )
-            v.append( limits[ k ] )
+            # Cannot add thresholds here,
+            # this will destroy the mapping process( Writing rules into the match-action pipelines ) in the dataplane.
+            # v.append( 0 )
+            # v.append( limits[ k ] )
 
             # https://www.geeksforgeeks.org/python-ways-to-remove-duplicates-from-list/
             # Remove duplicate elements.

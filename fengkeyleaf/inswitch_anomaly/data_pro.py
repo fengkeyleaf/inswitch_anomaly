@@ -13,8 +13,6 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-__version__ = "1.0"
-
 # fengkeyleaf imports
 # Add path dependency, which is allowed to exclude this file from the working directory.
 sys.path.append(
@@ -26,9 +24,11 @@ sys.path.append(
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.inswitch_anomaly import data_processor, filter
 
+__version__ = "1.0"
+
 # BoT-IoT
-# python .\data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-# python .\data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
+# python .\fengkeyleaf\inswitch_anomaly\data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+# python .\fengkeyleaf\inswitch_anomaly\data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
 
 # TON_IoT\Processed_Network_dataset
 # python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\TON_IoT\Processed_Network_dataset\test" -dm "D:\data"

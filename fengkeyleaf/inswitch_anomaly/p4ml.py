@@ -1,5 +1,5 @@
 import re
-from typing import List
+from typing import List, Tuple, Any
 
 """
 file: p4ml.py
@@ -8,6 +8,8 @@ language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
+__version__ = "1.0"
+
 # Reference material about basic decision-tree combing packet re-forwading:
 # https://github.com/cucl-srg/IIsy
 
@@ -15,19 +17,24 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 # Paraphrase the decision tree txt file.
 #######################
 
-def find_action( textfile:str ) -> List[ int ]:
-    action = []
-    f = open(textfile)
-    for line in f:
-        n = re.findall(r"class", line)
-        if n:
-            fea = re.findall(r"\d", line)
-            action.append(int(fea[1]))
-    f.close()
-    return action
+def find_action( tf: str ) -> List[ int ]:
+    """
+
+    @param tf: File path to the decision tree txt file.
+    @return:
+    """
+    A: List[ int ] = []
+    with open( tf, "r" )as f:
+        for line in f:
+            n = re.findall( r"class", line )
+            if n:
+                fea = re.findall( r"\d", line )
+                A.append( int( fea[ 1 ] ) )
+
+    return A
 
 
-def find_feature( tf, n ):
+def find_feature( tf: str, n: int ) -> Tuple:
     """
     :param tf: decision tree txt file.
     :param n: # of features.
@@ -46,7 +53,9 @@ def find_feature( tf, n ):
     return ( e for e in r )
 
 
-def find_classification( tf, F, FS, fr ):
+def find_classification(
+        tf: str, F: List[ List[ Any ] ], FS: List[ str ], fr: str
+) -> Tuple:
     """
     :param tf: decision tree txt file.
     :param F: list of features.
@@ -54,9 +63,9 @@ def find_classification( tf, F, FS, fr ):
     :param fr: regular exp of feature names.
     :return: ( feature1, feature2, ..., featureN, classfication )
     """
-    fea = []
-    sign = []
-    num = []
+    fea: List = []
+    sign: List = []
+    num: List = []
     with open( tf, "r" ) as f:
         for line in f:
             n = re.findall( r"when", line )
@@ -66,11 +75,11 @@ def find_classification( tf, F, FS, fr ):
                 num.append( re.findall( r"\d+\.?\d*", line ) )
 
 
-    FL = [ [] for _ in range( len( F ) + 1 ) ]
+    FL: List = [ [] for _ in range( len( F ) + 1 ) ]
 
     # print( "fea=%s\nsign=%s\nnum=%s\nFL=%s\nFS=%s" % ( fea, sign, num, FL, FS ) )
     for i in range( len( fea ) ):
-        FLT = [ [ k for k in range( len( f ) + 1 ) ] for f in F ]
+        FLT: List[ List[ int ] ] = [ [ k for k in range( len( f ) + 1 ) ] for f in F ]
         assert len( FLT ) == len( FS ), str( len( FLT ) ) + " " + str( len( FS ) )
         assert len( FS ) == len( F )
 
@@ -79,10 +88,10 @@ def find_classification( tf, F, FS, fr ):
             # print( str( j ) + " " + str( feature ) )
             for k in range( len( FS ) ):
                 if feature == FS[ k ]:
-                    sig = sign[ i ][ j ]
-                    thres = int( float( num[ i ][ j ] ) )
+                    sig: str = sign[ i ][ j ]
+                    thres: int = int( float( num[ i ][ j ] ) )
                     # print( str( num[ i ][ j ] ) + " " + str( F[ k ] ) + " " + str( thres ) )
-                    id = F[ k ].index( thres )
+                    id: int = F[ k ].index( thres )
                     if sig == "<=":
                         while id < len( F[ k ] ):
                             if id + 1 in FLT[ k ]:
