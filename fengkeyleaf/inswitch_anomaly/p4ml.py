@@ -31,6 +31,7 @@ def find_action( tf: str ) -> List[ int ]:
                 fea = re.findall( r"\d", line )
                 A.append( int( fea[ 1 ] ) )
 
+    return A
 
 
 def find_feature( tf: str, n: int ) -> Tuple:

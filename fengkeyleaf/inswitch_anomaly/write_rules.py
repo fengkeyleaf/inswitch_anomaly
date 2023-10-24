@@ -17,7 +17,7 @@ from fengkeyleaf.logging import my_logging
 
 __version__ = "1.0"
 
-l: logging.Logger = my_logging.get_logger( logging.INFO )
+l: logging.Logger = my_logging.get_logger( logging.DEBUG )
 
 
 # Reference material about basic decision-tree combing packet re-forwading:
@@ -75,7 +75,7 @@ def write_forwarding_rules( p4info_helper, sw, range, port ) -> None:
 
 # Decision tree rules.
 
-def write_action_rule( p4info_helper, switch, a, b, c, d, action, port ):
+def write_action_rule( switch, p4info_helper, a, b, c, d, action, port ):
     # para = get_actionpara( port )
     if port == 0:
         para: Dict = {}
@@ -270,11 +270,11 @@ def _write_actions(
         ind = int( classfication[ i ] )
         ac = action[ ind ]
         if ac == 0:
-            l.debug( "A: a=%s,b=%s,c=%s,d=%s,ac=%s,ac=%d" % (a, b, c, d, "MyIngress.drop", ac) )
-            if not is_debug_mode: write_action_rule( p4info_helper, s1, a, b, c, d, "MyIngress.drop", 0 );
+            l.debug( "A: a=%s,b=%s,c=%s,d=%s,ac=%s,ac=%d" % ( a, b, c, d, "MyIngress.drop", ac ) )
+            if not is_debug_mode: write_action_rule( s1, p4info_helper, a, b, c, d, "MyIngress.drop", 0 );
         else:
-            l.debug( "A: a=%s,b=%s,c=%s,d=%s,ac=%s,ac=%d" % (a, b, c, d, "MyIngress.ipv4_forward", ac) )
-            if not is_debug_mode: write_action_rule( p4info_helper, s1, a, b, c, d, "MyIngress.ipv4_forward", ac );
+            l.debug( "A: a=%s,b=%s,c=%s,d=%s,ac=%s,ac=%d" % ( a, b, c, d, "MyIngress.ipv4_forward", ac ) )
+            if not is_debug_mode: write_action_rule( s1, p4info_helper, a, b, c, d, "MyIngress.ipv4_forward", ac );
 
 
 M: int = 0xffff
@@ -303,13 +303,13 @@ def _write_fea_rules(
         for i in range( len( F ) - 1 ):
             l.debug( "%s: range=%s,ind=%s" % ( t_n, F[ i: i + 2 ], i + 1 ) )
             if not is_debug_mode:
-                write_action_rule( s1, p4info_helper, t_n, m_n, a_n, a_param_n, F[ i: i + 2 ], i + 1 )
+                write_feature_rule( s1, p4info_helper, t_n, m_n, a_n, a_param_n, F[ i: i + 2 ], i + 1 )
 
         return
 
     l.debug( "%s: range=%s,ind=%s" % ( t_n, [ 0, M ], 1 ) )
     if not is_debug_mode:
-        write_action_rule( s1, p4info_helper, t_n, m_n, a_n, a_param_n, [ 0, M ], 1 )
+        write_feature_rule( s1, p4info_helper, t_n, m_n, a_n, a_param_n, [ 0, M ], 1 )
 
 
 def write_ml_rules(
