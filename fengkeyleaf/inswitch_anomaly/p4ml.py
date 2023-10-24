@@ -31,7 +31,6 @@ def find_action( tf: str ) -> List[ int ]:
                 fea = re.findall( r"\d", line )
                 A.append( int( fea[ 1 ] ) )
 
-    return A
 
 
 def find_feature( tf: str, n: int ) -> Tuple:
@@ -75,6 +74,7 @@ def find_classification(
                 num.append( re.findall( r"\d+\.?\d*", line ) )
 
 
+    # [ fea1, fea2, fea2, ......, feaN, classification ]
     FL: List = [ [] for _ in range( len( F ) + 1 ) ]
 
     # print( "fea=%s\nsign=%s\nnum=%s\nFL=%s\nFS=%s" % ( fea, sign, num, FL, FS ) )
@@ -83,15 +83,16 @@ def find_classification(
         assert len( FLT ) == len( FS ), str( len( FLT ) ) + " " + str( len( FS ) )
         assert len( FS ) == len( F )
 
-        # print( fea[ i ] )
+        # print( "fea[" + str( i ) + "]: " + str( fea[ i ] ) )
         for j, feature in enumerate( fea[ i ] ):
             # print( str( j ) + " " + str( feature ) )
             for k in range( len( FS ) ):
                 if feature == FS[ k ]:
                     sig: str = sign[ i ][ j ]
                     thres: int = int( float( num[ i ][ j ] ) )
-                    # print( str( num[ i ][ j ] ) + " " + str( F[ k ] ) + " " + str( thres ) )
                     id: int = F[ k ].index( thres )
+                    print( "fea=%s, sig=%s,thres=%s,id=%s" % (feature, sig, thres, id) )
+
                     if sig == "<=":
                         while id < len( F[ k ] ):
                             if id + 1 in FLT[ k ]:
