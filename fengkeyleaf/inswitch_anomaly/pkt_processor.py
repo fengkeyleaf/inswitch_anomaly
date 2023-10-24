@@ -256,7 +256,6 @@ class PktProcessor:
             I.append( idx )
 
         assert self._cb.is_balanced()
-        self.l.debug( "I: " + str( I ) )
         return df.drop( I )
 
     class _Checker:

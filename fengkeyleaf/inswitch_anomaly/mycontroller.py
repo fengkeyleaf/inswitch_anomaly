@@ -36,7 +36,7 @@ from utils.p4runtime_lib.switch import ShutdownAllSwitchConnections
 sys.path.append(
     os.path.join(
         os.path.dirname( os.path.abspath(__file__) ),
-        '../../../../'
+        '../../'
     )
 )
 from fengkeyleaf.logging import my_logging
