@@ -17,11 +17,17 @@ And then the folders:
 5. imports -> Contains py files imported by the entry control plane py file, mycontroller.py.
 6. pseudocode -> Contains pseudocode txt files for each model.
 
-# 2. Run the exmaple
+# 2. Run the inswitch anomaly Test
 
-First put the project files in the path:
+First going to the working directory:
 
-`~/tutorials/exercises/<FOLDER_NAME_OF_YOUR_CHOICE>/`
+`~/inswitch_anomaly/`
+
+Then run the command line:
+
+`python3 ./fengkeyleaf/inswitch_anomlay/toplology.py`
+
+This will read an input pkt data file and convert it to a network toplogy, read by the P4 mininet.
 
 Then run the command line:
 
@@ -29,23 +35,13 @@ Then run the command line:
 
 This will compile the p4 program and build the network topology and run mininet.
 
-Once the mininet is running, open another terminal and run the command line:
+Once the network is initialized and the mininet is running, open another terminal and run the command line:
 
-`sudo python3 ./mycontroller.py`
+`sudo python3 ./fengkeyleaf/inswitch_anomlay/mycontroller.py`
 
-This will install routing rules into the switch and print them ( May print things out in bytes ). Finally, in the mininet, run:
+After a few mininets, the program will automatically start sniffing on the host1 and send all pkts from the dataset on the host2.
 
-`xterm h1 h2 h3 h4`
-
-In h2, h3, h4's terminal, run:
-
-`./receive.py`
-
-And then in h1's terminal, run:
-
-`./send.py 10.0.2.2 HelloWorld`
-
-And you will see the information about pkts in h1's and h3's terminal.
+Once the sending process is done, the program will also stop sniffing and evalute the accuracy.
 
 Note that s1-runtime.json should be configured in topology.json if outside runtime routing rules should be injected when initializing the network, something like: "runtime_json" : "pod-topo/s1-runtime.json".
 

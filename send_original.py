@@ -8,6 +8,7 @@ from scapy.all import IP, TCP, Ether, get_if_hwaddr, get_if_list, sendp
 import fengkeyleaf.mlaas_preli.mlaas_pkt as mlaas_pkt
 
 
+# TODO: Move this file into the fengkeyleaf package.
 def get_if():
     ifs=get_if_list()
     iface=None # "h1-eth0"

@@ -27,7 +27,7 @@ def __get_host_json( d: Dict ) -> None:
              json.dumps( d[ k ], indent = 4 )
         )
 
-
+# TODO: Move this file into the fengkeyleaf package.
 if __name__ == '__main__':
     # # Initial Test
     # cf: str = "./test/test_csv1_small.csv"
@@ -42,6 +42,7 @@ if __name__ == '__main__':
 
     cf = "/home/p4/BoT-loT/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     cf = "/home/p4/data/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
+    cf = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
 
     # Basic forwarding test
     # cf = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
