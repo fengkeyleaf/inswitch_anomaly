@@ -17,7 +17,7 @@ from fengkeyleaf.logging import my_logging
 
 __version__ = "1.0"
 
-l: logging.Logger = my_logging.get_logger( logging.DEBUG )
+l: logging.Logger = my_logging.get_logger( logging.INFO )
 
 
 # Reference material about basic decision-tree combing packet re-forwading:

@@ -70,14 +70,14 @@ fr = r"(srcCount|srcTLS|dstCount|dstTLS)"
 FS = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
 srcCount, srcTLS, dstCount, dstTLS = p4ml.find_feature( inputfile, len( FS ) )
-l.info( "Feature:\nsrcCount=%s,\n srcTLS=%s,\n dstCount=%s,\n dstTLS=%s" % (srcCount, srcTLS, dstCount, dstTLS) )
+l.debug( "Feature:\nsrcCount=%s,\n srcTLS=%s,\n dstCount=%s,\n dstTLS=%s" % (srcCount, srcTLS, dstCount, dstTLS) )
 srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = p4ml.find_classification( inputfile,
                                                                                      [ srcCount, srcTLS, dstCount,
                                                                                        dstTLS ], FS, fr )
-l.info( "Classification:\nsrcCountMap=%s,\nsrcTLSMap=%s,\ndstCountMap=%s,\ndstTLSMap=%s,\nclass=%s" % (
+l.debug( "Classification:\nsrcCountMap=%s,\nsrcTLSMap=%s,\ndstCountMap=%s,\ndstTLSMap=%s,\nclass=%s" % (
 srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication) )
 action = p4ml.find_action( actionfile )
-l.info( "Action: %s" % (action) )
+l.debug( "Action: %s" % (action) )
 
 
 #######################
@@ -142,10 +142,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser( description = 'P4Runtime Controller' )
     parser.add_argument( '--p4info', help = 'p4info proto in text format from p4c',
                          type = str, action = "store", required = False,
-                         default = '../../build/inswitch_anomaly.p4.p4info.txt' )
+                         default = './build/inswitch_anomaly.p4.p4info.txt' )
     parser.add_argument( '--bmv2-json', help = 'BMv2 JSON file from p4c',
                          type = str, action = "store", required = False,
-                         default = '../..//build/inswitch_anomaly.json' )
+                         default = './build/inswitch_anomaly.json' )
     args = parser.parse_args()
 
     if not os.path.exists( args.p4info ):
