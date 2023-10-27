@@ -92,7 +92,7 @@ def find_classification(
                     sig: str = sign[ i ][ j ]
                     thres: int = int( float( num[ i ][ j ] ) )
                     id: int = F[ k ].index( thres )
-                    print( "fea=%s, sig=%s,thres=%s,id=%s" % (feature, sig, thres, id) )
+                    # print( "fea=%s, sig=%s,thres=%s,id=%s" % (feature, sig, thres, id) )
 
                     if sig == "<=":
                         while id < len( F[ k ] ):

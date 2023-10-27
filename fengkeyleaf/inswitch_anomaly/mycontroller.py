@@ -25,7 +25,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 sys.path.append(
     os.path.join(
         os.path.dirname( os.path.abspath( __file__ ) ),
-        '../../utils/' )
+        '../../' )
 )
 import utils.p4runtime_lib.bmv2 as bmv2
 import utils.p4runtime_lib.helper as helper
