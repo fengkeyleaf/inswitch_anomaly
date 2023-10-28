@@ -2,24 +2,34 @@
 
 import logging
 from time import sleep
+import os
+import sys
 
 """
 file:
 description: Start a worker from an outside directory to use the package spacename, fengkeyleaf.
+nots: Directly called from the working directory.
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
-
 """
 
-from fengkeyleaf.mlaas_preli.worker import Worker
+# fengkeyleaf imports
+# Add path dependency, which is allowed to exclude this file from the working directory.
+sys.path.append(
+    os.path.join(
+        os.path.dirname( os.path.abspath( __file__ ) ),
+        '../../'
+    )
+)
+from fengkeyleaf import worker
 
 __version__ = "1.0"
 
 
 if __name__ == '__main__':
     lr: float = 0.001
-    w: Worker = Worker( lr, logging.INFO )
+    w: worker.Worker = worker.Worker( lr, logging.INFO )
     w.build_model()
     # Full dataset
     f: str = "./fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"

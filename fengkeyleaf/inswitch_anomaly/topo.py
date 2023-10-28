@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 
 import json
-from typing import (Dict, List, Tuple)
+from typing import ( Dict, List, Tuple )
+
+import pandas
 
 """
 file: topo.py
-description:
+description: Parse pkt csv files into a dict, or build a network topology used by P4 mininet.
 language: python3 3.8.10
 author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+# fengkeyleaf imports
 from fengkeyleaf.io import my_writer
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+
 
 IP_STR = "ip"
 MAC_STR = "mac"
@@ -26,12 +30,73 @@ DST_IP_STR = "dstAddr"
 DST_MAC_STR = "dstMac"
 
 
+class Parser:
+    """
+    Parse processed pkt csv files into a dict.
+    """
+    def __init__( self ) -> None:
+        pass
+
+    @staticmethod
+    def _assertion( a: str, m: str ) -> bool:
+        D: Dict = {}
+        if D.get( a ) is not None:
+            assert D[ a ] == m
+            return True
+
+        D[ a ] = m
+        return True
+
+    # https://stackoverflow.com/questions/11706215/how-can-i-fix-the-git-error-object-file-is-empty/12371337#12371337
+    @staticmethod
+    def parse( f: str ) -> Dict[ int, Dict ]:
+        """
+        Class to parse processed pkt csv files into a dict.
+        The file should be in the standard format, that is, all features are mapping to our own ones.
+        :param f: file path to the csv file.
+        :return: {
+            pkt_id: {
+                srcAddr: srcIP, dstAddr: dstIP,
+                srcMAC: srcMac, dstMAC: dstMac,
+                Label: Number( 0 or 1 )
+            }
+        }
+        """
+        dic: Dict[ int, Dict ] = {}
+        id: int = 0
+        # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
+        # https://pandas.pydata.org/docs/reference/frame.html
+        # https://www.geeksforgeeks.org/python-next-method/
+        # https://pandas.pydata.org/docs/reference/api/pandas.Series.html?highlight=series#pandas.Series
+        for ( _, s ) in pandas.read_csv( f ).iterrows():
+            assert dic.get( s[ fkl_inswitch.ID_STR ] ) is None, "Already seen this ID before."
+            id = id + 1
+            # if ( s[ ID_STR ] == 1 or s[ ID_STR ] == 2006 or s[ ID_STR ] == 2007 ):
+            #     continue
+
+            assert id <= int( s[ fkl_inswitch.ID_STR ] ) # Consistent incremental id garaunteed
+            assert s[ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) or s[ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ), type( s[ fkl_inswitch.LABEL_STR ] )
+            assert Parser._assertion( s[ fkl_inswitch.SRC_ADDR_STR ], s[ fkl_inswitch.SRC_MAC_STR ] ) and Parser._assertion( s[ fkl_inswitch.DST_ADDR_STR ], s[ fkl_inswitch.DST_MAC_STR ] )
+
+            # print( "s=%s, d=%s" % ( s[ "Source" ], s[ "Destination" ] ) )
+            dic[ s[ fkl_inswitch.ID_STR ] ] = {
+                fkl_inswitch.SRC_ADDR_STR: s[ fkl_inswitch.SRC_ADDR_STR ],
+                fkl_inswitch.DST_ADDR_STR: s[ fkl_inswitch.DST_ADDR_STR ],
+                fkl_inswitch.SRC_MAC_STR: s[ fkl_inswitch.SRC_MAC_STR ],
+                fkl_inswitch.DST_MAC_STR: s[ fkl_inswitch.DST_MAC_STR ],
+                fkl_inswitch.LABEL_STR: s[ fkl_inswitch.LABEL_STR ]
+            }
+
+        print( "csvparaser: %d pkts in this csv file" % ( id ) )
+        return dic
+
+
 # https://www.geeksforgeeks.org/python-classes-and-objects/
 # https://www.geeksforgeeks.org/g-fact-34-class-or-static-variables-in-python/
 # https://www.geeksforgeeks.org/access-modifiers-in-python-public-private-and-protected/
-class CSVParaser:
+class Builder:
     """
-    Parse csv pkt files into p4 network topology json file.
+    Build p4 network topology json file with pkts stored in a dict..
     """
     def __init__( self ) -> None:
         self.h1: Dict = {
@@ -40,8 +105,9 @@ class CSVParaser:
             MAC_STR: "A0:36:BC:D1:8D:82"
         }
 
+    @staticmethod
     # https://pythonexamples.org/python-write-json-to-file/
-    def __generate_topo_json( self, H: Dict, S: Dict, L: List ) -> str:
+    def __generate_topo_json( H: Dict, S: Dict, L: List ) -> str:
         """
         :param I: List of hosts and their configurations.
         :param S: List of swtiches and their configurations.
@@ -54,11 +120,13 @@ class CSVParaser:
             "links": L
         }, indent = 4 )
 
-    def __write_to_file( self, topo, fp ):
+    @staticmethod
+    def _write_to_file( topo, fp ):
         with open( fp, "w+" ) as f:
             f.write( topo )
 
-    def __add_pkt( self, h: Dict, da: str, dm: str, id: str ):
+    @staticmethod
+    def _add_pkt( h: Dict, da: str, dm: str, id: str ):
         assert h[ PKT_STR ].get( id ) is None
 
         h[ PKT_STR ][ id ] = {
@@ -66,8 +134,11 @@ class CSVParaser:
             DST_MAC_STR: dm
         }
 
-    def __add_host( self, H: Dict[ str, Dict ], L: List, id: str, a: str, m: str ) -> Dict:
-        hn: str = "h" + str( id )  # host name
+    @staticmethod
+    def _add_host(
+            H: Dict[ str, Dict ], L: List, id: str, a: str, m: str
+    ) -> Dict:
+        hn: str = "h" + id # host name
         # Initi host
         h: Dict = {
             NAME_STR: hn,
@@ -83,7 +154,7 @@ class CSVParaser:
         H[ a ] = h
         return h
 
-    def __get_host_json(
+    def _get_host_json(
             self, n: str, i: str, m: str, c: List[ str ]
     ) -> Tuple[ str, Dict ]:
         return (
@@ -95,8 +166,9 @@ class CSVParaser:
             }
         )
 
-    def __add_host_pkt(
-            self, H: Dict, L: List,
+    @staticmethod
+    def _add_host_pkt(
+            H: Dict, L: List,
             idh: str, sa: str,
             da: str, sm: str,
             dm: str, idp: str
@@ -111,10 +183,14 @@ class CSVParaser:
         :param dm: dst mac
         :param idp: id of pkt
         """
-        self.__add_pkt( self.__add_host( H, L, idh, sa, sm ), da, dm, idp )
+        Builder._add_pkt(
+            Builder._add_host( H, L, idh, sa, sm ),
+            da, dm, idp
+        )
 
-    def __convert( self, H: Dict ) -> Dict:
-        P = { }
+    @staticmethod
+    def _convert( H: Dict ) -> Dict:
+        P = {}
         for v in H.values():
             P[ v[ NAME_STR ] ] = {
                 IP_STR: v[ IP_STR ],
@@ -125,15 +201,16 @@ class CSVParaser:
 
         return P
 
-    def __is_not_terminator_host( self, a: str, m: str ) -> bool:
+    def _is_not_terminator_host( self, a: str, m: str ) -> bool:
         assert self.h1[ IP_STR ] != a
         assert self.h1[ MAC_STR ] != m
         return True
 
     def get_topo_json(
-            self, P: Dict[ float, Dict ], f: str
+            self, P: Dict[ int, Dict ], f: str
     ) -> Dict:
         """
+        Get the network topology json file from the input dict, P
         @param P: Dict to store all pkt info.
         @param f: File path to the output topology.
                   If None, will not output the result to a file.
@@ -172,7 +249,7 @@ class CSVParaser:
             "192.168.137.249": "08:00:00:00:02:22"
         }
 
-        self.__add_host( H, L, id, self.h1[ IP_STR ], self.h1[ MAC_STR ] )
+        Builder._add_host( H, L, str( id ), self.h1[ IP_STR ], self.h1[ MAC_STR ] )
 
         # k -> pkt id
         for k in P.keys():
@@ -184,25 +261,40 @@ class CSVParaser:
 
             assert sa is not da
             assert sm is not dm
-            assert self.__is_not_terminator_host( sa, sm ) and self.__is_not_terminator_host( da, dm )
+            assert self._is_not_terminator_host( sa, sm ) and self._is_not_terminator_host( da, dm )
 
             if H.get( sa ) is None:
                 id = id + 1
-                self.__add_host_pkt( H, L, id, sa, da, sm, dm, k )
+                Builder._add_host_pkt( H, L, str( id ), sa, da, sm, dm, str( k ) )
             else:
-                self.__add_pkt( H[ sa ], da, dm, k )
+                Builder._add_pkt( H[ sa ], da, dm, str( k ) )
 
             if H.get( da ) is None:
                 id = id + 1
-                self.__add_host( H, L, id, da, dm )
+                Builder._add_host( H, L, str( id ), da, dm )
 
         res: Dict = {
-            HOST_STR: self.__convert( H ),
+            HOST_STR: Builder._convert( H ),
             SWITCH_STR: S,
             LINK_STR: L
         }
         my_writer.write_to_file( f, json.dumps( res, indent = 4 ) )
         return res
+
+    @staticmethod
+    def get_host_jsons( f: str, d: Dict ) -> None:
+        """
+        Get host json files in the network topology.
+        @param f: Output directory.
+        @param d: Dict containing pkt information.
+        """
+        d: Dict = d[ HOST_STR ]
+        for k in d:
+            assert d.get( k ) is not None
+            my_writer.write_to_file(
+                f + k + ".json",
+                json.dumps( d[ k ], indent = 4 )
+            )
 
 
 class _Tester:

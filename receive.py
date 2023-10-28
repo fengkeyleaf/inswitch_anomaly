@@ -36,7 +36,7 @@ import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf import (
     my_json,
     my_logging,
-    csvparaser,
+    topo,
     filter
 )
 
@@ -161,7 +161,7 @@ class Evaluator:
         :param f: Output json file
         :return:
         """
-        self.P = csvparaser.Parser().parse( f )
+        self.P = topo.Parser().parse( f )
         # self.R = my_json.load( RESULT_FILE )[ rec.RESULT_STR ]
         self.R = my_json.load( RESULT_FILE )[ RESULT_STR ]
         self.__evaluate()

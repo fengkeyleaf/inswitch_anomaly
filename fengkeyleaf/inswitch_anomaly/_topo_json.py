@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict
-import json
+import os
+import sys
 
+# Directly called from the working directory.
 """
-file: Generate network topology json file for p4 program to build the network.
+file:
 description:
-language: python3 3.8.10
-author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
+nots: Directly called from the working directory.
+language: python3 3.11.3
+author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf import (
-    csvparaser,
-    topo,
-    my_writer
+# fengkeyleaf imports
+# Add path dependency, which is allowed to exclude this file from the working directory.
+sys.path.append(
+    os.path.join(
+        os.path.dirname( os.path.abspath( __file__ ) ),
+        '../../'
+    )
 )
+from fengkeyleaf import topo
 
+__version__ = "1.0"
 
-def __get_host_json( d: Dict ) -> None:
-    d: Dict = d[ topo.HOST_STR ]
-    for k in d:
-        assert d.get( k ) is not None
-        my_writer.write_to_file(
-             "./pod-topo/hosts/" + k + ".json",
-             json.dumps( d[ k ], indent = 4 )
-        )
-
-# TODO: Move this file into the fengkeyleaf package.
 if __name__ == '__main__':
+    # _Tester().test1()
+    # _Tester().test2()
+
     # # Initial Test
     # cf: str = "./test/test_csv1_small.csv"
     # cf: str = "../test/test_csv1_small_one_side_sending.csv"
@@ -47,5 +47,11 @@ if __name__ == '__main__':
     # Basic forwarding test
     # cf = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
 
-    P: Dict[ float, Dict ] = csvparaser.Parser().parse( cf )
-    __get_host_json( topo.CSVParaser().get_topo_json( P, "pod-topo/topology.json" ) )
+    of: str = "../../pod-topo/hosts/"
+    topo.Builder.get_host_jsons(
+        of,
+        topo.Builder().get_topo_json(
+            topo.Parser().parse( cf ),
+            "../../pod-topo/topology.json"
+        )
+    )

@@ -4,10 +4,12 @@ import argparse
 import sys
 import os
 
+# Directly called from the working directory.
 """
 file: Coordinator program to do the pkt data pre-processing and ML training,
       including re-formatting, data sampling/balancing, sketching, and training.
 description:
+nots: Directly called from the working directory.
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
@@ -17,27 +19,26 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 # Add path dependency, which is allowed to exclude this file from the working directory.
 sys.path.append(
     os.path.join(
-        os.path.dirname( os.path.abspath(__file__) ),
+        os.path.dirname( os.path.abspath( __file__ ) ),
         '../../'
     )
 )
-from fengkeyleaf.logging import my_logging
-from fengkeyleaf.inswitch_anomaly import data_processor, filter
+from fengkeyleaf import my_logging, data_processor, filter
 
 __version__ = "1.0"
 
 # BoT-IoT
-# python .\fengkeyleaf\inswitch_anomaly\data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-# python .\fengkeyleaf\inswitch_anomaly\data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
+# python .\fengkeyleaf\inswitch_anomaly\_data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+# python .\fengkeyleaf\inswitch_anomaly\_data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
 
 # TON_IoT\Processed_Network_dataset
-# python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\TON_IoT\Processed_Network_dataset\test" -dm "D:\data"
+# python .\_data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\TON_IoT\Processed_Network_dataset\test" -dm "D:\data"
 
 # UNSW-NB15
-# python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\UNSW-NB15-CSV\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\UNSW-NB15-CSV\NUSW-NB15_features_name.csv" -dm "D:\data"
+# python .\_data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\UNSW-NB15-CSV\data" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\UNSW-NB15-CSV\NUSW-NB15_features_name.csv" -dm "D:\data"
 
 # Presentation, Milestone 2
-# python .\data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\thesis\presentation\sketching_csv_examples" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+# python .\_data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\thesis\presentation\sketching_csv_examples" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
 if __name__ == '__main__':
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     # https://stackoverflow.com/questions/18839957/argparseargumenterror-argument-h-help-conflicting-option-strings-h

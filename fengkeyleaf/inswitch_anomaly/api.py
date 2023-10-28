@@ -14,7 +14,6 @@ from fengkeyleaf.inswitch_anomaly import (
     sketch,
     sketch_write,
     tree,
-    csvparaser,
     pkt_processor,
     topo,
     p4ml,
