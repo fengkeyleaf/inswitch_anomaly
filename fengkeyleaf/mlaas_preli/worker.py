@@ -135,7 +135,7 @@ class Worker:
             self.y_valid = self.y_train
             return
 
-        self.X_valid, self.X_train = Worker._load_data( f_valid )
+        self.X_valid, self.y_valid = Worker._load_data( f_valid )
 
     @staticmethod
     def _load_data( f: str ) -> Tuple[ torch.Tensor, torch.Tensor ]:
@@ -341,9 +341,9 @@ class Worker:
     def evaluate( self ) -> None:
         # compute accuracy (no_grad is optional)
         with torch.no_grad():
-            y_pred = self.model( self.X_train )
+            y_pred = self.model( self.X_valid )
 
-        accuracy = (y_pred.round() == self.y_train).float().mean()
+        accuracy = ( y_pred.round() == self.y_valid ).float().mean()
         self.l.info( f"Accuracy {accuracy}" )
 
 
