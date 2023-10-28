@@ -46,7 +46,8 @@ __version__ = "1.0"
 # Refernce material: 
 # https://github.com/p4lang/tutorials
 
-RESULT_STR = "result"
+RESULT_STR: str = "result"
+RESULT_INFO_STR: str = "result_info"
 
 
 def get_if():
@@ -124,7 +125,7 @@ class Evaluator:
         """
         return re.match( filter.IPV4_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
 
-    def __evaluate( self ) -> None:
+    def __evaluate( self, dic: Dict[ str, str ] ) -> None:
         gc: int = 0 # good count
         bc: int = 0 # bad count
         gtc: int = 0 # good total count
@@ -152,11 +153,17 @@ class Evaluator:
             self.l.info( "%d out of total %d pkts, accuracy = %.2f%%" % ( rc, rtc, ( rc / rtc ) * 100 ) )
         else:
             # https://java2blog.com/python-print-percentage-sign/
-            self.l.info( "%d out of total %d pkts, accuracy = %.2f%%" % ( gc + bc, len( self.P ), ( ( gc + bc ) / len( self.P ) ) * 100 ) )
-            self.l.info( "Correct gc = %d, bc = %d" % ( gc, bc ) )
-            self.l.info( "Data set: %d out of %d are good pkts." % ( gtc, len( self.P ) ) )
+            s: str = "%d out of total %d pkts, accuracy = %.2f%%" % ( gc + bc, len( self.P ), ( ( gc + bc ) / len( self.P ) ) * 100 )
+            self.l.info( s )
+            dic[ RESULT_INFO_STR ] = s
+            s = "Correct gc = %d, bc = %d" % ( gc, bc )
+            self.l.info( s )
+            dic[ RESULT_INFO_STR ] += " | " + s
+            s = "Data set: %d out of %d are good pkts." % ( gtc, len( self.P ) )
+            self.l.info( s )
+            dic[ RESULT_INFO_STR ] += " | " + s
 
-    def evaluate( self, f: str ) -> None:
+    def evaluate( self, f: str, dic: Dict[ str, str ] ) -> None:
         """
         :param f: Output json file
         :return:
@@ -164,7 +171,7 @@ class Evaluator:
         self.P = topo.Parser().parse( f )
         # self.R = my_json.load( RESULT_FILE )[ rec.RESULT_STR ]
         self.R = my_json.load( RESULT_FILE )[ RESULT_STR ]
-        self.__evaluate()
+        self.__evaluate( dic )
 
 
 def handle_pkt( pkt, dic: Dict ):
@@ -196,19 +203,19 @@ def main( fp: str ):
     print( "sniffing on %s" % iface )
     sys.stdout.flush()
 
-    dic: Dict = { "now": datetime.now().strftime( "%d/%m/%Y %H:%M:%S" ), RESULT_STR: { } }
+    dic: Dict[ str, str ] = { "now": datetime.now().strftime( "%d/%m/%Y %H:%M:%S" ), RESULT_STR: { } }
     # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sniff
     sniff( iface = iface,
            #   count = parser.parse_args().count,
            #   timeout = 10,
            prn = lambda x: handle_pkt( x, dic ) )
 
+    print( "evaluating......" )
+    Evaluator().evaluate( fp, dic )
+
     print( "Finish sniffing, write result to the file" )
     with open( RESULT_FILE, "w" ) as f:
         f.write( json.dumps( dic, indent = 4 ) )
-
-    print( "evaluating......" )
-    Evaluator().evaluate( fp )
 
 
 if __name__ == '__main__':
@@ -221,7 +228,7 @@ if __name__ == '__main__':
     # f: str = "/home/p4/tutorials/data/Bot-loT/dataSet/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     # f = "/home/p4/tutorials/data/UNSW-NB15/dataSet/UNSW-NB15_3_reformatted.csv"
     f = "/home/p4/BoT-loT/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
-    f = "/home/p4/data/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
+    f = "/home/p4/data/balanced_reformatted/UNSW_2018_IoT_Botnet_Dataset_1_balanced_reformatted.csv"
 
     # Basic forwarding test
     # f = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
