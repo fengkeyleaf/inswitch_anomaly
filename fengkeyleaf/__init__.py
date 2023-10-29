@@ -19,7 +19,8 @@ from fengkeyleaf.inswitch_anomaly.api import (
     p4ml,
     write_rules,
     data_processor,
-    filter
+    filter,
+    evaulator
 )
 
 from fengkeyleaf.io.api import (

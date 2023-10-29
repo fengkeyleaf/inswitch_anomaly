@@ -82,6 +82,7 @@ class PktProcessor:
 
         # Spoof macs and renumber.
         PktProcessor.spoof_macs( df )
+        # TODO: id is inconsistent.
         PktProcessor.renumber( df )
         assert PktProcessor._Checker.verify( df, f )
 

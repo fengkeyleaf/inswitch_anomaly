@@ -2,6 +2,7 @@
 
 import json
 from typing import ( Dict, List, Tuple )
+import logging
 
 import pandas
 
@@ -16,6 +17,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 # fengkeyleaf imports
 from fengkeyleaf.io import my_writer
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
+from fengkeyleaf.logging import my_logging
 
 
 IP_STR = "ip"
@@ -26,6 +28,8 @@ SWITCH_STR = "switches"
 LINK_STR = "links"
 NAME_STR = "name"
 PKT_STR = "pkts"
+SRC_IP_STR = "srcAddr"
+SRC_MAC_STR = "srcMac"
 DST_IP_STR = "dstAddr"
 DST_MAC_STR = "dstMac"
 
@@ -34,8 +38,8 @@ class Parser:
     """
     Parse processed pkt csv files into a dict.
     """
-    def __init__( self ) -> None:
-        pass
+    def __init__( self,  ll: int = logging.INFO ) -> None:
+        self.l: logging.Logger = my_logging.get_logger( ll )
 
     @staticmethod
     def _assertion( a: str, m: str ) -> bool:
@@ -47,13 +51,17 @@ class Parser:
         D[ a ] = m
         return True
 
-    # https://stackoverflow.com/questions/11706215/how-can-i-fix-the-git-error-object-file-is-empty/12371337#12371337
     @staticmethod
-    def parse( f: str ) -> Dict[ int, Dict ]:
+    def _write_to_file() -> None:
+        pass
+
+    # https://stackoverflow.com/questions/11706215/how-can-i-fix-the-git-error-object-file-is-empty/12371337#12371337
+    def parse( self, f: str, of: str ) -> Dict[ int, Dict[ str, str ] ]:
         """
         Class to parse processed pkt csv files into a dict.
         The file should be in the standard format, that is, all features are mapping to our own ones.
-        :param f: file path to the csv file.
+        @param f: file path to the csv file.
+        @param of: Output file path to the pkt json file.
         :return: {
             pkt_id: {
                 srcAddr: srcIP, dstAddr: dstIP,
@@ -62,7 +70,8 @@ class Parser:
             }
         }
         """
-        dic: Dict[ int, Dict ] = {}
+        dic: Dict[ int, Dict[ str, str ] ] = {}
+        L: List[ Dict[ str, str, ] ] = []
         id: int = 0
         # https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
         # https://pandas.pydata.org/docs/reference/frame.html
@@ -87,7 +96,17 @@ class Parser:
                 fkl_inswitch.LABEL_STR: s[ fkl_inswitch.LABEL_STR ]
             }
 
-        print( "csvparaser: %d pkts in this csv file" % ( id ) )
+            L.append( {
+                fkl_inswitch.ID_STR: s[ fkl_inswitch.ID_STR ],
+                fkl_inswitch.SRC_ADDR_STR: s[ fkl_inswitch.SRC_ADDR_STR ],
+                fkl_inswitch.DST_ADDR_STR: s[ fkl_inswitch.DST_ADDR_STR ],
+                fkl_inswitch.SRC_MAC_STR: s[ fkl_inswitch.SRC_MAC_STR ],
+                fkl_inswitch.DST_MAC_STR: s[ fkl_inswitch.DST_MAC_STR ],
+                fkl_inswitch.LABEL_STR: s[ fkl_inswitch.LABEL_STR ]
+            } )
+
+        my_writer.write_to_file( of, json.dumps( L, indent = 4 ) )
+        self.l.info( "csvparaser: %d pkts in this csv file" % ( id ) )
         return dic
 
 
@@ -126,10 +145,43 @@ class Builder:
             f.write( topo )
 
     @staticmethod
-    def _add_pkt( h: Dict, da: str, dm: str, id: str ):
-        assert h[ PKT_STR ].get( id ) is None
+    def _add_pkt_to_host(
+            H: Dict[ str, Dict[ str, Dict[ str, str ] ] ], da: str, dm: str, id: str
+    ) -> None:
+        """
+        Add a pkt to a host.
+        @param H: Host dict
+        @param da:
+        @param dm:
+        @param id:
+        """
+        assert H[ PKT_STR ].get( id ) is None
 
-        h[ PKT_STR ][ id ] = {
+        H[ PKT_STR ][ id ] = {
+            DST_IP_STR: da,
+            DST_MAC_STR: dm
+        }
+
+    @staticmethod
+    def _add_pkt(
+            T: Dict[ str, Dict[ str, str ] ],
+            sa: str, sm: str,
+            da: str, dm: str,
+            id: str
+    ) -> None:
+        """
+        Add a pkt to the network topology when D is a topology dict.
+        This will keep the same order of pkts as that of the input dataset.
+        @param T: Topology dict.
+        @param da:
+        @param dm:
+        @param id:
+        """
+        assert T.get( id ) is None
+
+        T[ id ] = {
+            SRC_IP_STR: sa,
+            SRC_MAC_STR: sm,
             DST_IP_STR: da,
             DST_MAC_STR: dm
         }
@@ -138,6 +190,15 @@ class Builder:
     def _add_host(
             H: Dict[ str, Dict ], L: List, id: str, a: str, m: str
     ) -> Dict:
+        """
+        Add a host
+        @param H:
+        @param L:
+        @param id:
+        @param a:
+        @param m:
+        @return:
+        """
         hn: str = "h" + id # host name
         # Initi host
         h: Dict = {
@@ -154,6 +215,29 @@ class Builder:
         H[ a ] = h
         return h
 
+    @staticmethod
+    def _add_host_and_pkt(
+            H: Dict, L: List,
+            idh: str, sa: str,
+            da: str, sm: str,
+            dm: str, idp: str
+    ) -> None:
+        """
+        Add a host and a pkt to the host.
+        :param H: hosts in a dict.
+        :param L: list of links.
+        :param idh: id of host.
+        :param sa: src addr
+        :param da: dst addr
+        :param sm: src mac
+        :param dm: dst mac
+        :param idp: id of pkt
+        """
+        Builder._add_pkt_to_host(
+            Builder._add_host( H, L, idh, sa, sm ),
+            da, dm, idp
+        )
+
     def _get_host_json(
             self, n: str, i: str, m: str, c: List[ str ]
     ) -> Tuple[ str, Dict ]:
@@ -164,28 +248,6 @@ class Builder:
                 MAC_STR: m,
                 COM_STR: c
             }
-        )
-
-    @staticmethod
-    def _add_host_pkt(
-            H: Dict, L: List,
-            idh: str, sa: str,
-            da: str, sm: str,
-            dm: str, idp: str
-    ) -> None:
-        """
-        :param H: hosts in a dict.
-        :param L: list of links.
-        :param idh: id of host. 
-        :param sa: src addr 
-        :param da: dst addr 
-        :param sm: src mac 
-        :param dm: dst mac
-        :param idp: id of pkt
-        """
-        Builder._add_pkt(
-            Builder._add_host( H, L, idh, sa, sm ),
-            da, dm, idp
         )
 
     @staticmethod
@@ -215,20 +277,22 @@ class Builder:
         @param f: File path to the output topology.
                   If None, will not output the result to a file.
         @return: Dict structure of the network topology:
+                *: Missing item.
                 {
                     "hosts": {
                         "host_name": {
-                                "ip": str,
-                                "mac": str,
-                                "commands": [ str ],
-                                "pkts": {
-                                    "id": {
-                                        "dstAddr": str,
-                                        "dstMac": str,
-                                        "label": Number( 0 or 1 )
-                                        "payload": str
-                                    }
+                            "ip": str,
+                            "mac": str,
+                            "commands": [ str ],
+                            // Pkts sent by this host.
+                            "pkts": {
+                                "id": {
+                                    "dstAddr": str,
+                                    "dstMac": str,
+                                    "label": Number( 0 or 1 )*
+                                    "payload": str*
                                 }
+                            }
                         }
                     },
                     "switches": {
@@ -236,19 +300,36 @@ class Builder:
                     },
                     "links": [
                         [ "host_name", "switch_port_of_host" ]
-                    ]
+                    ],
+                    // Pkts in the same order as that of the input dataset.
+                    "pkts": {
+                        "id": {
+                            "srcAddr": str,
+                            "srcMac": str,
+                            "dstAddr": str,
+                            "dstMac": str,
+                            "label": Number( 0 or 1 )*
+                            "payload": str*
+                        }
+                    }
                 }
         """
+        ( H, S, L ) = self._host_order( P )
+        res: Dict = {
+            HOST_STR: H,
+            SWITCH_STR: S,
+            LINK_STR: L
+        }
+        my_writer.write_to_file( f, json.dumps( res, indent = 4 ) )
+        return res
+
+    def _host_order( self, P: Dict[ int, Dict ] ) -> Tuple[ Dict, Dict, List[ List ] ]:
         H: Dict[ str, Dict ] = {}
         id: int = 1  # host id
-        S = { "s1": {} }
+        S: Dict[ str, Dict[ str, str ] ] = { "s1": {} }
         L: List[ List ] = []
 
-        M = {
-            "192.168.137.5": "08:00:00:00:01:11",
-            "192.168.137.249": "08:00:00:00:02:22"
-        }
-
+        # Add the host receiving forwarded pkts.
         Builder._add_host( H, L, str( id ), self.h1[ IP_STR ], self.h1[ MAC_STR ] )
 
         # k -> pkt id
@@ -263,23 +344,39 @@ class Builder:
             assert sm is not dm
             assert self._is_not_terminator_host( sa, sm ) and self._is_not_terminator_host( da, dm )
 
+            # Host with src ip.
+            # Only add a pkt record when processing src ip,
+            # since we only send a pkt from the host with src ip to the one with dst ip.
             if H.get( sa ) is None:
                 id = id + 1
-                Builder._add_host_pkt( H, L, str( id ), sa, da, sm, dm, str( k ) )
+                Builder._add_host_and_pkt( H, L, str( id ), sa, da, sm, dm, str( k ) )
             else:
-                Builder._add_pkt( H[ sa ], da, dm, str( k ) )
+                Builder._add_pkt_to_host( H[ sa ], da, dm, str( k ) )
 
+            # Host with dst ip.
             if H.get( da ) is None:
                 id = id + 1
                 Builder._add_host( H, L, str( id ), da, dm )
 
-        res: Dict = {
-            HOST_STR: Builder._convert( H ),
-            SWITCH_STR: S,
-            LINK_STR: L
-        }
-        my_writer.write_to_file( f, json.dumps( res, indent = 4 ) )
-        return res
+        return Builder._convert( H ), S, L
+
+    @staticmethod
+    def _linear_order( P: Dict[ int, Dict ] ) -> Dict[ str, Dict[ str, str ] ]:
+        D: Dict[ str, Dict[ str, str ] ] = {}
+
+        for i in range( len( P ) + 1 ):
+            assert P.get( i ) is not None
+            v: Dict[ str, str ] = P.get( i )
+            Builder._add_pkt(
+                D,
+                v[ fkl_inswitch.SRC_ADDR_STR ],
+                v[ fkl_inswitch.SRC_MAC_STR ],
+                v[ fkl_inswitch.DST_ADDR_STR ],
+                v[ fkl_inswitch.DST_MAC_STR ],
+                str( i )
+            )
+
+        return D
 
     @staticmethod
     def get_host_jsons( f: str, d: Dict ) -> None:
@@ -298,10 +395,15 @@ class Builder:
 
 
 class _Tester:
-    def test1( self ) -> None:
-        H = { }
-        S = { }
-        L = [ ]
+    HOST_OUTPUT_PATH: str = "./_topo_test/hosts/"
+    TOPO_OUTPUT_PATH: str = "./_topo_test/topology.json"
+    PKTS_OUTPUT_PATH: str = "./_topo_test/pkts.json"
+
+    @staticmethod
+    def test1() -> None:
+        H = {}
+        S = {}
+        L = []
         # ( hn, hc ) = __get_host_json( "h1", "10.0.1.1/24", "08:00:00:00:01:11", ["route add default gw 10.0.1.10 dev eth0"] )
         # H[ hn ] = hc
         # ( hn, hc ) = __get_host_json( "h2", "10.0.2.2/24", "08:00:00:00:02:22", ["route add default gw 10.0.2.20 dev eth0"] )
@@ -318,12 +420,16 @@ class _Tester:
         # print( __generate_topo_json( H, S, L ) )
         # __write_to_file( __generate_topo_json( H, S, L ), "../pod-topo/topology.json" )
 
-    def test2( self ) -> None:
-        cf: str = "../test/test_csv1_small.csv"
-        cf = "../test/test_csv1.csv"
-        # cf = "../test/test_csv1_small_one_side_sending.csv"
-        # P:Dict = csvparaser.parse( cf )
-        # CSVParaser().get_topo_json( P, "../pod-topo/topology.json" )
+    @staticmethod
+    def test2() -> None:
+        cf: str = "./_topo_test/tests/1_100.csv"
+        Builder.get_host_jsons(
+            _Tester.HOST_OUTPUT_PATH,
+            Builder().get_topo_json(
+                Parser().parse( cf, _Tester.PKTS_OUTPUT_PATH ),
+                _Tester.TOPO_OUTPUT_PATH
+            )
+        )
 
 
 if __name__ == '__main__':

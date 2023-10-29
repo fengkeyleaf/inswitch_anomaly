@@ -19,5 +19,6 @@ from fengkeyleaf.inswitch_anomaly import (
     p4ml,
     write_rules,
     data_processor,
-    filter
+    filter,
+    evaulator
 )

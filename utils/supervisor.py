@@ -106,15 +106,15 @@ class Supervisor:
         # https://github.com/mininet/mininet/blob/master/mininet/node.py#L328
         self.__net.get( Supervisor.LISTENING_HOST ).sendInt()
 
-    SEDNING_HOST_NAME: str = "h2"
+    SENSING_HOST_NAME: str = "h2"
 
     def send( self ) -> None:
         self._start_sniffing()
 
-        print( "Sending pkts on host %s" % ( Supervisor.SEDNING_HOST_NAME ) )
+        print( "Sending pkts on host %s" % (Supervisor.SENSING_HOST_NAME) )
         self.__S.append( False )
         self.__Sender(
-            Supervisor.SEDNING_HOST_NAME, self.__net.get( Supervisor.SEDNING_HOST_NAME ),
+            Supervisor.SENSING_HOST_NAME, self.__net.get( Supervisor.SENSING_HOST_NAME ),
             "./send.py -hjs ./pod-topo/hosts/",
             len( self.__S ) - 1, self.__S
         ).start()

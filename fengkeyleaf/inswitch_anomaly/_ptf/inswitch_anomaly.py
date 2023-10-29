@@ -72,7 +72,7 @@ __version__ = "1.0"
 #     -i 6@veth13 \
 #     -i 7@veth15 \
 #     --test-params="grpcaddr='localhost:9559';p4info='./build/inswitch_anomaly.p4info.txt';config='./build/inswitch_anomaly.json'" \
-#     --test-dir ./fengkeyleaf/inswitch_anomaly/ptf
+#     --test-dir ./fengkeyleaf/inswitch_anomaly/_ptf
 
 
 l: logging = my_logging.get_logger( logging.DEBUG )

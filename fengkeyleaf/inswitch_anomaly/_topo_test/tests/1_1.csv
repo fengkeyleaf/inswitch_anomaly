@@ -1,0 +1,2 @@
+No.,stime,Source,Destination,srcMAC,dstMAC,spkts,dpkts,sbytes,dbytes,Label
+1,1526344121.188091,192.168.100.1,192.168.100.3,00:00:00:00:00:00,00:00:00:00:00:01,2,2,120,120,0

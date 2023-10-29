@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import random
-import socket
 import os
-from argparse import (
-    ArgumentParser
-)
+from argparse import ArgumentParser
 from typing import Dict
 import json
 from scapy.all import IP, TCP, Ether, get_if_hwaddr, get_if_list, sendp
@@ -38,31 +35,33 @@ def get_if():
     return iface
 
 
+def _send( f: str, iface: str ):
+    with open( f, "r" ) as f_json:
+        # Host info
+        H: Dict = json.load( f_json )
+        src_addr: str = H[ topo.IP_STR ]
+        print( "Start sending pkts on srcIP=%s, h=%s" % (src_addr, f) )
+        # Pkt info
+        P: Dict = H[ topo.PKT_STR ]
+        for k in P:
+            dst_addr: str = P[ k ][ topo.DST_IP_STR ]
+            pkt = Ether( src = get_if_hwaddr( iface ), dst = 'ff:ff:ff:ff:ff:ff' )
+            pkt = pkt / IP( src = src_addr, dst = dst_addr )
+            pkt = pkt / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / k
+            # pkt.show2()
+            sendp( pkt, iface = iface, verbose = False )
+        print( "Done with sending pkts on %s" % (src_addr) )
+
+
 # python3 ./send.py -hjs ./pod-topo/hosts/
-def send_pkts_hosts( fp: str, iface: str ) -> None:
+def send_pkts_host( fp: str, iface: str ) -> None:
     """
     Send pkts from different host json file on the same host.
     """
     for s, d, F in os.walk( fp ):
         for f in F:
             assert my_writer.get_extension( f ).lower() == my_files.JSON_EXTENSION, f
-
-            with open( os.path.join( s, f ), "r" ) as f_json:
-                # Host info
-                H: Dict = json.load( f_json )
-                src_addr: str = H[ topo.IP_STR ]
-                print( "Start sending pkts on srcIP=%s, h=%s" % ( src_addr, f ) )
-                # Pkt info
-                P: Dict  = H[ topo.PKT_STR ]
-                for k in P:
-                    dst_addr: str = P[ k ][ topo.DST_IP_STR ]
-                    pkt = Ether( src = get_if_hwaddr( iface ), dst = 'ff:ff:ff:ff:ff:ff' )
-                    pkt = pkt / IP( src = src_addr, dst = dst_addr )
-                    pkt = pkt / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / k
-                    # pkt.show2()
-                    sendp( pkt, iface = iface, verbose = False )
-                print( "Done with sending pkts on %s" % ( src_addr ) )
-
+            _send( os.path.join( s, f ), iface )
 
     print( "Done with sending all pkts" )
 
@@ -85,11 +84,13 @@ def main():
     iface: str = get_if()
 
     if args.host_jsons is not None:
-        send_pkts_hosts( args.host_jsons, iface )
+        send_pkts_host( args.host_jsons, iface )
         return
 
+    _send( args.host_json, iface )
+
     # TODO: Send pkts with multiple hosts in parallel. 
-    # send_pkts_host()
+    print( "Done with sending all pkts" )
 
 
 if __name__ == '__main__':
