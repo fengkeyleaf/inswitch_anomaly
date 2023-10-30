@@ -144,10 +144,15 @@ class Evaluator:
 
         self.file_list: List[ List[ str ] ] = my_files.get_files_in_dirs( D )
 
+    # TODO: Merge this into the 2nd part.
+    # -----------------------------------------------------------------------------------------------------
+    # Evaluating methods when directly training a tree and evaluate it against other original input datasets.
+    # -----------------------------------------------------------------------------------------------------
+
     # TODO: evaluate() and evaluate_classic can be merged into one, meaning we can give arbitrary features for evaluate(), not the fixed four, scrCount, srcTLS, dstCount, dstTLS.
     # TODO: Could be removed.
     # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
-    def evaluate(
+    def evaluate_old(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str,
             t_data: List[ List[ int ] ], t_labels: List[ int ]
     ) -> None:
@@ -329,8 +334,7 @@ class Evaluator:
             self.l.debug( "limitation=%d, median accuracy=%.2f%%" % op.find_max() )
 
     def _logging(
-            self, tf: str, acc: float,
-            c: Dict[ str, Any ]
+            self, tf: str, acc: float, c: Dict[ str, Any ]
     ):
         """
 
@@ -429,6 +433,66 @@ class Evaluator:
             self.acc_rec.append_element( str( r ), my_writer.get_filename( tf ), test_file_name )
 
         return r
+
+    # -----------------------------------------------------------------------------------------------------
+    # Evaluating methods when training a tree in the while process( pre-process -> sketching -> training )
+    # -----------------------------------------------------------------------------------------------------
+
+    def evaluate(
+            self, dp: str, tf: str,
+            t: sklearn.tree.DecisionTreeClassifier, acc: float,
+            sketch_config: Dict[ str, Any ]
+    ) -> None:
+        self._logging( tf, acc, sketch_config )
+
+        if self._is_writing:
+            # Add one row name, file name of the training set, to the recorder.
+            self.acc_rec.add_row_name( my_writer.get_filename( tf ) )
+
+        # Evaluate with unlimited sketch or limited sketch with designed sketch limitation.
+        self.l.debug(
+            "Evaluating with the sketch of the limitation of %d" %
+            ( -1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None
+             else sketch_config[ fkl_inswitch.LIMITATION_STR ] )
+        )
+
+        self._evaluate(
+            t,
+            my_files.get_files_in_dir( dp ),
+            Evaluator._get_limitation( sketch_config ),
+            tf
+        )
+
+    def _evaluate(
+            self, t: sklearn.tree.DecisionTreeClassifier,
+            F: List[ str ], l: int, tf: str
+    ) -> List[ float ]:
+        """
+
+        @param t: Decision tree classifier.
+        @param F: List of test file paths.
+        @param l: SKetch limitation
+        @param tf: File path to the tree.
+        @return: List of accuracy numbers for the test files in the file list, F.
+        """
+        A: List[ float ] = []
+
+        for fp in F:
+            # Reset the sketch is important,
+            # otherwise it contains information from the previous tests.
+            sw: sketch_write.SketchWriter = sketch_write.SketchWriter(
+                None, None, l, False, self.l.level
+            )
+
+            assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
+            df = sw.process( pandas.read_csv( fp ), None )
+            A.append(
+                self._record(
+                    t, fp, tf, l, df
+                )
+            )
+
+        return A
 
 
 class _Optimizer:

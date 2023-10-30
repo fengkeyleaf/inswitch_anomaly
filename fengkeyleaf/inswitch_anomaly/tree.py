@@ -12,9 +12,7 @@ from typing import (
 import numpy as np
 import pandas
 import sklearn.tree
-from sklearn.tree import (
-    DecisionTreeClassifier
-)
+from sklearn.tree import DecisionTreeClassifier
 
 """
 File: file that takes training data as input and produces a tree as output
@@ -121,7 +119,7 @@ class Tree:
     SIGNATURE: str = "_tree.txt"
 
     def __init__(
-            self, d: str, pd: str,
+            self, d: str, pd: str, h: str,
             D: List[ str ], is_writing: bool = False,
             ll: int = logging.INFO
     ) -> None:
@@ -129,10 +127,18 @@ class Tree:
 
         @param d: Directory to pkt sketch csv files.
         @param pd: Directory to original pkt csv files.
+        @param h: Path to features(headers)
         @param D: List of directories to the processed data sets to test trees.
         @param ll: logging level
         """
+        self.d = d
+        self.pd = pd
+        self.h = h
+
+        # logging
         self.l = my_logging.get_logger( ll )
+
+        # Evaluating setting.
         # Record accuracies computed by one data set as training set and the other as validation set.
         self.acc_rec: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
         # Record sketch limitation optimization data.
@@ -142,23 +148,17 @@ class Tree:
         self._is_writing: bool = is_writing
         self.e.set_is_writing( is_writing )
 
-        self.d = d
-        self.pd = pd
-
     def process(
-            self, f: str,
-            df_o: pandas.DataFrame, df_n: pandas.DataFrame
-    ) -> None:
+            self, f: str, df: pandas.DataFrame
+    ) -> Tuple[ DecisionTreeClassifier, float ]:
         """
         Process pkt sketch csv file and train a tree.
-        @param df_o: Pre-processed sketch dataframe, list form.
-        @param df_n: Pre-processed sketch dataframe, individual column.
+        @param df: Pre-processed sketch dataframe, individual column.
         @param f: File path to the original csv pkt file.
         """
-        if df_o is not None: self.get_tree_old( f, *_tree_evaluator.reformatting( df_o ) );
-        if df_n is not None: self.get_tree_new( f, df_n );
+        return self._get_tree( f, df )
 
-    def get_tree_new( self, f: str, df: pandas.DataFrame ) -> None:
+    def _get_tree( self, f: str, df: pandas.DataFrame ) -> Tuple[ DecisionTreeClassifier, float ]:
         # Getting training data info.
         d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
         my_writer.make_dir( d )
@@ -173,46 +173,13 @@ class Tree:
 
         # Train a tree and evaluation.
         t: DecisionTreeClassifier = DecisionTreeClassifier().fit( X, y )
+        # self.e.evaluate( dp, t.score( X, y ) * 100 )
+        Tree._write_tree( t, f )
 
-        # Evaluate the tree
-        self.e.set_is_writing( True )
-        # TODO: Check parameters.
-        self.e.evaluate_sketch(
-            t, f,
-            [ None for _ in range( len( self.e.file_list ) ) ],
-            X, y,
-            {
-                fkl_inswitch.IS_OPTIMIZING_STR: False
-            }
-        )
+        return t, t.score( X, y ) * 100
 
-        # TODO: Missing converting the tree into a txt file format.
-        self.out_tree( t, f )
-
-    # TODO: Return a DecisionTreeClassifier.
-    def get_tree_old( self, f: str, data, labels ):
-        """
-        Train a tree ( DecisionTreeClassifier ) and Convert it into a txt file format,
-        read by p4 program
-        @param f:
-        @param data:
-        @param labels:
-        """
-        d: str = my_writer.get_dir( f ) + Tree.FOLDER_NAME
-        my_writer.make_dir( d )
-        f = d + my_writer.get_filename( f ) + Tree.SIGNATURE
-        self.l.info( "tree: " + f )
-
-        decision_tree = DecisionTreeClassifier()
-        # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.fit
-        decision_tree = decision_tree.fit( data, labels )
-
-        # Evaluate the tree
-        self.e.evaluate( decision_tree, f, data, labels )
-
-        self.out_tree( decision_tree, f )
-
-    def out_tree( self, t: DecisionTreeClassifier, f: str ) -> None:
+    @staticmethod
+    def _write_tree( t: DecisionTreeClassifier, f: str ) -> None:
         """
 
         @param t: Decision Tree Classifier
@@ -345,7 +312,7 @@ class Tree:
                     sketch_config
                 )
             else:
-                self.e.evaluate_classic( t, f, H, F, X, y );
+                self.e.evaluate_classic( t, f, H, F, X, y )
 
             # Write limitation optimization results per training file.
             if self._is_writing_sketch_opti( sketch_config ):

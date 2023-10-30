@@ -28,8 +28,10 @@ from fengkeyleaf.inswitch_anomaly import (
     pkt_processor,
     sketch_write,
     tree,
-    _tree_evaluator
+    _tree_evaluator,
+    filter as fkl_filter
 )
+from fengkeyleaf.my_pandas import my_dataframe
 
 # parent-directory..
 #     | --> original_data..
@@ -55,7 +57,7 @@ class DataProcessor:
     def __init__(
             self, da: str, h: str,
             dm: str = None, D: List[ str ] = None,
-            is_writing: bool = False, fn: Callable = None,
+            is_writing_eval: bool = False, fn: Callable = None,
             ll: int = logging.INFO
     ) -> None:
         """
@@ -64,6 +66,8 @@ class DataProcessor:
         @param h: Path to features(headers)
         @param dm: Directory to the synthesised data sets. No synthesised pkts added when dm is None or dm == ""
         @param D: List of directories to the processed data sets to test trees.
+        @param is_writing_eval: To tell if to write evaluating results to a file
+        @param fn: Function to filter input pkts.
         @param ll: logging level
         """
         # Logging setting
@@ -74,10 +78,22 @@ class DataProcessor:
         self.l.debug( "dm: " + str( dm ) )
         self.l.debug( "D: " + str( D ) )
 
-        self._is_writing = is_writing
+        # I/O
         assert da is not None
         self.da: str = da
-        # Initialize the three processors.
+
+        # # Initialize the three processors.
+        self._init_sub_processors( da, h, dm, D, is_writing_eval, fn, ll )
+
+        # Evaluating setting.
+        self._init_eval( D, is_writing_eval, ll )
+
+    def _init_sub_processors(
+            self, da: str, h: str,
+            dm: str = None, D: List[ str ] = None,
+            is_writing_eval: bool = False, fn: Callable = None,
+            ll: int = logging.INFO
+    ):
         self.pkt_processor: pkt_processor.PktProcessor = pkt_processor.PktProcessor(
             h,
             mix_make_ups.Mixer(
@@ -98,10 +114,21 @@ class DataProcessor:
         self.tree: tree.Tree = tree.Tree(
             da + sketch_write.SketchWriter.SKETCH_FOLDER_NAME,
             da,
+            h,
             D,
-            is_writing,
+            is_writing_eval,
             ll
         )
+
+    def _init_eval( self, D: List[ str ] = None, is_writing_eval: bool = False, ll: int = logging.INFO ):
+        # Record accuracies computed by one data set as training set and the other as validation set.
+        self.acc_rec: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
+        # Record sketch limitation optimization data.
+        self.lim_opti_rec: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
+
+        self.e = _tree_evaluator.Evaluator( self.l, D, self.acc_rec, self.lim_opti_rec )
+        self._is_writing: bool = is_writing_eval
+        self.e.set_is_writing( is_writing_eval )
 
     def process( self, is_only_preprocessing: bool = False ) -> None:
         """
@@ -113,6 +140,7 @@ class DataProcessor:
         """
         self.l.info( "Start processing from the beginning." )
 
+        T: List[ Tuple ] = []
         # https://docs.python.org/3/library/os.html#os.walk
         # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
         # root, dirs, files
@@ -131,14 +159,44 @@ class DataProcessor:
                     continue
 
                 # Pre-process, sketching and training.
-                self.tree.process(
+                ( t, sc ) = self.tree.process(
                     fp,
                     # https://realpython.com/python-kwargs-and-args/
-                    *self.sketch_processor.process(
+                    self.sketch_processor.process(
                         self.pkt_processor.process( fp ),
                         fp
                     )
                 )
+
+                # Add test info for each tree model.
+                T.append(
+                    (
+                        # Balanced dataset validation
+                        my_writer.get_dir( fp ) + pkt_processor.PktProcessor.BALANCED_FOLDER_NAME,
+                        fkl_inswitch.get_output_file_path(
+                            fp, tree.Tree.FOLDER_NAME,
+                            tree.Tree.SIGNATURE
+                        ),
+                        t,
+                        sc,
+                        {
+                            fkl_inswitch.IS_SKETCHING_STR: True,
+                            fkl_inswitch.IS_OPTIMIZING_STR: False,
+                            # Sketch limitation of 8
+                            fkl_inswitch.LIMITATION_STR: 8,
+                            fkl_inswitch.IS_NOT_BALANCING_STR: True
+                        }
+                    )
+                )
+
+        # Evaluate trees
+        for t in T:
+            self.e.evaluate( *t )
+
+        # Write accuracy results
+        if self._is_writing:
+            self.acc_rec.to_csv( self.da + _tree_evaluator.Evaluator.ACCU_SIGNATURE )
+            self.acc_rec.reset()
 
     # TODO: csvparaser.TIMESTAMP_STR could vary.
     def __get_original_relative_time( self, da: str, h: str ) -> float:
@@ -199,33 +257,14 @@ class DataProcessor:
 class _Tester( unittest.TestCase ):
     is_writing: bool = True
 
-    h1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
-    h3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/NUSW-NB15_features_name.csv"
-
-    dt1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/data"
-    dt2: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/data"
-    dt3: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/data"
-    # Validation with testing sets
-    D = [
-        "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/original/sketches",
-        "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/original/sketches",
-        "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/original/sketches"
-    ]
-
-    # Validation with training sets
-    # D = [ "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/BoT-IoT/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/TON_IoT/Processed_Network_dataset/processed/sketches", "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/data/UNSW-NB15-CSV/processed/sketches" ]
+    h1: str = "D:/networking/datasets/anomoaly_detection/data/BoT-IoT/UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv"
+    da1: str = "C:/Users/fengk/OneDrive/documents/computerScience/RIT/2023 spring/NetworkingResearch/inswitch_anomaly/fengkeyleaf/inswitch_anomaly/_data_pro_test/tests"
 
     # @unittest.skip
     def test_bot_lot( self ):
-        DataProcessor( _Tester.dt1, _Tester.h1, None, _Tester.D, _Tester.is_writing, 10 ).train_trees()
-
-    # @unittest.skip
-    def test_ton_lot( self ):
-        DataProcessor( _Tester.dt2, None, None, _Tester.D, _Tester.is_writing, 10 ).train_trees()
-
-    # @unittest.skip
-    def test_unsw_nb15( self ):
-        DataProcessor( _Tester.dt3, _Tester.h3, None, _Tester.D, _Tester.is_writing, 10 ).train_trees()
+        DataProcessor(
+            _Tester.da1, _Tester.h1, None, None, _Tester.is_writing, fkl_filter.ipv4_filter, logging.DEBUG
+        ).process()
 
 
 if __name__ == '__main__':

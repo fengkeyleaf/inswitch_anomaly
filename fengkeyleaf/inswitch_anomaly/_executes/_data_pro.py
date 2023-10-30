@@ -23,7 +23,7 @@ sys.path.append(
         '../../../'
     )
 )
-from fengkeyleaf import my_logging, data_processor, filter
+from fengkeyleaf import my_logging, data_processor, filter as fkl_filter
 
 __version__ = "1.0"
 
@@ -66,6 +66,6 @@ if __name__ == '__main__':
     data_processor.DataProcessor(
         args.dir_data, args.header,
         args.dir_madeup, None,
-        False,  filter.ipv4_filter,
+        True, fkl_filter.ipv4_filter,
         my_logging.get_level_name( args.logging_level )
     ).process()
