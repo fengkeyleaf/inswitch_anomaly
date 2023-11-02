@@ -13,11 +13,13 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 from fengkeyleaf import logging
 
+
 # https://docs.python.org/3/library/logging.html#logging-levels
 # https://github.com/borntyping/python-colorlog
 def get_logger( ll: int, n: str = None ) -> py_logging.Logger:
     """
     Note that if two or more identical names are provided, logging will be printed out server times.
+    @param n:
     @param ll: logging level
     @return:
     """

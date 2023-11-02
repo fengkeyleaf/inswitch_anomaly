@@ -36,6 +36,7 @@ from fengkeyleaf.inswitch_anomaly import (
     mapper,
     sketch_write
 )
+from fengkeyleaf import annotations
 
 
 def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ int ] ]:
@@ -49,7 +50,7 @@ def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ in
     data: List[ List[ int ] ] = [ ]
     labels: List[ int ] = [ ]
 
-    for ( i, _ ) in df.iterrows():
+    for (i, _) in df.iterrows():
         # print( df.loc[ i, sketch_write.RANGE_STR ] )
         # tmp1: List[ str ] = df.loc[ i, sketch_write.RANGE_STR ].strip( '][' ).split( ',' )
         # tmp2: List[ int ] = []
@@ -62,7 +63,7 @@ def reformatting( df: pandas.DataFrame ) -> Tuple[ List[ List[ int ] ], List[ in
         assert isinstance( l, str ) or isinstance( l, list )
         data.append( ast.literal_eval( l ) if isinstance( l, str ) else l )
 
-    return ( data, labels )
+    return (data, labels)
 
 
 # TODO: Put into my_pandas.my_dataframe
@@ -78,7 +79,8 @@ def get_data_file(
     """
     df: pandas.DataFrame = mapper.Mapper.mapping( my_dataframe.add_header( h, fp ) )
     assert fkl_inswitch.LABEL_STR in df.columns, str( df ) + "\n" + str( my_dataframe.add_header( h, fp ) )
-    for f in F: assert f in df.columns, f + "\n" + str( my_dataframe.add_header( h, fp ).columns ) + "\n" + str( df.columns );
+    for f in F: assert f in df.columns, f + "\n" + str( my_dataframe.add_header( h, fp ).columns ) + "\n" + str(
+        df.columns );
 
     return _get_data( df, F )
 
@@ -92,7 +94,7 @@ def _get_data(
     # https://stackoverflow.com/a/76294033
     y: pandas.Series = df[ fkl_inswitch.LABEL_STR ].astype( int )
 
-    return ( df, X, y )
+    return (df, X, y)
 
 
 def get_data_dataframe(
@@ -152,6 +154,7 @@ class Evaluator:
     # TODO: evaluate() and evaluate_classic can be merged into one, meaning we can give arbitrary features for evaluate(), not the fixed four, scrCount, srcTLS, dstCount, dstTLS.
     # TODO: Could be removed.
     # python3 ./ML/tree.py /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/test_data/sketch.csv /home/p4/tutorials/exercises/inswitch_anomaly-data_labeling/test/tree.txt
+    @annotations.deprecated
     def evaluate_old(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str,
             t_data: List[ List[ int ] ], t_labels: List[ int ]
@@ -165,7 +168,7 @@ class Evaluator:
         @param t_labels: Tree's label data
         """
         self.l.debug( "Evaluate the tree with the 4 features and without the limited sketch" )
-        self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
+        self.l.debug( "Accuracy of this tree: %.2f%%" % (t.score( t_data, t_labels ) * 100) )
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
         # print( self.t.predict( self.X ) )
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.score
@@ -192,6 +195,7 @@ class Evaluator:
                     if self._is_writing:
                         self.acc_rec.append_element( str( result ), my_writer.get_filename( tf ), test_file_name )
 
+    @annotations.deprecated
     def evaluate_classic(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str ],
             feature_list: List[ str ],
@@ -209,7 +213,7 @@ class Evaluator:
         @param t_labels: testing data set.
         """
         self.l.debug( "Evaluate the tree with wanted features and without the sketch" )
-        self.l.debug( "Accuracy of this tree: %.2f%%" % ( t.score( t_data, t_labels ) * 100) )
+        self.l.debug( "Accuracy of this tree: %.2f%%" % (t.score( t_data, t_labels ) * 100) )
         self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
 
         if self._is_writing: self.acc_rec.add_row_name( my_writer.get_filename( tf ) );
@@ -218,7 +222,7 @@ class Evaluator:
             for fp in self.file_list[ i ]:
                 assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
 
-                ( df, X, y ) = get_data_file(
+                (df, X, y) = get_data_file(
                     fp,
                     H[ i ],
                     feature_list
@@ -260,6 +264,7 @@ class Evaluator:
             else c[ fkl_inswitch.OPTI_FUNCTION_CONFIG_STR ]
 
     # TODO: Only support one validation data group to optimize the sketch limitation.
+    @annotations.deprecated
     def evaluate_sketch(
             self, t: sklearn.tree.DecisionTreeClassifier, tf: str, H: List[ str ],
             t_data: pandas.DataFrame, t_labels: pandas.Series, sketch_config: Dict[ str, Any ]
@@ -296,7 +301,9 @@ class Evaluator:
         for i in range( len( self.file_list ) ):
             # Evaluate with unlimited sketch or limited sketch with designed sketch limitation.
             if Evaluator._not_optimizes( sketch_config ):
-                self.l.debug( "Evaluating with the sketch of the limitation of %d" % ( -1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None else sketch_config[ fkl_inswitch.LIMITATION_STR ] ) )
+                self.l.debug( "Evaluating with the sketch of the limitation of %d" % (
+                    -1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None else sketch_config[
+                        fkl_inswitch.LIMITATION_STR ]) )
                 self._evaluate_sketch(
                     t,
                     self.file_list[ i ],
@@ -338,9 +345,9 @@ class Evaluator:
     ):
         """
 
-        @param tf:
+        @param tf: File path to the tree.
         @param acc: Accuracy of this current trained tree using the same training set to validate.
-        @param c:
+        @param c: sketch config.
         """
         assert c is not None
 
@@ -349,6 +356,11 @@ class Evaluator:
             self.l.debug( "Sketch limitation optimization process enabled" )
         if Evaluator._get_not_balancing( c ):
             self.l.debug( "Data sampling/balancing disabled" )
+        self.l.debug(
+            "Evaluating with the sketch of the limitation of %d" %
+            (-1 if c.get( fkl_inswitch.LIMITATION_STR ) is None
+             else c[ fkl_inswitch.LIMITATION_STR ])
+        )
         self.l.debug( "Accuracy of this tree: %.2f%%" % acc )
         self.l.debug( "Verifying the tree with the sketch file: %s" % my_writer.get_filename( tf ) )
 
@@ -374,7 +386,7 @@ class Evaluator:
         @param h: File path to the header
         @return: List of accuracy numbers for the test files in the file list, F.
         """
-        A: List[ float ] = []
+        A: List[ float ] = [ ]
 
         for fp in F:
             sw: sketch_write.SketchWriter = sketch_write.SketchWriter(
@@ -382,13 +394,13 @@ class Evaluator:
             )
 
             assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
-            ( df, _, _ ) = get_data_file(
+            (df, _, _) = get_data_file(
                 fp,
                 h,
                 fkl_inswitch.PKT_FEATURE_NAMES
             )
 
-            ( _, df_n ) = sw.process( df, None )
+            (_, df_n) = sw.process( df, None )
             A.append(
                 self._record(
                     t, fp, tf, l, df_n
@@ -411,11 +423,13 @@ class Evaluator:
         @return:
         """
         # filename + sketch limitation
-        test_file_name: str = my_writer.get_filename( fp ) + ( ( "_limit_of_" + str( l ) ) if l > 0 else "" )
+        test_file_name: str = my_writer.get_filename( fp ) + (("_limit_of_" + str( l )) if l > 0 else "")
         # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html#sklearn.tree.DecisionTreeClassifier.predict
         pre: numpy.ndarray = t.predict( df.drop( columns = [ fkl_inswitch.LABEL_STR ] ) )
         # check inconsistent numbers of samples
-        assert my_typing.equals( df[ fkl_inswitch.LABEL_STR ].size, len( pre ) ), "test file: %s, y size: %d, pre size: %d" % ( test_file_name, df[ fkl_inswitch.LABEL_STR ].size, len( pre ))
+        assert my_typing.equals( df[ fkl_inswitch.LABEL_STR ].size,
+                                 len( pre ) ), "test file: %s, y size: %d, pre size: %d" % (
+        test_file_name, df[ fkl_inswitch.LABEL_STR ].size, len( pre ))
         r: float = sklearn.metrics.accuracy_score(
             df[ fkl_inswitch.LABEL_STR ].astype( int ),
             pre
@@ -452,20 +466,21 @@ class Evaluator:
         # Evaluate with unlimited sketch or limited sketch with designed sketch limitation.
         self.l.debug(
             "Evaluating with the sketch of the limitation of %d" %
-            ( -1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None
-             else sketch_config[ fkl_inswitch.LIMITATION_STR ] )
+            (-1 if sketch_config.get( fkl_inswitch.LIMITATION_STR ) is None
+             else sketch_config[ fkl_inswitch.LIMITATION_STR ])
         )
 
         self._evaluate(
             t,
             my_files.get_files_in_dir( dp ),
             Evaluator._get_limitation( sketch_config ),
-            tf
+            tf,
+            Evaluator._get_not_balancing( sketch_config )
         )
 
     def _evaluate(
             self, t: sklearn.tree.DecisionTreeClassifier,
-            F: List[ str ], l: int, tf: str
+            F: List[ str ], l: int, tf: str, is_not_balancing: bool
     ) -> List[ float ]:
         """
 
@@ -475,13 +490,13 @@ class Evaluator:
         @param tf: File path to the tree.
         @return: List of accuracy numbers for the test files in the file list, F.
         """
-        A: List[ float ] = []
+        A: List[ float ] = [ ]
 
         for fp in F:
             # Reset the sketch is important,
             # otherwise it contains information from the previous tests.
             sw: sketch_write.SketchWriter = sketch_write.SketchWriter(
-                None, None, l, False, self.l.level
+                None, None, is_not_balancing, l, False, False, self.l.level
             )
 
             assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
@@ -502,25 +517,26 @@ class _Optimizer:
 
     # Optimization functions
     # Binary search
-    BINARY_F: Callable = lambda R : R[ 0 ] + ( R[ 1 ] - R[ 0 ] + 1 ) // 2
+    BINARY_F: Callable = lambda R: R[ 0 ] + (R[ 1 ] - R[ 0 ] + 1) // 2
     # Linear incremental
-    LINEAR_F: Callable = lambda R : R[ 0 ] + 1
+    LINEAR_F: Callable = lambda R: R[ 0 ] + 1
 
     """
     Class to find the optimal sketch limitation, empty spot for each src and dst ips.
     """
+
     def __init__( self, F: List[ str ], l: logging.Logger, op_f: Callable = None ) -> None:
         assert F is not None
         # Search range domain.
         self.range: List[ int ] = _Optimizer._find_range( F )
         assert self.range[ 0 ] <= self.range[ 1 ]
-        self.res: Dict[ int, List[ float ] ] = {}
-        self.res_median: Dict[ int, float ] = {}
+        self.res: Dict[ int, List[ float ] ] = { }
+        self.res_median: Dict[ int, float ] = { }
 
         self.op_f: Callable = _Optimizer.BINARY_F if op_f is None else op_f
 
         self.l: logging.Logger = l
-        self.l.debug( "Optimization range: [ %d, %d ]" % ( self.range[ 0 ], self.range[ 1 ] ) )
+        self.l.debug( "Optimization range: [ %d, %d ]" % (self.range[ 0 ], self.range[ 1 ]) )
 
     # TODO: Empty spot overflow.
     @staticmethod
@@ -534,7 +550,7 @@ class _Optimizer:
         S_src: Set[ str ] = set()
         S_dst: Set[ str ] = set()
         for f in F:
-            for ( _, s ) in pandas.read_csv( f ).iterrows():
+            for (_, s) in pandas.read_csv( f ).iterrows():
                 _Optimizer._add( S_src, s.at[ fkl_inswitch.SRC_ADDR_STR ] )
                 _Optimizer._add( S_dst, s.at[ fkl_inswitch.DST_ADDR_STR ] )
 
@@ -542,7 +558,7 @@ class _Optimizer:
 
     @staticmethod
     def _add( S: Set[ str ], ip: str ) -> None:
-        if not ( ip in S ): S.add( ip );
+        if not (ip in S): S.add( ip );
 
     def has_next( self ) -> bool:
         """

@@ -2,9 +2,7 @@
 
 import logging
 import math
-from typing import (
-    List, Tuple
-)
+from typing import List, Tuple
 
 import pandas
 
@@ -165,3 +163,4 @@ class Mixer:
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.insert.html#pandas.DataFrame.insert
         df.insert( len( df.columns ), fkl_inswitch.LABEL_STR, [ 0 for _ in range( my_dataframe.get_row_size( df ) ) ] )
         return df
+

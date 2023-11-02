@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from typing import (
-    List
-)
+from typing import List
 
 """
 file:
@@ -46,7 +44,7 @@ def get_files_in_dir( dir: str ) -> List[ str ]:
 def get_files_in_dirs( D: List[ str ] ) -> List[ List[ str ] ]:
     """
     Find all file paths in multiple directories.
-    @param dir:
+    @param D:
     @return:
     """
     if D is None: return [];

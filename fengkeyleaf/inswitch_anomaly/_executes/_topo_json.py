@@ -6,7 +6,7 @@ import sys
 # Directly called from the working directory.
 """
 file:
-description:
+description: File to process pkt input file to produce network topology.
 nots: Directly called from the working directory.
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     topo.Builder.get_host_jsons(
         of,
         topo.Builder().get_topo_json(
-            topo.Parser().parse( cf ),
+            topo.Parser().parse( cf, "./pod-topo/pkts.json" ),
             "./pod-topo/topology.json"
         )
     )

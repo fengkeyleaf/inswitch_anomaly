@@ -2,7 +2,6 @@
 
 import logging
 import math
-import random
 from typing import Dict, List, Set, Callable
 import pandas
 
@@ -50,7 +49,7 @@ class PktProcessor:
         # https://docs.python.org/3/library/logging.html#logging-levels
         self.l: logging.Logger = my_logging.get_logger( ll )
         self._cm: PktProcessor._CheckerMixer = PktProcessor._CheckerMixer( self.l )
-        self._cb: PktProcessor._CheckerBalancing = self._CheckerBalancing( self.l )
+        self._cb: PktProcessor._CheckerBalancing = PktProcessor._CheckerBalancing( self.l )
 
         # Pkt dataset setting
         self.h: str = h  # header file path
@@ -58,13 +57,6 @@ class PktProcessor:
 
         # Filtering setting
         self.fn: Callable = fn
-
-        # Data sampling/balancing setting.
-        self._is_balancing: bool = True
-        # gc <- 0 // good pkt count
-        self.gc: int = 0
-        # bc <- 0 // bad pkt count
-        self.bc: int = 0
 
     def process( self, f: str ) -> pandas.DataFrame:
         """
@@ -95,8 +87,6 @@ class PktProcessor:
         return self.write(
             # Original reformatted data.
             df,
-            # Data sampling/balancing
-            self._balancing( df ),
             f
         )
 
@@ -154,110 +144,14 @@ class PktProcessor:
             d.loc[ i, fkl_inswitch.ID_STR ] = id
             id += 1
 
-    def write( self, df_o: pandas.DataFrame, df_b: pandas.DataFrame, f: str ) -> pandas.DataFrame:
+    def write( self, df: pandas.DataFrame, f: str ) -> pandas.DataFrame:
         fp: str = fkl_inswitch.get_output_file_path(
             f, PktProcessor.FOLDER_NAME, PktProcessor.SIGNATURE
         )
         self.l.info( "Pro-process: " + fp )
-        df_o.to_csv( fp, index = False )
+        df.to_csv( fp, index = False )
 
-        if self._is_balancing:
-            fp: str = fkl_inswitch.get_output_file_path(
-                f, PktProcessor.BALANCED_FOLDER_NAME, PktProcessor.BALANCED_SIGNATURE
-            )
-            self.l.info( "Pro-process balanced: " + fp )
-            df_b.to_csv( fp, index = False )
-            return df_b
-
-        return df_o
-
-    def _counting( self, df: pandas.DataFrame ) -> None:
-        """
-        Count good pkts and bad pkts.
-        @param df:
-        """
-        # Reset
-        self.gc = 0
-        self.bc = 0
-
-        # for every pkt, p, in P
-        for ( i, s ) in df.iterrows():
-            # do if p is a good one
-            if df.at[ i, fkl_inswitch.LABEL_STR ] == fkl_inswitch.GOOD_LABEL:
-                # then gc++
-                self.gc += 1
-                continue
-
-            # else bc++
-            assert df.at[ i, fkl_inswitch.LABEL_STR ] == fkl_inswitch.BAD_LABEL
-            self.bc += 1
-
-        assert self.gc + self.bc == my_dataframe.get_row_size( df )
-        if self._is_balancing:
-            self.l.debug( "gc(good count): %d, bc(bad count): %d, tc(total count): %d" % ( self.gc, self.bc, my_dataframe.get_row_size( df ) ) )
-
-    # Algorithm DATASAMPLING( P )
-    def _balancing( self, df: pandas.DataFrame ) -> pandas.DataFrame:
-        """
-        Data sampling/balancing.
-        @param df:
-        @return: Original pkt dataframe if data balancing is off, otherwise balanced pkt dataframe.
-        """
-        if not self._is_balancing: return df;
-
-        assert self._cb.setLen( my_dataframe.get_row_size( df ) )
-
-        self.l.info( "Balancing is turned on in PktProcessor." )
-        self._counting( df )
-
-        # gdp <- gc / len( P ) // good Drop Percent
-        gdp: float = self.gc / my_dataframe.get_row_size( df )
-        # bdp <- bc / len( P ) // bad Drop Percent
-        bdp: float = self.bc / my_dataframe.get_row_size( df )
-        self.l.debug( "gdp( bad Drop Percent ): %f, bdp( bad Drop Percent ): %f" % (gdp, bdp) )
-
-        return self._selecting( df, gdp, bdp )
-
-    def _is_added( self, ifg: bool, ifb: bool ) -> bool:
-        # Add a pkt if data balancing is off or
-        return ( not self._is_balancing or
-                 # add one from a probabilistic perspective
-                 ( ifg or ifb ) )
-
-    def _selecting(
-            self, df: pandas.DataFrame, gdp: float, bdp: float
-    ) -> pandas.DataFrame:
-        """
-        Data balancing process.
-        @param df:
-        @param gdp: Good pkt probability.
-        @param bdp: Bad pkt probability.
-        @return: Balanced pkt dataframe.
-        """
-        assert 0 <= gdp <= 1
-        assert 0 <= bdp <= 1
-
-        I: List[ int ] = []
-        for ( idx, _ ) in df.iterrows():
-            l: int = df.at[ idx, fkl_inswitch.LABEL_STR ]
-            assert l == fkl_inswitch.GOOD_LABEL or l == fkl_inswitch.BAD_LABEL
-
-            # ifAddGood <- p is a good one and randDoube() > gdp
-            if_add_good: bool = l == fkl_inswitch.GOOD_LABEL and random.random() > gdp
-            # ifAddBad <- p is a bad one and randDoube() > bdp
-            if_add_bad: bool = l == fkl_inswitch.BAD_LABEL and random.random() > bdp
-
-            # if ifAddGood or ifAddBad
-            # Add a pkt
-            if self._is_added( if_add_good, if_add_bad ):
-                assert self._cb.count( l, if_add_good, if_add_bad )
-                continue
-
-            # Not add, record its index and then drop it later.
-            I.append( idx )
-
-        assert self._cb.is_balanced()
-        return df.drop( I )
+        return df
 
     class _Checker:
         @staticmethod
@@ -266,11 +160,11 @@ class PktProcessor:
             for (i, s) in d.iterrows():
                 # PktProcessor.verify_ip( d )
                 assert d.loc[ i, fkl_inswitch.ID_STR ] != "" and d.loc[ i, fkl_inswitch.ID_STR ] is not None
-                assert d.loc[ i, fkl_inswitch.LABEL_STR ] == 0 or d.loc[ i, fkl_inswitch.LABEL_STR ] == 1, str(
-                    i ) + " | " + f
+                assert d.loc[ i, fkl_inswitch.LABEL_STR ] == 0 or d.loc[ i, fkl_inswitch.LABEL_STR ] == 1, str( i ) + " | " + f
 
             return True
 
+    @staticmethod
     class _CheckerMixer:
         def __init__( self, l: logging.Logger ):
             self.l: logging.Logger = l
@@ -291,6 +185,7 @@ class PktProcessor:
             self.l.info( "Mixed dataset: gc = %d, bc = %d, tc = %d" % ( gc, bc, tc ) )
             return True
 
+    @staticmethod
     class _CheckerBalancing:
         def __init__( self, l: logging.Logger ):
             self.tc: int = 0 # total pkt count

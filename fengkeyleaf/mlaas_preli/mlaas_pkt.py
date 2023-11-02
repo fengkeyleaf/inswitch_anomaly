@@ -14,7 +14,6 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 
-# TODO: Combine multiple files into one.
 # https://scapy.readthedocs.io/en/latest/build_dissect.html
 # https://scapy.readthedocs.io/en/latest/api/scapy.fields.html#scapy.fields.BitField
 class Mlaas_p( Packet ):

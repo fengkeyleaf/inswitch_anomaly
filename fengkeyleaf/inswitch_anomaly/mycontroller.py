@@ -4,6 +4,7 @@ import argparse
 import os
 import sys
 import logging
+from typing import List, Tuple
 
 import grpc
 
@@ -44,98 +45,116 @@ from fengkeyleaf.inswitch_anomaly import p4ml, write_rules
 
 __version__ = "1.0"
 
-l: logging.Logger = my_logging.get_logger( logging.INFO )
 
-#######################
-# Paraphrase ML model.
-#######################
+class Controller:
+    FEATURE_REG: str = r"(srcCount|srcTLS|dstCount|dstTLS)"
+    FEATURE_NAMES: List[ str ] = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
 
-# Initial Test
-inputfile = '../decision_tree/tree.txt'
-inputfile = "./test/test_tree_4_features.txt"
-inputfile = "./config/tree.txt"
+    def __init__( self ) -> None:
+        self.l: logging.Logger = my_logging.get_logger( logging.INFO )
 
-# Real-world data Test
-# inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_3_tree.txt"
-inputfile = "/home/p4/BoT-loT/trees/UNSW_2018_IoT_Botnet_Dataset_1_new_tree.txt"
-inputfile = "/home/p4/data/trees/UNSW_2018_IoT_Botnet_Dataset_1_new_tree.txt"
+        self.srcCount = None
+        self.srcTLS = None
+        self.dstCount = None
+        self.dstTLS = None
 
-# Basic forwarding test
-# inputfile = "/home/p4/tutorials/data/Bot-loT/processed/without_synthesised/UNSW_2018_IoT_Botnet_Dataset_3_reformatted_sketch_tree.txt"
+        self.srcCountMap = None
+        self.srcTLSMap = None
+        self.dstCountMap = None
+        self.dstTLSMap = None
+        self.classfication = None
 
-actionfile = '../decision_tree/action.txt'
-actionfile = "./config/action.txt"
+        self.action = None
 
-fr = r"(srcCount|srcTLS|dstCount|dstTLS)"
-FS = [ "srcCount", "srcTLS", "dstCount", "dstTLS" ]
-
-srcCount, srcTLS, dstCount, dstTLS = p4ml.find_feature( inputfile, len( FS ) )
-l.debug( "Feature:\nsrcCount=%s,\n srcTLS=%s,\n dstCount=%s,\n dstTLS=%s" % (srcCount, srcTLS, dstCount, dstTLS) )
-srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication = p4ml.find_classification( inputfile,
-                                                                                     [ srcCount, srcTLS, dstCount,
-                                                                                       dstTLS ], FS, fr )
-l.debug( "Classification:\nsrcCountMap=%s,\nsrcTLSMap=%s,\ndstCountMap=%s,\ndstTLSMap=%s,\nclass=%s" % (
-srcCountMap, srcTLSMap, dstCountMap, dstTLSMap, classfication) )
-action = p4ml.find_action( actionfile )
-l.debug( "Action: %s" % (action) )
-
-
-#######################
-# Contorl plane process.
-#######################
-
-
-def main( p4info_file_path, bmv2_file_path ):
-    # Instantiate a P4Runtime helper from the p4info file
-    p4info_helper = helper.P4InfoHelper( p4info_file_path )
-
-    try:
-        # Create a switch connection object for s1 and s2;
-        # this is backed by a P4Runtime gRPC connection.
-        # Also, dump all P4Runtime messages sent to switch to given txt files.
-        s1 = bmv2.Bmv2SwitchConnection(
-            name = 's1',
-            address = '127.0.0.1:50051',
-            device_id = 0,
-            proto_dump_file = 'logs/s1-p4runtime-requests.txt' )
-
-        # Send master arbitration update message to establish this controller as
-        # master (required by P4Runtime before performing any other write operation)
-        s1.MasterArbitrationUpdate()
-        # s2.MasterArbitrationUpdate()
-
-        # Install the P4 program on the switches
-        s1.SetForwardingPipelineConfig( p4info = p4info_helper.p4info,
-                                        bmv2_json_file_path = bmv2_file_path )
-        l.info( "Installed P4 Program using SetForwardingPipelineConfig on s1" )
-
-        # Write basic forwarding rules into switch.
-        # write_rules.writeBasicForwardingRules( p4info_helper, s1 )
-
-        # Basic forwarding without the tree.
-        # write_rules.write_basic_forwarding_rules_batch_test( p4info_helper, s1 )
-
-        write_rules.write_ml_rules(
-            srcCount = srcCount,
-            srcCountMap = srcCountMap,
-            srcTLS = srcTLS,
-            srcTLSMap = srcTLSMap,
-            dstCount = dstCount,
-            dstCountMap = dstCountMap,
-            dstTLS = dstTLS,
-            dstTLSMap = dstTLSMap,
-            classfication = classfication,
-            action = action,
-            s1 = s1,
-            p4info_helper = p4info_helper
+    def load( self, inputfile: str, actionfile: str ) -> None:
+        self.srcCount, self.srcTLS, self.dstCount, self.dstTLS = p4ml.find_feature(
+            inputfile, len( Controller.FEATURE_NAMES )
+        )
+        self.l.debug( "Feature:\nsrcCount=%s,\n srcTLS=%s,\n dstCount=%s,\n dstTLS=%s" %
+                 ( self.srcCount, self.srcTLS, self.dstCount, self.dstTLS )
         )
 
-    except KeyboardInterrupt:
-        l.info( " Shutting down." )
-    except grpc.RpcError as e:
-        write_rules.printGrpcError( e )
+        self.srcCountMap, self.srcTLSMap, self.dstCountMap, self.dstTLSMap, self.classfication = p4ml.find_classification(
+            inputfile,
+            [ self.srcCount, self.srcTLS, self.dstCount, self.dstTLS ],
+            Controller.FEATURE_NAMES,
+            Controller.FEATURE_REG
+        )
+        self.l.debug( "Classification:\nsrcCountMap=%s,\nsrcTLSMap=%s,\ndstCountMap=%s,\ndstTLSMap=%s,\nclass=%s" %
+                 ( self.srcCountMap, self.srcTLSMap, self.dstCountMap, self.dstTLSMap, self.classfication )
+        )
 
-    ShutdownAllSwitchConnections()
+        self.action = p4ml.find_action( actionfile )
+        self.l.debug( "Action: %s" % ( self.action ) )
+
+    # TODO: Add param type.
+    def inject( self, args_parser: argparse.ArgumentParser ) -> None:
+        p4info_file_path, bmv2_file_path = self.parse( args_parser )
+
+        # Instantiate a P4Runtime helper from the p4info file
+        p4info_helper = helper.P4InfoHelper( p4info_file_path )
+
+        try:
+            # Create a switch connection object for s1 and s2;
+            # this is backed by a P4Runtime gRPC connection.
+            # Also, dump all P4Runtime messages sent to switch to given txt files.
+            s1 = bmv2.Bmv2SwitchConnection(
+                name = 's1',
+                address = '127.0.0.1:50051',
+                device_id = 0,
+                proto_dump_file = 'logs/s1-p4runtime-requests.txt' )
+
+            # Send master arbitration update message to establish this controller as
+            # master (required by P4Runtime before performing any other write operation)
+            s1.MasterArbitrationUpdate()
+            # s2.MasterArbitrationUpdate()
+
+            # Install the P4 program on the switches
+            s1.SetForwardingPipelineConfig( p4info = p4info_helper.p4info,
+                                            bmv2_json_file_path = bmv2_file_path )
+            self.l.info( "Installed P4 Program using SetForwardingPipelineConfig on s1" )
+
+            # Write basic forwarding rules into switch.
+            # write_rules.writeBasicForwardingRules( p4info_helper, s1 )
+
+            # Basic forwarding without the tree.
+            # write_rules.write_basic_forwarding_rules_batch_test( p4info_helper, s1 )
+
+            write_rules.write_ml_rules(
+                srcCount = self.srcCount,
+                srcCountMap = self.srcCountMap,
+                srcTLS = self.srcTLS,
+                srcTLSMap = self.srcTLSMap,
+                dstCount = self.dstCount,
+                dstCountMap = self.dstCountMap,
+                dstTLS = self.dstTLS,
+                dstTLSMap = self.dstTLSMap,
+                classfication = self.classfication,
+                action = self.action,
+                s1 = s1,
+                p4info_helper = p4info_helper
+            )
+
+        except KeyboardInterrupt:
+            self.l.info( " Shutting down." )
+        except grpc.RpcError as e:
+            write_rules.printGrpcError( e )
+
+        ShutdownAllSwitchConnections()
+
+    def parse( self, args_parser: argparse.ArgumentParser ) -> Tuple[ str, str ]:
+        args = args_parser.parse_args()
+
+        if not os.path.exists( args.p4info ):
+            parser.print_help()
+            self.l.info( "\np4info file not found: %s\nHave you run 'make'?" % args.p4info )
+            parser.exit( 1 )
+        if not os.path.exists( args.bmv2_json ):
+            parser.print_help()
+            self.l.info( "\nBMv2 JSON file not found: %s\nHave you run 'make'?" % args.bmv2_json )
+            parser.exit( 1 )
+
+        return args.p4info, args.bmv2_json
 
 
 if __name__ == '__main__':
@@ -146,15 +165,23 @@ if __name__ == '__main__':
     parser.add_argument( '--bmv2-json', help = 'BMv2 JSON file from p4c',
                          type = str, action = "store", required = False,
                          default = './build/inswitch_anomaly.json' )
-    args = parser.parse_args()
 
-    if not os.path.exists( args.p4info ):
-        parser.print_help()
-        l.info( "\np4info file not found: %s\nHave you run 'make'?" % args.p4info )
-        parser.exit( 1 )
-    if not os.path.exists( args.bmv2_json ):
-        parser.print_help()
-        l.info( "\nBMv2 JSON file not found: %s\nHave you run 'make'?" % args.bmv2_json )
-        parser.exit( 1 )
+    # Initial Test
+    inputfile = '../decision_tree/tree.txt'
+    inputfile = "./test/test_tree_4_features.txt"
+    inputfile = "./config/tree.txt"
 
-    main( args.p4info, args.bmv2_json )
+    # Real-world data Test
+    # inputfile = "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_3_tree.txt"
+    inputfile = "/home/p4/BoT-loT/trees/UNSW_2018_IoT_Botnet_Dataset_1_new_tree.txt"
+    inputfile = "/home/p4/data/trees/UNSW_2018_IoT_Botnet_Dataset_1_new_tree.txt"
+
+    # Basic forwarding test
+    # inputfile = "/home/p4/tutorials/data/Bot-loT/processed/without_synthesised/UNSW_2018_IoT_Botnet_Dataset_3_reformatted_sketch_tree.txt"
+
+    actionfile = '../decision_tree/action.txt'
+    actionfile = "./config/action.txt"
+
+    c: Controller = Controller()
+    c.load( inputfile, actionfile )
+    c.inject( parser )

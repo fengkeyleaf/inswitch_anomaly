@@ -7,7 +7,8 @@ from typing import (
     List,
     Dict,
     Tuple,
-    Any, Generator
+    Any,
+    Generator
 )
 import numpy as np
 import pandas
@@ -32,6 +33,7 @@ from fengkeyleaf.utils import my_collections
 from fengkeyleaf.my_pandas import my_dataframe
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.inswitch_anomaly import _tree_evaluator, sketch
+from fengkeyleaf import annotations
 
 
 # https://github.com/cucl-srg/IIsy/blob/master/iisy_sw/framework/Machinelearning.py
@@ -265,6 +267,7 @@ class Tree:
             Tree._sketches( c ) and \
             c.get( fkl_inswitch.IS_OPTIMIZING_STR ) is not None and c.get( fkl_inswitch.IS_OPTIMIZING_STR )
 
+    @annotations.deprecated
     def train(
             self, h: str, H: List[ str ],
             F: List[ str ] = None,

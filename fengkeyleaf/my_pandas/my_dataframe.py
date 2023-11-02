@@ -224,6 +224,9 @@ class Builder:
 
 
 class _Checker:
+    """
+    Checker for the Builder class.
+    """
     def __init__( self, b: Builder ):
         self.b: Builder = b
 

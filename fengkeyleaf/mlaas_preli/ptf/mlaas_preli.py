@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import threading
+# import threading
 import random
 from typing import List
 # import math
+import sys
+import os
 
 # scapy imports
 from scapy.layers.inet import IP, Ether
@@ -18,6 +20,7 @@ from ptf.base_tests import BaseTest
 import p4runtime_sh.shell as sh
 # import p4runtime_shell_utils as p4rtutil
 
+# Directly called from the working directory.
 """
 file:
 description:
@@ -27,7 +30,16 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 
 """
 
-import mlaas_pkt
+# fengkeyleaf imports
+# Add path dependency, which is allowed to exclude this file from the working directory.
+sys.path.append(
+    os.path.join(
+        os.path.dirname( os.path.abspath( __file__  ) ),
+        '../../../'
+    )
+)
+# Import packages
+from fengkeyleaf.mlaas_preli import mlaas_pkt
 
 # PTF commands
 # Complie

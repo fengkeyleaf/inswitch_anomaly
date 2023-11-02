@@ -4,9 +4,11 @@ import logging
 import os
 import sys
 import unittest
-from typing import List, Iterator, Tuple, Callable
+from typing import List, Iterator, Tuple, Callable, Dict, Any
+
 import pandas
 from pandas import DataFrame
+from sklearn.tree import DecisionTreeClassifier
 
 """
 file:
@@ -32,6 +34,7 @@ from fengkeyleaf.inswitch_anomaly import (
     filter as fkl_filter
 )
 from fengkeyleaf.my_pandas import my_dataframe
+from fengkeyleaf import annotations
 
 # parent-directory..
 #     | --> original_data..
@@ -107,7 +110,9 @@ class DataProcessor:
         self.sketch_processor: sketch_write.SketchWriter = sketch_write.SketchWriter(
             da + pkt_processor.PktProcessor.FOLDER_NAME,
             da,
+            False,
             -1,
+            True,
             True,
             ll
         )
@@ -120,7 +125,10 @@ class DataProcessor:
             ll
         )
 
-    def _init_eval( self, D: List[ str ] = None, is_writing_eval: bool = False, ll: int = logging.INFO ):
+    def _init_eval(
+            self, D: List[ str ] = None,
+            is_writing_eval: bool = False, ll: int = logging.INFO
+    ):
         # Record accuracies computed by one data set as training set and the other as validation set.
         self.acc_rec: my_dataframe.Builder = my_dataframe.Builder( ll = ll )
         # Record sketch limitation optimization data.
@@ -130,26 +138,26 @@ class DataProcessor:
         self._is_writing: bool = is_writing_eval
         self.e.set_is_writing( is_writing_eval )
 
-    def process( self, is_only_preprocessing: bool = False ) -> None:
+    def process(
+            self, eval_config: Dict[ str, Any ], is_only_preprocessing: bool = False,
+    ) -> None:
         """
         Process data sets and train trees. Start from beginning.
         1) Re-format csv data sets.
         2) Generate sketch csv files.
         3) Train a tree with the sketch files.
+        @param eval_config:
         @param is_only_preprocessing: True, only generate processed data sets.
         """
         self.l.info( "Start processing from the beginning." )
 
-        T: List[ Tuple ] = []
+        T: List[ Tuple[ str, str, DecisionTreeClassifier, float, Dict[ str, Any ] ] ] = []
         # https://docs.python.org/3/library/os.html#os.walk
         # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
         # root, dirs, files
         # Avoid to iterate newly-added directories.
         it: Iterator[ Tuple[ str, List[ str ], List[ str ] ] ] = os.walk( self.da )
         for s, d, F in it:
-            # print( s )
-            # print( d )
-            # print( F )
             for f in F:
                 fp: str = os.path.join( s, f )
 
@@ -172,24 +180,19 @@ class DataProcessor:
                 T.append(
                     (
                         # Balanced dataset validation
-                        my_writer.get_dir( fp ) + pkt_processor.PktProcessor.BALANCED_FOLDER_NAME,
+                        my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME,
                         fkl_inswitch.get_output_file_path(
                             fp, tree.Tree.FOLDER_NAME,
                             tree.Tree.SIGNATURE
                         ),
                         t,
                         sc,
-                        {
-                            fkl_inswitch.IS_SKETCHING_STR: True,
-                            fkl_inswitch.IS_OPTIMIZING_STR: False,
-                            # Sketch limitation of 8
-                            fkl_inswitch.LIMITATION_STR: 8,
-                            fkl_inswitch.IS_NOT_BALANCING_STR: True
-                        }
+                        eval_config
                     )
                 )
 
         # Evaluate trees
+        self.l.info( "All processes are done, evaluating trees......" )
         for t in T:
             self.e.evaluate( *t )
 
@@ -231,6 +234,7 @@ class DataProcessor:
 
     # fengkeyleaf.data_processor.DataProcessor( da, h, None, D, 10 ).train_trees()
     # TODO: merge into process() in this class or train() in the Tree class.
+    @annotations.deprecated
     def train_trees( self ) -> None:
         """
         Train tree with given csv files. The sketch format should be range and leabel.
@@ -245,8 +249,7 @@ class DataProcessor:
                 assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION, fp
                 self.tree.process(
                     self.tree.pd + "/" + my_writer.get_filename( fp ),
-                    pandas.read_csv( f ),
-                    None
+                    pandas.read_csv( f )
                 )
 
         if self._is_writing:

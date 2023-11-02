@@ -15,6 +15,7 @@ from ptf.base_tests import BaseTest
 # p4runtime imports
 import p4runtime_sh.shell as sh
 
+# Directly called from the working directory.
 """
 file:
 description:

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import (
-    Dict, List
-)
+from typing import Dict, List
 
 import pandas
 
@@ -102,7 +100,7 @@ class Mapper:
         # 4 features in a list
         RANGE_M
     ]
-    M: my_dataframe.Mapper =  my_dataframe.Mapper( D )
+    M: my_dataframe.Mapper = my_dataframe.Mapper( D )
 
     @staticmethod
     def mapping( df: pandas.DataFrame ) -> pandas.DataFrame:
