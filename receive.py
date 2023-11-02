@@ -72,7 +72,7 @@ class IPOption_MRI( IPOption ):
 
 def handle_pkt( pkt, dic: Dict ):
     if TCP in pkt and pkt[ TCP ].dport == 1234:
-        print( "got a packet" )
+        # print( "got a packet" )
         # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html
         # pkt.show2()
         # https://stackoverflow.com/questions/65370305/extracting-tcp-data-with-scapy
@@ -103,6 +103,10 @@ def main( fp: str ):
            #   timeout = 10,
            prn = lambda x: handle_pkt( x, dic ) )
 
+    print( "Finish sniffing, write result to the file" )
+    with open( evaulator.RESULT_FILE, "w" ) as f:
+        f.write( json.dumps( dic, indent = 4 ) )
+
     print( "evaluating......" )
     evaulator.Evaluator().evaluate( fp, dic )
 
@@ -117,11 +121,7 @@ if __name__ == '__main__':
     # Evalutor().evaluate( "./test/test_csv1_small.csv" )
 
     # Real-world data Test
-    # Evaluator().evaluate( "/home/p4/tutorials/data/Bot-loT/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv" )
-    # f: str = "/home/p4/tutorials/data/Bot-loT/dataSet/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
-    # f = "/home/p4/tutorials/data/UNSW-NB15/dataSet/UNSW-NB15_3_reformatted.csv"
-    f = "/home/p4/BoT-loT/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
-    f = "/home/p4/data/balanced_reformatted/UNSW_2018_IoT_Botnet_Dataset_1_balanced_reformatted.csv"
+    f: str = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
 
     # Basic forwarding test
     # f = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"

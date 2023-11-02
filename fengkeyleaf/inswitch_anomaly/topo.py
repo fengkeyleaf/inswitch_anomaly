@@ -56,7 +56,7 @@ class Parser:
         pass
 
     # https://stackoverflow.com/questions/11706215/how-can-i-fix-the-git-error-object-file-is-empty/12371337#12371337
-    def parse( self, f: str, of: str ) -> Dict[ int, Dict[ str, str ] ]:
+    def parse( self, f: str, of: str = None ) -> Dict[ int, Dict[ str, str ] ]:
         """
         Class to parse processed pkt csv files into a dict.
         The file should be in the standard format, that is, all features are mapping to our own ones.

@@ -40,10 +40,7 @@ if __name__ == '__main__':
     # cf = "/home/p4/tutorials/data/TON_loT/dataSet/Network_dataset_4_reformatted.csv"
     # cf = "/home/p4/tutorials/data/UNSW-NB15/dataSet/UNSW-NB15_3_reformatted.csv"
 
-    cf = "/home/p4/BoT-loT/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
-    cf = "/home/p4/data/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
     cf = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_1_reformatted.csv"
-    cf = "/home/p4/data/balanced_reformatted/UNSW_2018_IoT_Botnet_Dataset_1_balanced_reformatted.csv"
 
     # Basic forwarding test
     # cf = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"

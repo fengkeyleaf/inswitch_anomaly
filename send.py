@@ -86,7 +86,7 @@ def send_pkts( fp: str, iface: str ) -> None:
         for p in P:
             pkt = Ether( src = get_if_hwaddr( iface ), dst = 'ff:ff:ff:ff:ff:ff' )
             pkt = pkt / IP( src = p[ fkl_inswtich.SRC_ADDR_STR ], dst = p[ fkl_inswtich.DST_ADDR_STR ] )
-            pkt = pkt / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / p[ fkl_inswtich.ID_STR ]
+            pkt = pkt / TCP( dport = 1234, sport = random.randint( 49152, 65535 ) ) / str( p[ fkl_inswtich.ID_STR ] )
             # pkt.show2()
             sendp( pkt, iface = iface, verbose = False )
         print( "Done with sending pkts in order" )
@@ -116,6 +116,7 @@ def main():
 
     if args.packet_json is not None:
         send_pkts( args.packet_json, iface )
+        return
 
     _send( args.host_json, iface )
 

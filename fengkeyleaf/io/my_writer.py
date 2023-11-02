@@ -26,7 +26,7 @@ def write_to_file( fp: str, d: str ) -> None:
     @param d:
     """
     if fp is None or fp == "":
-        l.warning( "File path doesn't exit: " + fp )
+        l.warning( "Output file path doesn't exit: " + str( fp ) )
         return
     
     with open( fp, "w+" ) as f:

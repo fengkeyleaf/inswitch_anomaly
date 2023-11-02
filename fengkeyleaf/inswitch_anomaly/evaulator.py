@@ -115,3 +115,5 @@ class Evaluator:
         # self.R = my_json.load( RESULT_FILE )[ rec.RESULT_STR ]
         self.R = my_json.load( RESULT_FILE )[ RESULT_STR ]
         self.__evaluate( dic )
+
+
