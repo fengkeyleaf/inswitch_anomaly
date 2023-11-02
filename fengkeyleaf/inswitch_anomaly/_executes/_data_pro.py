@@ -82,6 +82,8 @@ if __name__ == '__main__':
             fkl_inswitch.IS_SKETCHING_STR: True,
             fkl_inswitch.IS_OPTIMIZING_STR: False,
             fkl_inswitch.LIMITATION_STR: args.sketch_lim,
-            fkl_inswitch.IS_NOT_BALANCING_STR: False
+            # Must be True since there is no balancing in the switch.
+            # No meaning to enable it to evaluate trees.
+            fkl_inswitch.IS_NOT_BALANCING_STR: True
         }
     )

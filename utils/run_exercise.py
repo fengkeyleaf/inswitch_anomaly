@@ -19,12 +19,12 @@
 # We encourage you to dissect this script to better understand the BMv2/Mininet
 # environment used by the P4 tutorial.
 #
+
 import argparse
 import json
 import os
 import subprocess
 from time import sleep
-import threading
 
 import p4runtime_lib.simple_controller
 from mininet.cli import CLI
@@ -222,7 +222,9 @@ class ExerciseRunner:
         # Sending pkts in parallel.
         # supervisor.Supervisor( self.net, self.hosts ).sends()
         # Sending only on one host.
-        supervisor.Supervisor( self.net, self.hosts ).send()
+        # supervisor.Supervisor( self.net, self.hosts ).send( "./send.py -hjs ./pod-topo/hosts/" )
+        # Sending pkts in the same order as that in the original dataset.
+        supervisor.Supervisor( self.net, self.hosts ).send( "./send.py -pktj ./pod-topo/pkts.json" )
 
     def parse_links(self, unparsed_links):
         """ 

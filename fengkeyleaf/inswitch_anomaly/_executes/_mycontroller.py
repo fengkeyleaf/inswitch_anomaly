@@ -26,7 +26,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
 sys.path.append(
     os.path.join(
         os.path.dirname( os.path.abspath( __file__ ) ),
-        '../../' )
+        '../../../' )
 )
 import utils.p4runtime_lib.bmv2 as bmv2
 import utils.p4runtime_lib.helper as helper
@@ -37,7 +37,7 @@ from utils.p4runtime_lib.switch import ShutdownAllSwitchConnections
 sys.path.append(
     os.path.join(
         os.path.dirname( os.path.abspath(__file__) ),
-        '../../'
+        '../../../'
     )
 )
 from fengkeyleaf.logging import my_logging
