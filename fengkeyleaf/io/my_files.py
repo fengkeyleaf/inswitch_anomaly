@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-from typing import List
+from typing import List, Iterator, Tuple
 
 """
 file:
@@ -34,7 +34,11 @@ def get_files_in_dir( dir: str ) -> List[ str ]:
     if dir is None or dir == "": return [];
 
     R: List[ str ] = []
-    for s, d, F in os.walk( dir ):
+    # https://docs.python.org/3/library/os.html#os.walk
+    # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
+    # root, dirs, files
+    it: Iterator[ Tuple[ str, List[ str ], List[ str ] ] ] = os.walk( dir )
+    for s, d, F in it:
         for f in F:
             R.append( os.path.join( s, f ) )
 

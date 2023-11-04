@@ -71,6 +71,11 @@ OPTI_FUNCTION_CONFIG_STR: str = "op_f_config"
 BINARY_OP: int = 0
 LINEAR_OP: int = 1
 
+# Process configs
+IS_FROM_PRE_PROCESS_STR: str = "is_pre"
+IS_FROM_SKETCH_STR: str = "is_sketch"
+IS_FROM_TREE_STR: str = "is_tree"
+
 
 # I/O
 def get_output_file_path( f: str, fdn: str, sig: str ) -> str:

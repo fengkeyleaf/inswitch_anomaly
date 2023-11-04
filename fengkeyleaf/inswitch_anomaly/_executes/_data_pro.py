@@ -29,7 +29,7 @@ from fengkeyleaf import my_logging, data_processor, filter as fkl_filter
 __version__ = "1.0"
 
 # BoT-IoT
-# python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -iwe True -lim 8
+# python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -iwe True -lim 8 -inb True
 # python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
 
 # TON_IoT\Processed_Network_dataset
@@ -61,6 +61,10 @@ if __name__ == '__main__':
         type = str, help = "Is writing evaluating results", required = False, default = False
     )
     parser.add_argument(
+        "-inb", "--is-not-balancing",
+        type = str, help = "Is enabling data balancing", required = False, default = False
+    )
+    parser.add_argument(
         "-lim", "--sketch-lim",
         type = int, help = "Sketch limitation", required = False, default = -1
     )
@@ -75,9 +79,12 @@ if __name__ == '__main__':
     data_processor.DataProcessor(
         args.dir_data, args.header,
         args.dir_madeup, None,
-        args.is_writing_eval, fkl_filter.ipv4_filter,
+        args.is_writing_eval,args.is_not_balancing, fkl_filter.ipv4_filter,
         my_logging.get_level_name( args.logging_level )
     ).process(
+        {
+          fkl_inswitch.IS_FROM_PRE_PROCESS_STR: True
+        },
         {
             fkl_inswitch.IS_SKETCHING_STR: True,
             fkl_inswitch.IS_OPTIMIZING_STR: False,

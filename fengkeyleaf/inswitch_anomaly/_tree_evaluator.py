@@ -453,10 +453,18 @@ class Evaluator:
     # -----------------------------------------------------------------------------------------------------
 
     def evaluate(
-            self, dp: str, tf: str,
+            self, V: List[ str ], tf: str,
             t: sklearn.tree.DecisionTreeClassifier, acc: float,
             sketch_config: Dict[ str, Any ]
     ) -> None:
+        """
+
+        @param V: List of file paths to the validation datasets
+        @param tf:
+        @param t:
+        @param acc:
+        @param sketch_config:
+        """
         self._logging( tf, acc, sketch_config )
 
         if self._is_writing:
@@ -472,7 +480,7 @@ class Evaluator:
 
         self._evaluate(
             t,
-            my_files.get_files_in_dir( dp ),
+            V,
             Evaluator._get_limitation( sketch_config ),
             tf,
             Evaluator._get_not_balancing( sketch_config )
@@ -490,7 +498,7 @@ class Evaluator:
         @param tf: File path to the tree.
         @return: List of accuracy numbers for the test files in the file list, F.
         """
-        A: List[ float ] = [ ]
+        A: List[ float ] = []
 
         for fp in F:
             # Reset the sketch is important,

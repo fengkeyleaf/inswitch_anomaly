@@ -60,8 +60,8 @@ class DataProcessor:
     def __init__(
             self, da: str, h: str,
             dm: str = None, D: List[ str ] = None,
-            is_writing_eval: bool = False, fn: Callable = None,
-            ll: int = logging.INFO
+            is_writing_eval: bool = False, ia_not_balancing: bool = False,
+            fn: Callable = None, ll: int = logging.INFO
     ) -> None:
         """
 
@@ -84,9 +84,10 @@ class DataProcessor:
         # I/O
         assert da is not None
         self.da: str = da
+        self.training_files: List[ str ] = my_files.get_files_in_dir( da )
 
         # # Initialize the three processors.
-        self._init_sub_processors( da, h, dm, D, is_writing_eval, fn, ll )
+        self._init_sub_processors( da, h, dm, D, is_writing_eval, ia_not_balancing, fn, ll )
 
         # Evaluating setting.
         self._init_eval( D, is_writing_eval, ll )
@@ -94,8 +95,8 @@ class DataProcessor:
     def _init_sub_processors(
             self, da: str, h: str,
             dm: str = None, D: List[ str ] = None,
-            is_writing_eval: bool = False, fn: Callable = None,
-            ll: int = logging.INFO
+            is_writing_eval: bool = False, ia_not_balancing: bool = False,
+            fn: Callable = None, ll: int = logging.INFO
     ):
         self.pkt_processor: pkt_processor.PktProcessor = pkt_processor.PktProcessor(
             h,
@@ -110,7 +111,7 @@ class DataProcessor:
         self.sketch_processor: sketch_write.SketchWriter = sketch_write.SketchWriter(
             da + pkt_processor.PktProcessor.FOLDER_NAME,
             da,
-            False,
+            ia_not_balancing,
             -1,
             True,
             True,
@@ -139,57 +140,51 @@ class DataProcessor:
         self.e.set_is_writing( is_writing_eval )
 
     def process(
-            self, eval_config: Dict[ str, Any ], is_only_preprocessing: bool = False,
+            self, pro_config: Dict[ str, Any ],
+            eval_config: Dict[ str, Any ], is_only_preprocessing: bool = False,
     ) -> None:
         """
         Process data sets and train trees. Start from beginning.
         1) Re-format csv data sets.
         2) Generate sketch csv files.
         3) Train a tree with the sketch files.
+        @param pro_config:
         @param eval_config:
         @param is_only_preprocessing: True, only generate processed data sets.
         """
         self.l.info( "Start processing from the beginning." )
 
-        T: List[ Tuple[ str, str, DecisionTreeClassifier, float, Dict[ str, Any ] ] ] = []
-        # https://docs.python.org/3/library/os.html#os.walk
-        # https://stackoverflow.com/questions/11968976/list-files-only-in-the-current-directory
-        # root, dirs, files
+        T: List[ Tuple[ List[ str ], str, DecisionTreeClassifier, float, Dict[ str, Any ] ] ] = []
+
         # Avoid to iterate newly-added directories.
-        it: Iterator[ Tuple[ str, List[ str ], List[ str ] ] ] = os.walk( self.da )
-        for s, d, F in it:
-            for f in F:
-                fp: str = os.path.join( s, f )
 
-                # Only pre-process pkts.
-                if is_only_preprocessing:
-                    self.pkt_processor.process( fp )
-                    continue
+        for f in self.training_files:
+            # Only pre-process pkts.
+            if is_only_preprocessing:
+                self.pkt_processor.process( f )
+                continue
 
-                # Pre-process, sketching and training.
-                ( t, sc ) = self.tree.process(
-                    fp,
-                    # https://realpython.com/python-kwargs-and-args/
-                    self.sketch_processor.process(
-                        self.pkt_processor.process( fp ),
-                        fp
-                    )
+            # Data processing and ML training.
+            ( t, sc, v ) = self._process( pro_config, f )
+
+            # Add test info for each tree model.
+            T.append(
+                (
+                    # Dataset validation folder.
+                    v,
+                    # File path to the tree.
+                    fkl_inswitch.get_output_file_path(
+                        f, tree.Tree.FOLDER_NAME,
+                        tree.Tree.SIGNATURE
+                    ),
+                    # Decision tree model.
+                    t,
+                    # Accuracy verifying by the training dataset.
+                    sc,
+                    # evaluation configs.
+                    eval_config
                 )
-
-                # Add test info for each tree model.
-                T.append(
-                    (
-                        # Balanced dataset validation
-                        my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME,
-                        fkl_inswitch.get_output_file_path(
-                            fp, tree.Tree.FOLDER_NAME,
-                            tree.Tree.SIGNATURE
-                        ),
-                        t,
-                        sc,
-                        eval_config
-                    )
-                )
+            )
 
         # Evaluate trees
         self.l.info( "All processes are done, evaluating trees......" )
@@ -200,6 +195,39 @@ class DataProcessor:
         if self._is_writing:
             self.acc_rec.to_csv( self.da + _tree_evaluator.Evaluator.ACCU_SIGNATURE )
             self.acc_rec.reset()
+
+    def _process(
+            self, pro_config: Dict[ str, Any ], fp: str
+    ) -> Tuple[ DecisionTreeClassifier, float, List[ str ] ]:
+        if pro_config.get( fkl_inswitch.IS_FROM_PRE_PROCESS_STR ):
+            # Pre-process, sketching and training.
+            ( t, sc ) = self.tree.process(
+                fp,
+                self.sketch_processor.process(
+                    self.pkt_processor.process( fp ),
+                    fp
+                )
+            )
+            return (
+                t, sc,
+                my_files.get_files_in_dir( my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME )
+            )
+        elif pro_config.get( fkl_inswitch.IS_FROM_SKETCH_STR ):
+            # Sketching and training.
+            ( t, sc ) = self.tree.process(
+                fp,
+                self.sketch_processor.process(
+                    pandas.read_csv( fp ),
+                    fp
+                )
+            )
+            return ( t, sc, self.training_files )
+        elif pro_config.get( fkl_inswitch.IS_FROM_TREE_STR ):
+            # Training.
+            assert False
+
+        assert False
+        return ( None, 0, [] )
 
     # TODO: csvparaser.TIMESTAMP_STR could vary.
     def __get_original_relative_time( self, da: str, h: str ) -> float:
