@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 import unittest
-from typing import List, Iterator, Tuple, Callable, Dict, Any
+from typing import List, Tuple, Callable, Dict, Any
 
 import pandas
 from pandas import DataFrame
@@ -154,8 +154,6 @@ class DataProcessor:
         """
         T: List[ Tuple[ List[ str ], str, DecisionTreeClassifier, float, Dict[ str, Any ] ] ] = []
 
-        # Avoid to iterate newly-added directories.
-
         for f in self.files:
             # Only pre-process pkts.
             if is_only_preprocessing:
@@ -282,7 +280,7 @@ class DataProcessor:
         #         - sketching dataset file 1
         #         - sketching dataset file 2
         #         - sketching dataset file ,,,,,,
-        #         - sketching dataset file n-1
+        #         - sketching dataset file n1
         #         - sketching dataset file n
         #         - trees/
         #     -re-formatted/
@@ -308,6 +306,12 @@ class DataProcessor:
 
     @staticmethod
     def _get_eval_folder( eval_config: Dict[ str, Any ], fp: str ) -> List[ str ]:
+        """
+        Get the file path to the validation datasets for the evaluation process.
+        @param eval_config:
+        @param fp:
+        @return:
+        """
         if eval_config.get( fkl_inswitch.EVAL_FOLDER_STR ) is None:
             return my_files.get_files_in_dir( my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME )
 
