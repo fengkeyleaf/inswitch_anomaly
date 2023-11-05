@@ -65,6 +65,7 @@ def send_pkts_host( fp: str, iface: str ) -> None:
     """
     Send pkts from different host json file on the same host.
     """
+    print( "Start sending pkts" )
     for s, d, F in os.walk( fp ):
         for f in F:
             assert my_writer.get_extension( f ).lower() == my_files.JSON_EXTENSION, f
@@ -80,6 +81,7 @@ def send_pkts( fp: str, iface: str ) -> None:
     @param fp:
     @param iface:
     """
+    print( "Start sending pkts" )
     with open( fp, "r" ) as pkt_json:
         P: List[ Dict[ str, str ] ] = json.load( pkt_json )
 

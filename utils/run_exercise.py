@@ -90,12 +90,13 @@ class ExerciseTopo(Topo):
                 switchClass = configureP4Switch(
                         sw_path=bmv2_exe,
                         json_path=params["program"],
-                        log_console=True,
+                        log_console=False,
                         pcap_dump=pcap_dir)
             else:
                 # add default switch
                 switchClass = None
             self.addSwitch(sw, log_file="%s/%s.log" %(log_dir, sw), cls=switchClass)
+            # self.addSwitch(sw, cls=switchClass)
 
         for link in host_links:
             host_name = link['node1']
@@ -180,6 +181,7 @@ class ExerciseRunner:
 
         # Ensure all the needed directories exist and are directories
         for dir_name in [log_dir, pcap_dir]:
+            if dir_name is None: continue;
             if not os.path.isdir(dir_name):
                 if os.path.exists(dir_name):
                     raise Exception("'%s' exists and is not a directory!" % dir_name)
@@ -267,7 +269,7 @@ class ExerciseRunner:
         defaultSwitchClass = configureP4Switch(
                                 sw_path=self.bmv2_exe,
                                 json_path=self.switch_json,
-                                log_console=True,
+                                log_console=False,
                                 pcap_dump=self.pcap_dir)
 
         self.topo = ExerciseTopo(self.hosts, self.switches, self.links, self.log_dir, self.bmv2_exe, self.pcap_dir)
@@ -385,6 +387,7 @@ def get_args():
     cwd = os.getcwd()
     default_logs = os.path.join(cwd, 'logs')
     default_pcaps = os.path.join(cwd, 'pcaps')
+    default_pcaps = None
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', help='Suppress log messages.',

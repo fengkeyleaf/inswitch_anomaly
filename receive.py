@@ -74,7 +74,7 @@ def handle_pkt( pkt, dic: Dict ):
     if TCP in pkt and pkt[ TCP ].dport == 1234:
         # print( "got a packet" )
         # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html
-        # pkt.show2()
+        pkt.show2()
         # https://stackoverflow.com/questions/65370305/extracting-tcp-data-with-scapy
         # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Raw
         # print( "payload: %s" % pkt[ Raw ].load )
