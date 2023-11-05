@@ -84,7 +84,7 @@ class DataProcessor:
         # I/O
         assert da is not None
         self.da: str = da
-        self.training_files: List[ str ] = my_files.get_files_in_dir( da )
+        self.files: List[ str ] = my_files.get_files_in_dir( da )
 
         # # Initialize the three processors.
         self._init_sub_processors( da, h, dm, D, is_writing_eval, ia_not_balancing, fn, ll )
@@ -158,14 +158,14 @@ class DataProcessor:
 
         # Avoid to iterate newly-added directories.
 
-        for f in self.training_files:
+        for f in self.files:
             # Only pre-process pkts.
             if is_only_preprocessing:
                 self.pkt_processor.process( f )
                 continue
 
             # Data processing and ML training.
-            ( t, sc, v ) = self._process( pro_config, f )
+            ( t, sc, v ) = self._process( pro_config, eval_config, f )
 
             # Add test info for each tree model.
             T.append(
@@ -197,7 +197,8 @@ class DataProcessor:
             self.acc_rec.reset()
 
     def _process(
-            self, pro_config: Dict[ str, Any ], fp: str
+            self, pro_config: Dict[ str, Any ],
+            eval_config: Dict[ str, Any ], fp: str
     ) -> Tuple[ DecisionTreeClassifier, float, List[ str ] ]:
         if pro_config.get( fkl_inswitch.IS_FROM_PRE_PROCESS_STR ):
             # Pre-process, sketching and training.
@@ -221,13 +222,27 @@ class DataProcessor:
                     fp
                 )
             )
-            return ( t, sc, self.training_files )
+            return ( t, sc, self.files )
         elif pro_config.get( fkl_inswitch.IS_FROM_TREE_STR ):
             # Training.
-            assert False
+            ( t, sc ) = self.tree.process(
+                fp,
+                pandas.read_csv( fp )
+            )
+            return (
+                t, sc,
+                DataProcessor._get_eval_folder( eval_config, fp )
+            )
 
         assert False
         return ( None, 0, [] )
+
+    @staticmethod
+    def _get_eval_folder( eval_config: Dict[ str, Any ], fp: str ) -> List[ str ]:
+        if eval_config.get( fkl_inswitch.EVAL_FOLDER_STR ) is None:
+            return my_files.get_files_in_dir( my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME )
+
+        return my_files.get_files_in_dir( eval_config.get( fkl_inswitch.EVAL_FOLDER_STR ) )
 
     # TODO: csvparaser.TIMESTAMP_STR could vary.
     def __get_original_relative_time( self, da: str, h: str ) -> float:

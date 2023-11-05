@@ -55,6 +55,7 @@ PKT_FEATURE_NAMES: List[ str ] = [ SRC_ADDR_STR, DST_ADDR_STR ]
 # Tree Evaluation
 LIMITATION_STR: str = "lims"
 MEDIAN_ACCURACY_STR: str = "med_acc"
+EVAL_FOLDER_STR: str = "eval_folder"
 
 # Evaluation feature names
 SKETCH_LIMITATION_OPTI_FEATURE_NAMES: List[ str ] = [ LIMITATION_STR, MEDIAN_ACCURACY_STR ]

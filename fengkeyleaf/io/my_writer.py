@@ -53,6 +53,7 @@ def get_filename( fp: str ) -> str:
     return os.path.splitext( os.path.basename( fp ) )[ 0 ]
 
 
+# TODO: Valid file path format check.
 def get_extension( fp: str ) -> str:
     """
     Get file extension from a file path.

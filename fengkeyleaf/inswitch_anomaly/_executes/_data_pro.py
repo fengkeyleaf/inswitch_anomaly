@@ -29,8 +29,11 @@ from fengkeyleaf import my_logging, data_processor, filter as fkl_filter
 __version__ = "1.0"
 
 # BoT-IoT
-# python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -iwe True -lim 8 -inb True
+# python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -iwe True -lim 8
 # python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\data1\orignal" -he "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -dm "D:\data1\madeup" -ll debug
+
+# Start from processing tress
+# python .\fengkeyleaf\inswitch_anomaly\_executes\_data_pro.py -da "D:\networking\datasets\anomoaly_detection\BoT-loT\sketches" -he "D:\networking\datasets\anomoaly_detection\data\BoT-IoT\UNSW_2018_IoT_Botnet_Dataset_Feature_Names.csv" -iwe True -lim 8
 
 # TON_IoT\Processed_Network_dataset
 # python .\_data_pro.py -da "C:\Users\fengk\OneDrive\documents\computerScience\RIT\2023 spring\NetworkingResearch\data\TON_IoT\Processed_Network_dataset\test" -dm "D:\data"
@@ -83,7 +86,8 @@ if __name__ == '__main__':
         my_logging.get_level_name( args.logging_level )
     ).process(
         {
-          fkl_inswitch.IS_FROM_PRE_PROCESS_STR: True
+          # Must give one option.
+          fkl_inswitch.IS_FROM_TREE_STR: True
         },
         {
             fkl_inswitch.IS_SKETCHING_STR: True,
@@ -91,6 +95,7 @@ if __name__ == '__main__':
             fkl_inswitch.LIMITATION_STR: args.sketch_lim,
             # Must be True since there is no balancing in the switch.
             # No meaning to enable it to evaluate trees.
-            fkl_inswitch.IS_NOT_BALANCING_STR: True
+            fkl_inswitch.IS_NOT_BALANCING_STR: True,
+            fkl_inswitch.EVAL_FOLDER_STR: "D:/networking/datasets/anomoaly_detection/BoT-loT/re-formatted/"
         }
     )

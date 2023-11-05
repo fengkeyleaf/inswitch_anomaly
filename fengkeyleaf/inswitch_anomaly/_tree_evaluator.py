@@ -507,7 +507,7 @@ class Evaluator:
                 None, None, is_not_balancing, l, False, False, self.l.level
             )
 
-            assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION
+            assert my_writer.get_extension( fp ).lower() == my_files.CSV_EXTENSION, my_writer.get_extension( fp )
             df = sw.process( pandas.read_csv( fp ), None )
             A.append(
                 self._record(
