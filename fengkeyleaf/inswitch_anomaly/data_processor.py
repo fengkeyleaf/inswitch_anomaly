@@ -198,6 +198,25 @@ class DataProcessor:
             self, pro_config: Dict[ str, Any ],
             eval_config: Dict[ str, Any ], fp: str
     ) -> Tuple[ DecisionTreeClassifier, float, List[ str ] ]:
+        # Folder structure from starting processing from pre-processing.
+        # Before processing:
+        # BoT-loT/
+        #     - original dataset file 1
+        #     - original dataset file 2
+        #     - original dataset file ....
+        #     - original dataset file n-1
+        #     - original dataset file n
+        # After processing:
+        # BoT-loT/
+        #     - balanced_reformatted/
+        #     - re-formatted/
+        #     - sketches/
+        #     - trees/
+        #     - original dataset file 1
+        #     - original dataset file 2
+        #     - original dataset file ....
+        #     - original dataset file n-1
+        #     - original dataset file n
         if pro_config.get( fkl_inswitch.IS_FROM_PRE_PROCESS_STR ):
             self.l.info( "Start processing from pre-processing." )
             # Pre-process, sketching and training.
@@ -212,6 +231,24 @@ class DataProcessor:
                 t, sc,
                 my_files.get_files_in_dir( my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME )
             )
+        # Folder structure from starting processing from sketching.
+        # Before processing:
+        # BoT-loT/
+        #     - pro-processed dataset file 1
+        #     - pro-processed dataset file 2
+        #     - pro-processed dataset file ......
+        #     - pro-processed dataset file n-1
+        #     - pro-processed dataset file n
+        # After processing:
+        # BoT-loT/
+        #     - balanced_reformatted/
+        #     - sketches/
+        #     - trees/
+        #     - pro-processed dataset file 1
+        #     - pro-processed dataset file 2
+        #     - pro-processed dataset file ......
+        #     - pro-processed dataset file n-1
+        #     - pro-processed dataset file n
         elif pro_config.get( fkl_inswitch.IS_FROM_SKETCH_STR ):
             self.l.info( "Start processing from sketching." )
             # Sketching and training.
@@ -223,6 +260,37 @@ class DataProcessor:
                 )
             )
             return ( t, sc, self.files )
+        # Folder structure from starting processing from trees.
+        # BoT-loT/re-formatted/ is the validation dataset folder given by the user.
+        # Before processing:
+        # BoT-loT/
+        #     - sketches/
+        #         - sketching dataset file 1
+        #         - sketching dataset file 2
+        #         - sketching dataset file ,,,,,,
+        #         - sketching dataset file n-1
+        #         - sketching dataset file n
+        #     -re-formatted/
+        #         - pro-processed dataset file 1
+        #         - pro-processed dataset file 2
+        #         - pro-processed dataset file ......
+        #         - pro-processed dataset file n-1
+        #         - pro-processed dataset file n
+        # After processing:
+        # BoT-loT/
+        #     - sketches/
+        #         - sketching dataset file 1
+        #         - sketching dataset file 2
+        #         - sketching dataset file ,,,,,,
+        #         - sketching dataset file n-1
+        #         - sketching dataset file n
+        #         - trees/
+        #     -re-formatted/
+        #         - pro-processed dataset file 1
+        #         - pro-processed dataset file 2
+        #         - pro-processed dataset file ......
+        #         - pro-processed dataset file n-1
+        #         - pro-processed dataset file n
         elif pro_config.get( fkl_inswitch.IS_FROM_TREE_STR ):
             self.l.info( "Start processing from trees." )
             # Training.
