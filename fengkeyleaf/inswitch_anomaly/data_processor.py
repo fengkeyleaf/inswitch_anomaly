@@ -152,8 +152,6 @@ class DataProcessor:
         @param eval_config:
         @param is_only_preprocessing: True, only generate processed data sets.
         """
-        self.l.info( "Start processing from the beginning." )
-
         T: List[ Tuple[ List[ str ], str, DecisionTreeClassifier, float, Dict[ str, Any ] ] ] = []
 
         # Avoid to iterate newly-added directories.
@@ -201,6 +199,7 @@ class DataProcessor:
             eval_config: Dict[ str, Any ], fp: str
     ) -> Tuple[ DecisionTreeClassifier, float, List[ str ] ]:
         if pro_config.get( fkl_inswitch.IS_FROM_PRE_PROCESS_STR ):
+            self.l.info( "Start processing from pre-processing." )
             # Pre-process, sketching and training.
             ( t, sc ) = self.tree.process(
                 fp,
@@ -214,6 +213,7 @@ class DataProcessor:
                 my_files.get_files_in_dir( my_writer.get_dir( fp ) + pkt_processor.PktProcessor.FOLDER_NAME )
             )
         elif pro_config.get( fkl_inswitch.IS_FROM_SKETCH_STR ):
+            self.l.info( "Start processing from sketching." )
             # Sketching and training.
             ( t, sc ) = self.tree.process(
                 fp,
@@ -224,6 +224,7 @@ class DataProcessor:
             )
             return ( t, sc, self.files )
         elif pro_config.get( fkl_inswitch.IS_FROM_TREE_STR ):
+            self.l.info( "Start processing from trees." )
             # Training.
             ( t, sc ) = self.tree.process(
                 fp,
