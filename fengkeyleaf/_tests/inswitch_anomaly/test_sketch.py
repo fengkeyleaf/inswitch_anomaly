@@ -15,6 +15,7 @@ __version__ = "1.0"
 from fengkeyleaf.inswitch_anomaly import sketch_write
 
 
+# TODO: Move into inswitch_anomaly package.
 # pytest -n auto -s -q test_sketch.py
 # https://www.digitalocean.com/community/tutorials/python-unittest-unit-test-example
 class Tester:

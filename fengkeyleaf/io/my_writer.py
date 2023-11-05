@@ -19,17 +19,18 @@ __version__ = "1.0"
 l: logging.Logger = my_logging.get_logger( logging.INFO )
 
 
-def write_to_file( fp: str, d: str ) -> None:
+def write_to_file( fp: str, d: str, rm: str = "w" ) -> None:
     """
     Write data ( in the form of string ) into file.
     @param fp:
     @param d:
+    @param rm: Write mode, default is "w".
     """
     if fp is None or fp == "":
         l.warning( "Output file path doesn't exit: " + str( fp ) )
         return
     
-    with open( fp, "w+" ) as f:
+    with open( fp, rm ) as f:
         f.write( d )
 
 

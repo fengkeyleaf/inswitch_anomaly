@@ -21,6 +21,7 @@ from fengkeyleaf.inswitch_anomaly import tree
 from fengkeyleaf.logging import my_logging
 
 
+# TODO: Move into inswitch_anomaly package.
 # content of test_class.py
 class TestClass:
     @pytest.mark.skip

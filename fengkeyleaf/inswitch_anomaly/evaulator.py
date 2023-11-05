@@ -68,7 +68,7 @@ class Evaluator:
         """
         return re.match( filter.IPV4_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
 
-    def __evaluate( self, dic: Dict[ str, str ] ) -> None:
+    def __evaluate( self ) -> None:
         gc: int = 0 # good count
         bc: int = 0 # bad count
         gtc: int = 0 # good total count
@@ -98,13 +98,13 @@ class Evaluator:
             # https://java2blog.com/python-print-percentage-sign/
             s: str = "%d out of total %d pkts, accuracy = %.2f%%" % ( gc + bc, len( self.P ), ( ( gc + bc ) / len( self.P ) ) * 100 )
             self.l.info( s )
-            dic[ RESULT_INFO_STR ] = s
+            self.R[ RESULT_INFO_STR ] = s
             s = "Correct gc = %d, bc = %d" % ( gc, bc )
             self.l.info( s )
-            dic[ RESULT_INFO_STR ] += " | " + s
+            self.R[ RESULT_INFO_STR ] += " | " + s
             s = "Data set: %d out of %d are good pkts." % ( gtc, len( self.P ) )
             self.l.info( s )
-            dic[ RESULT_INFO_STR ] += " | " + s
+            self.R[ RESULT_INFO_STR ] += " | " + s
 
     def evaluate( self, f: str, dic: Dict[ str, str ] ) -> None:
         """
@@ -112,8 +112,7 @@ class Evaluator:
         :return:
         """
         self.P = topo.Parser().parse( f )
-        # self.R = my_json.load( RESULT_FILE )[ rec.RESULT_STR ]
-        self.R = my_json.load( RESULT_FILE )[ RESULT_STR ]
-        self.__evaluate( dic )
+        self.R = dic
+        self.__evaluate()
 
 

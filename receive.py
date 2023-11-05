@@ -30,7 +30,7 @@ author: Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf import evaulator
+from fengkeyleaf import evaulator, my_writer
 
 __version__ = "1.0"
 
@@ -103,16 +103,11 @@ def main( fp: str ):
            #   timeout = 10,
            prn = lambda x: handle_pkt( x, dic ) )
 
-    print( "Finish sniffing, write result to the file" )
-    with open( evaulator.RESULT_FILE, "w" ) as f:
-        f.write( json.dumps( dic, indent = 4 ) )
-
     print( "evaluating......" )
     evaulator.Evaluator().evaluate( fp, dic )
 
     print( "Finish sniffing, write result to the file" )
-    with open( evaulator.RESULT_FILE, "w" ) as f:
-        f.write( json.dumps( dic, indent = 4 ) )
+    my_writer.write_to_file( evaulator.RESULT_FILE, json.dumps( dic, indent = 4 ) )
 
 
 if __name__ == '__main__':
