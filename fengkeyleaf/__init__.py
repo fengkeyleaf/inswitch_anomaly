@@ -33,6 +33,10 @@ from fengkeyleaf.logging.api import (
     my_logging
 )
 
+from fengkeyleaf.ml.api import (
+    f1_score
+)
+
 from fengkeyleaf.mlaas_preli import (
     mlaas_pkt,
     worker

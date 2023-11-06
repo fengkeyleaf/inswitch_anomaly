@@ -13,7 +13,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
-from fengkeyleaf.io import my_json
+from fengkeyleaf.ml.metrics import f1_score
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.inswitch_anomaly import topo, filter
 
@@ -21,9 +21,11 @@ __version__ = "1.0"
 
 RESULT_STR: str = "result"
 RESULT_INFO_STR: str = "result_info"
+F1_STR: str = "F1_info"
 RESULT_FILE = "./output.json" # result file path
 
 
+# TODO: Calculate F1 score.
 class Evaluator:
     def __init__( self, is_forwarding: bool = False, ll: int = logging.INFO ) -> None:
         """
@@ -32,27 +34,44 @@ class Evaluator:
         """
         self.l: logging.Logger = my_logging.get_logger( ll )
 
-        self.P: Dict[ float, Dict ] = None
+        self.P: Dict[ int, Dict[ str, str ] ] = None
         self.R: Dict[ str, str ] = None
         self.is_forwarding: bool = is_forwarding
 
-    def __is_correct_good( self, k: float ) -> bool:
+        self.f1: f1_score.F1Score = None
+
+    # True - good pkt, false - bad pkt.
+    # True positives
+    def _count_tp( self, k: int ) -> None:
         """
         :param k: pkt ID number
         :return:
         """
-        if self.P[ k ].get( fkl_inswitch.LABEL_STR ) is None: return False;
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and
+                str( k ) in self.R[ RESULT_STR ] ):
+            self.f1.add_tp()
 
-        return self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and str( k ) in self.R
+    # False positives
+    def _count_fp( self, k: int ) -> None:
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and
+                str( k ) in self.R[ RESULT_STR ] ):
+            self.f1.add_fp()
 
-    def __is_correct_bad( self, k: float ) -> bool:
+    # Ture negatives
+    def _count_tn( self, k: int ) -> None:
         """
         :param k: pkt ID number
         :return:
         """
-        if self.P[ k ].get( fkl_inswitch.LABEL_STR ) is None: return False;
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and
+                not ( str( k ) in self.R[ RESULT_STR ] ) ):
+            self.f1.add_tn()
 
-        return self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and not (str( k ) in self.R)
+    # False negatives
+    def _count_fn( self, k: int ) -> None:
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and
+                not ( str( k ) in self.R[ RESULT_STR ] ) ):
+            self.f1.add_fn()
 
     def __is_correct_forwarding( self, k: float ) -> bool:
         """
@@ -69,42 +88,43 @@ class Evaluator:
         return re.match( filter.IPV4_REG, self.P[ k ][ fkl_inswitch.DST_ADDR_STR ] ) is not None
 
     def __evaluate( self ) -> None:
-        gc: int = 0 # good count
-        bc: int = 0 # bad count
+        self.f1 = f1_score.F1Score()
+
         gtc: int = 0 # good total count
         rc: int = 0 # received pkt count
         rtc: int = 0 # received pkt total count
         for k in self.P: # k: pkt ID number
             if self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ):
                 gtc += 1
-            # if k == 21:
-            #     print( self.__is_correct( k ) )
-                # print( self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.GOOD_LABEL_STR ) and k in self.R )
-                # print( self.P[ k ][ csvparaser.LABEL_STR ] == int( csvparaser.BAD_LABEL_STR ) and not ( k in self.R ) )
-                # print( k )
-                # print( type( k ) )
-                # print( ( k in self.R ) )
-                # print( ( str( k ) in self.R ) )
-                # print( not ( k in self.R ) )
+
             # https://www.geeksforgeeks.org/python-check-whether-given-key-already-exists-in-a-dictionary/
-            if self.__is_correct_good( k ): gc += 1;
-            if self.__is_correct_bad( k ): bc += 1;
+            self._count_tp( k )
+            self._count_tn( k )
+            self._count_fp( k )
+            self._count_fn( k )
             if self.__is_correct_forwarding( k ): rc += 1;
             if self.__is_valid_pkt( k ): rtc += 1;
 
         if self.is_forwarding:
             self.l.info( "%d out of total %d pkts, accuracy = %.2f%%" % ( rc, rtc, ( rc / rtc ) * 100 ) )
         else:
+            assert len( self.P ) == self.f1.get_total()
             # https://java2blog.com/python-print-percentage-sign/
-            s: str = "%d out of total %d pkts, accuracy = %.2f%%" % ( gc + bc, len( self.P ), ( ( gc + bc ) / len( self.P ) ) * 100 )
+            s: str = "%d out of total %d pkts, accuracy = %.2f%%" % ( self.f1.get_trues(), len( self.P ), ( self.f1.get_trues() / len( self.P ) ) * 100 )
             self.l.info( s )
             self.R[ RESULT_INFO_STR ] = s
-            s = "Correct gc = %d, bc = %d" % ( gc, bc )
+            s = "Correct gc = %d, bc = %d" % ( self.f1.get_tp(), self.f1.get_tn() )
             self.l.info( s )
             self.R[ RESULT_INFO_STR ] += " | " + s
             s = "Data set: %d out of %d are good pkts." % ( gtc, len( self.P ) )
             self.l.info( s )
             self.R[ RESULT_INFO_STR ] += " | " + s
+
+            self.f1.cal()
+            s = "acc=%.2f%%, pre=%.2f%%, re=%.2f%%, f1=%.2f%%" % ( self.f1.acc * 100, self.f1.pre * 100, self.f1.re * 100, self.f1.f1 * 100 )
+            self.R[ F1_STR ] = s
+            s = " | tp=%d, fp=%d, tn=%d, fn=%d" % ( self.f1.get_tp(), self.f1.get_fp(), self.f1.get_tn(), self.f1.get_fn() )
+            self.R[ F1_STR ] += s
 
     def evaluate( self, f: str, dic: Dict[ str, str ] ) -> None:
         """
