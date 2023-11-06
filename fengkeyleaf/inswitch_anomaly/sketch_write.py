@@ -16,12 +16,13 @@ author: @sean bergen,
 
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.my_pandas import my_dataframe
-from fengkeyleaf.io import ( my_writer, my_files )
+from fengkeyleaf.io import my_writer, my_files
 from fengkeyleaf import annotations
 import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.inswitch_anomaly import sketch
 
 
+# TODO: Accuracy with using balanced datasets is very slow, but why?
 # https://www.geeksforgeeks.org/what-is-a-clean-pythonic-way-to-have-multiple-constructors-in-python/
 class SketchWriter:
     """
