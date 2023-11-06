@@ -103,9 +103,12 @@ def main( fp: str ):
            #   timeout = 10,
            prn = lambda x: handle_pkt( x, dic ) )
 
+    my_writer.write_to_file( evaulator.RESULT_FILE, json.dumps( dic, indent = 4 ) )
+
     print( "evaluating......" )
     evaulator.Evaluator().evaluate( fp, dic )
 
+    my_writer.write_to_file( "./test.txt", "test" )
     print( "Finish sniffing, write result to the file" )
     my_writer.write_to_file( evaulator.RESULT_FILE, json.dumps( dic, indent = 4 ) )
 
