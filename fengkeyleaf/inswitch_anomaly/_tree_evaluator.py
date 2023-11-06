@@ -434,6 +434,12 @@ class Evaluator:
             df[ fkl_inswitch.LABEL_STR ].astype( int ),
             pre
         ) * 100
+        # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html#sklearn-metrics-confusion-matrix
+        R: Tuple[ float, float, float, None ] = sklearn.metrics.precision_recall_fscore_support(
+            df[ fkl_inswitch.LABEL_STR ].astype( int ),
+            pre,
+            average = "binary"
+        )
 
         # Accuracy Logging
         self.l.debug( test_file_name )
@@ -443,8 +449,7 @@ class Evaluator:
         if self._is_writing:
             # assert not self.acc_rec.contains_col_name( test_file_name ), test_file_name
             self.acc_rec.add_column_name( test_file_name )
-        if self._is_writing:
-            self.acc_rec.append_element( str( r ), my_writer.get_filename( tf ), test_file_name )
+            self.acc_rec.append_element( str( [ r, *R ] ), my_writer.get_filename( tf ), test_file_name )
 
         return r
 
