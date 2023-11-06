@@ -105,6 +105,9 @@ class Evaluator:
             if self.__is_correct_forwarding( k ): rc += 1;
             if self.__is_valid_pkt( k ): rtc += 1;
 
+        self._info( gtc, rc, rtc )
+
+    def _info( self, gtc: int, rc: int, rtc: int ) -> None:
         if self.is_forwarding:
             self.l.info( "%d out of total %d pkts, accuracy = %.2f%%" % ( rc, rtc, ( rc / rtc ) * 100 ) )
         else:

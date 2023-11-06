@@ -103,12 +103,11 @@ def main( fp: str ):
            #   timeout = 10,
            prn = lambda x: handle_pkt( x, dic ) )
 
-    my_writer.write_to_file( evaulator.RESULT_FILE, json.dumps( dic, indent = 4 ) )
+    # my_writer.write_to_file( "./output_raw.json", json.dumps( dic, indent = 4 ) )
 
     print( "evaluating......" )
     evaulator.Evaluator().evaluate( fp, dic )
 
-    my_writer.write_to_file( "./test.txt", "test" )
     print( "Finish sniffing, write result to the file" )
     my_writer.write_to_file( evaulator.RESULT_FILE, json.dumps( dic, indent = 4 ) )
 
@@ -119,7 +118,7 @@ if __name__ == '__main__':
     # Evalutor().evaluate( "./test/test_csv1_small.csv" )
 
     # Real-world data Test
-    f: str = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_3_reformatted.csv"
+    f: str = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_4_reformatted.csv"
 
     # Basic forwarding test
     # f = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
