@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # Evalutor().evaluate( "./test/test_csv1_small.csv" )
 
     # Real-world data Test
-    f: str = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv"
+    f: str = "/home/p4/data/re-formatted/UNSW_2018_IoT_Botnet_Dataset_3_reformatted.csv"
 
     # Basic forwarding test
     # f = "/home/p4/tutorials/data/swtich_test/Bot-loT_1.csv"
