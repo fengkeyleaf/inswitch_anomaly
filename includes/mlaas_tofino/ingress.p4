@@ -15,11 +15,21 @@ control Ingress(
     inout ingress_intrinsic_metadata_for_tm_t        ig_tm_md
 ) {
     // Note that register doesn't support signed integers.
-    register<unsigned_int32>( POOL_SIZE ) P_pos;  // Positive gradient pool
-    register<unsigned_int32>( POOL_SIZE ) P_neg; // Negative gradient pool
+    Register<unsigned_int32, _>( POOL_SIZE ) P_pos; // Positive gradient pool
+    RegisterAction<_, _, void>( reg = P_pos ) incre_p_pos = {
+        void apply( inout unsigned_int32 v ) {
+            v = v + 1;
+        }
+    }
+    Register<unsigned_int32, _>( POOL_SIZE ) P_neg; // Negative gradient pool
+    RegisterAction<_, _, void>( reg = P_neg ) incre_p_neg = {
+        void apply( inout unsigned_int32 v ) {
+            v = v + 1;
+        }
+    }
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
-    register<bit<16>>( POOL_SIZE ) C;  // Worker Count
+    Register<bit<16>, _>( POOL_SIZE ) C; // Worker Count
 
     // A Field variable must be initialized when it's used in a table key match,
     // Current count for the current param.
