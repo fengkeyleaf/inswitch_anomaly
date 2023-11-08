@@ -103,7 +103,7 @@ def main( fp: str ):
            #   timeout = 10,
            prn = lambda x: handle_pkt( x, dic ) )
 
-    # my_writer.write_to_file( "./output_raw.json", json.dumps( dic, indent = 4 ) )
+    my_writer.write_to_file( "./output_raw.json", json.dumps( dic, indent = 4 ) )
 
     print( "evaluating......" )
     evaulator.Evaluator().evaluate( fp, dic )
