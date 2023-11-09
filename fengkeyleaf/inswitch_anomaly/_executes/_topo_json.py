@@ -8,7 +8,6 @@ import sys
 """
 file:
 description: File to process pkt input file to produce network topology.
-nots: Directly called from the working directory.
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com

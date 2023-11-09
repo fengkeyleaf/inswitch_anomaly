@@ -430,26 +430,34 @@ class Evaluator:
         assert my_typing.equals( df[ fkl_inswitch.LABEL_STR ].size,
                                  len( pre ) ), "test file: %s, y size: %d, pre size: %d" % (
         test_file_name, df[ fkl_inswitch.LABEL_STR ].size, len( pre ))
+        # accuracy_score
         r: float = sklearn.metrics.accuracy_score(
             df[ fkl_inswitch.LABEL_STR ].astype( int ),
             pre
-        ) * 100
-        # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html#sklearn-metrics-confusion-matrix
+        )
+        # precision_recall_fscore
+        # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_recall_fscore_support.html#sklearn-metrics-precision-recall-fscore-support
         R: Tuple[ float, float, float, None ] = sklearn.metrics.precision_recall_fscore_support(
             df[ fkl_inswitch.LABEL_STR ].astype( int ),
             pre,
             average = "binary"
         )
+        # confusion_matrix
+        # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html#sklearn-metrics-confusion-matrix
+        M: Tuple[ float, float, float, float ] = sklearn.metrics.confusion_matrix(
+            df[ fkl_inswitch.LABEL_STR ].astype( int ),
+            pre
+        ).ravel()
 
         # Accuracy Logging
         self.l.debug( test_file_name )
-        self.l.debug( "Accuracy: %.2f%%" % r )
+        self.l.debug( "Accuracy: %.2f%%" % ( r * 100 ) )
 
         # Writing Accuracy logging
         if self._is_writing:
             # assert not self.acc_rec.contains_col_name( test_file_name ), test_file_name
             self.acc_rec.add_column_name( test_file_name )
-            self.acc_rec.append_element( str( [ r, *R ] ), my_writer.get_filename( tf ), test_file_name )
+            self.acc_rec.append_element( str( [ r, *R ] + [ *M ] ), my_writer.get_filename( tf ), test_file_name )
 
         return r
 

@@ -9,7 +9,6 @@ import os
 file: Coordinator program to do the pkt data pre-processing and ML training,
       including re-formatting, data sampling/balancing, sketching, and training.
 description:
-nots: Directly called from the working directory.
 language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com

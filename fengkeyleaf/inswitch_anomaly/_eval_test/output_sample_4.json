@@ -13250,5 +13250,7 @@
         "959179": "",
         "966347": "",
         "980633": ""
-    }
+    },
+    "result_info": "986787 out of total 1000000 pkts, accuracy = 98.68% | Correct gc = 67, bc = 986720 | Data set: 98 out of 1000000 are good pkts.",
+    "F1_info": "acc=0.9868, pre=0.0051, re=0.6837, f1=0.0100 | tp=67, fp=13182, tn=986720, fn=31"
 }

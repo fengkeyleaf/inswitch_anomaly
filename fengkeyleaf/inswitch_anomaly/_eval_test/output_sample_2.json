@@ -22405,5 +22405,7 @@
         "828657": "",
         "828658": "",
         "828659": ""
-    }
+    },
+    "result_info": "978991 out of total 999934 pkts, accuracy = 97.91% | Correct gc = 3168, bc = 975823 | Data set: 4875 out of 999934 are good pkts.",
+    "F1_info": "acc=0.9791, pre=0.1414, re=0.6498, f1=0.2323 | tp=3168, fp=19236, tn=975823, fn=1707"
 }

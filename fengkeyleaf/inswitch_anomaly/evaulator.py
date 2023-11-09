@@ -124,7 +124,7 @@ class Evaluator:
             self.R[ RESULT_INFO_STR ] += " | " + s
 
             self.f1.cal()
-            s = "acc=%.2f%%, pre=%.2f%%, re=%.2f%%, f1=%.2f%%" % ( self.f1.acc * 100, self.f1.pre * 100, self.f1.re * 100, self.f1.f1 * 100 )
+            s = "acc=%.4f, pre=%.4f, re=%.4f, f1=%.4f" % ( self.f1.acc, self.f1.pre, self.f1.re, self.f1.f1 )
             self.R[ F1_STR ] = s
             s = " | tp=%d, fp=%d, tn=%d, fn=%d" % ( self.f1.get_tp(), self.f1.get_fp(), self.f1.get_tn(), self.f1.get_fn() )
             self.R[ F1_STR ] += s

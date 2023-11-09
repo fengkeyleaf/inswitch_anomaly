@@ -3886,5 +3886,5 @@
         "962285": ""
     },
     "result_info": "996152 out of total 1000000 pkts, accuracy = 99.62% | Correct gc = 71, bc = 996081 | Data set: 107 out of 1000000 are good pkts.",
-    "F1_info": "acc=99.62%, pre=1.83%, re=66.36%, f1=3.56% | tp=71, fp=3812, tn=996081, fn=36"
+    "F1_info": "acc=0.9962, pre=0.0183, re=0.6636, f1=0.0356 | tp=71, fp=3812, tn=996081, fn=36"
 }
