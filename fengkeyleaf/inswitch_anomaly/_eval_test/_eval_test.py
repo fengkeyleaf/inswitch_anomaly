@@ -28,8 +28,8 @@ __version__ = "1.0"
 
 
 if __name__ == '__main__':
-    fp: str = "D:/networking/datasets/anomoaly_detection/New folder/re-formatted/UNSW_2018_IoT_Botnet_Dataset_3_reformatted.csv"
-    with open( "./output_sample_3.json", "r" ) as f_json:
+    fp: str = "D:/networking/datasets/anomoaly_detection/New folder/re-formatted/UNSW_2018_IoT_Botnet_Dataset_4_reformatted.csv"
+    with open( "./output_sample_4.json", "r" ) as f_json:
         D: Dict = json.load( f_json )
         evaulator.Evaluator().evaluate( fp, D )
         my_writer.write_to_file( evaulator.RESULT_FILE, json.dumps( D, indent = 4 ) )

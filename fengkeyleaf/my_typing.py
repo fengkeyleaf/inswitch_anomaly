@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from typing import Any, Dict
 
 """
 file:
@@ -29,3 +30,23 @@ def equals( e1, e2 ) -> bool:
         return False
 
     return e1 == e2
+
+
+def is_same_key( D: Dict[ Any, Any ], k: Any ) -> bool:
+    if not has_same_key( D ):
+        l.warning( "Key types in the dict are not all identical." )
+
+    return type( next( iter( D ) ) ) == type( k )
+
+
+def has_same_key( D: Dict[ Any, Any ] ) -> bool:
+    t: Any = None
+    for k in D:
+        if t is None:
+            t = k
+            continue
+
+        if type( k ) != type( t ):
+            return False
+
+    return True
