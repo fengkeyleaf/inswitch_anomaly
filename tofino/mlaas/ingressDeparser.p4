@@ -18,14 +18,14 @@ control IngressDeparser(
                 hdr.ipv4.version,
                 hdr.ipv4.ihl,
                 hdr.ipv4.diffserv,
-                hdr.ipv4.total_len,
+                hdr.ipv4.totalLen,
                 hdr.ipv4.identification,
                 hdr.ipv4.flags,
-                hdr.ipv4.frag_offset,
+                hdr.ipv4.fragOffset,
                 hdr.ipv4.ttl,
                 hdr.ipv4.protocol,
-                hdr.ipv4.src_addr,
-                hdr.ipv4.dst_addr
+                hdr.ipv4.srcAddr,
+                hdr.ipv4.dstAddr
             } );
         }
         
