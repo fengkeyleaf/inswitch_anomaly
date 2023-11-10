@@ -22406,6 +22406,7 @@
         "828658": "",
         "828659": ""
     },
-    "result_info": "978991 out of total 999934 pkts, accuracy = 97.91% | Correct gc = 3168, bc = 975823 | Data set: 4875 out of 999934 are good pkts.",
-    "F1_info": "acc=0.9791, pre=0.1414, re=0.6498, f1=0.2323 | tp=3168, fp=19236, tn=975823, fn=1707"
+    "result_info": "978991 out of total 999934 pkts, accuracy = 97.91% | Correct gc = 975823, bc = 3168 | Data set: 4875 out of 999934 are good pkts.",
+    "F1_info": "acc=0.9791, pre=0.9983, re=0.9807, f1=0.9894 | tp=975823, fp=1707, tn=3168, fn=19236",
+    "sklearn_f1_info": "[0.9790556176707663, 0.9982537620328787, 0.9806684829743764, 0.989382988549566, None, 3168, 1707, 19236, 975823]"
 }
