@@ -4,10 +4,10 @@
 #include <tna.p4>
 
 // . ~/tools/set_sde.bash
-// ~/tools/p4_build.sh ~/inswitch_anomaly/inswitch_anomaly/tofino/mlaas_preli.p4 -I/root/inswitch_anomaly/inswitch_anomaly/tofino/mlaas -DMY_VAR=1
+// ~/tools/p4_build.sh ~/inswitch_anomaly/inswitch_anomaly/tofino/mlaas_preli.p4
 // sudo $SDE_INSTALL/bin/veth_setup.sh
-//  . ./bf-sde-9.12.0/run_tofino_model.sh -p p4calc
-// . ./bf-sde-9.12.0/run_switchd.sh -p p4calc
+//  . ./bf-sde-9.12.0/run_tofino_model.sh -p mlaas_preli
+// . ./bf-sde-9.12.0/run_switchd.sh -p mlaas_preli
 //  . ./bf-sde-9.12.0/run_bfshell.sh
 
 // Other p4 files cannot be in the same folder where the entry file is located.

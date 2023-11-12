@@ -14,7 +14,7 @@ control IngressDeparser(
     // TODO: Missing options
     apply {
         if ( hdr.ipv4.isValid() ) {
-            hdr.ipv4.hdr_checksum = ipv4_checksum.update( {
+            hdr.ipv4.hdrChecksum = ipv4_checksum.update( {
                 hdr.ipv4.version,
                 hdr.ipv4.ihl,
                 hdr.ipv4.diffserv,
