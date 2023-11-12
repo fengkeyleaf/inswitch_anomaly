@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple
+from typing import List, Tuple
 
 """
 file:
@@ -28,6 +28,9 @@ class F1Score:
         self.pre: float = -1
         self.re: float = -1
         self.f1: float = -1
+
+        self._y_true: List[ int ] = []
+        self._y_pre: List[ int ] = []
 
     def add_tp( self ) -> None:
         self._tp += 1
@@ -68,3 +71,11 @@ class F1Score:
         self.pre = self._tp / ( self._tp + self._fp )
         self.re = self._tp / ( self._tp + self._fn )
         self.f1 = 2 * ( self.pre * self.re ) / ( self.pre + self.re )
+
+    def add_y( self, y_t: int, y_p: int ) -> None:
+        self._y_true.append( y_t )
+        self._y_pre.append( y_p )
+
+    def get_y( self ) -> Tuple[ List[ int ], List[ int ] ]:
+        assert len( self._y_true ) == len( self._y_pre )
+        return self._y_true, self._y_pre

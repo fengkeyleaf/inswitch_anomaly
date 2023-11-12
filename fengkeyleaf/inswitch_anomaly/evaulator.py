@@ -2,7 +2,9 @@
 
 import logging
 import re
-from typing import Dict
+from typing import Dict, Any, Tuple
+
+import sklearn
 
 """
 file:
@@ -16,12 +18,14 @@ import fengkeyleaf.inswitch_anomaly as fkl_inswitch
 from fengkeyleaf.ml.metrics import f1_score
 from fengkeyleaf.logging import my_logging
 from fengkeyleaf.inswitch_anomaly import topo, filter
+from fengkeyleaf import my_typing
 
 __version__ = "1.0"
 
 RESULT_STR: str = "result"
 RESULT_INFO_STR: str = "result_info"
 F1_STR: str = "F1_info"
+SKLEARN_F1_STR: str = "sklearn_f1_info"
 RESULT_FILE = "./output.json" # result file path
 
 
@@ -35,26 +39,26 @@ class Evaluator:
         self.l: logging.Logger = my_logging.get_logger( ll )
 
         self.P: Dict[ int, Dict[ str, str ] ] = None
-        self.R: Dict[ str, str ] = None
+        self.R: Dict[ str, Any ] = None
         self.is_forwarding: bool = is_forwarding
 
         self.f1: f1_score.F1Score = None
 
-    # True - good pkt, false - bad pkt.
+    # True - bad pkt, false - good pkt.
     # True positives
     def _count_tp( self, k: int ) -> None:
         """
         :param k: pkt ID number
         :return:
         """
-        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and
-                str( k ) in self.R[ RESULT_STR ] ):
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and
+                str( k ) not in self.R[ RESULT_STR ] ):
             self.f1.add_tp()
 
     # False positives
     def _count_fp( self, k: int ) -> None:
-        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and
-                str( k ) in self.R[ RESULT_STR ] ):
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and
+                str( k ) not in self.R[ RESULT_STR ] ):
             self.f1.add_fp()
 
     # Ture negatives
@@ -63,24 +67,24 @@ class Evaluator:
         :param k: pkt ID number
         :return:
         """
-        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and
-                not ( str( k ) in self.R[ RESULT_STR ] ) ):
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and
+                 ( str( k ) in self.R[ RESULT_STR ] ) ):
             self.f1.add_tn()
 
     # False negatives
     def _count_fn( self, k: int ) -> None:
-        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ) and
-                not ( str( k ) in self.R[ RESULT_STR ] ) ):
+        if ( self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.BAD_LABEL_STR ) and
+                ( str( k ) in self.R[ RESULT_STR ] ) ):
             self.f1.add_fn()
 
-    def __is_correct_forwarding( self, k: float ) -> bool:
+    def __is_correct_forwarding( self, k: int ) -> bool:
         """
         :param k: pkt ID number
         :return:
         """
         return self.is_forwarding and self.__is_valid_pkt( k )
 
-    def __is_valid_pkt( self, k: float ) -> bool:
+    def __is_valid_pkt( self, k: int ) -> bool:
         """
         :param k: pkt ID number
         :return:
@@ -94,14 +98,22 @@ class Evaluator:
         rc: int = 0 # received pkt count
         rtc: int = 0 # received pkt total count
         for k in self.P: # k: pkt ID number
-            if self.P[ k ][ fkl_inswitch.LABEL_STR ] == int( fkl_inswitch.GOOD_LABEL_STR ):
+            if int( self.P[ k ][ fkl_inswitch.LABEL_STR ] ) == int( fkl_inswitch.GOOD_LABEL_STR ):
                 gtc += 1
+
+            assert my_typing.is_same_key( self.R[ RESULT_STR ], str( k ) )
 
             # https://www.geeksforgeeks.org/python-check-whether-given-key-already-exists-in-a-dictionary/
             self._count_tp( k )
             self._count_tn( k )
             self._count_fp( k )
             self._count_fn( k )
+
+            self.f1.add_y(
+                int( self.P[ k ][ fkl_inswitch.LABEL_STR ] ),
+                1 if self.R[ RESULT_STR ].get( str( k ) ) is None else 0
+            )
+
             if self.__is_correct_forwarding( k ): rc += 1;
             if self.__is_valid_pkt( k ): rtc += 1;
 
@@ -129,7 +141,24 @@ class Evaluator:
             s = " | tp=%d, fp=%d, tn=%d, fn=%d" % ( self.f1.get_tp(), self.f1.get_fp(), self.f1.get_tn(), self.f1.get_fn() )
             self.R[ F1_STR ] += s
 
-    def evaluate( self, f: str, dic: Dict[ str, str ] ) -> None:
+            ( y_true, y_pre ) = self.f1.get_y()
+            # accuracy_score
+            r: float = sklearn.metrics.accuracy_score( y_true, y_pre )
+            # precision_recall_fscore
+            # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_recall_fscore_support.html#sklearn-metrics-precision-recall-fscore-support
+            R: Tuple[ float, float, float, None ] = sklearn.metrics.precision_recall_fscore_support(
+                y_true, y_pre,
+                average = "binary"
+            )
+            # confusion_matrix
+            # https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html#sklearn-metrics-confusion-matrix
+            # tn, fp, fn, tp
+            M: Tuple[ float, float, float, float ] = sklearn.metrics.confusion_matrix(
+                y_true, y_pre
+            ).ravel()
+            self.R[ SKLEARN_F1_STR ] = str( [ r, *R ] + [ *M ] )
+
+    def evaluate( self, f: str, dic: Dict[ str, Any ] ) -> None:
         """
         :param f: Output json file
         :return:

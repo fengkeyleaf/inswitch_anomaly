@@ -3885,6 +3885,7 @@
         "929301": "",
         "962285": ""
     },
-    "result_info": "996152 out of total 1000000 pkts, accuracy = 99.62% | Correct gc = 71, bc = 996081 | Data set: 107 out of 1000000 are good pkts.",
-    "F1_info": "acc=0.9962, pre=0.0183, re=0.6636, f1=0.0356 | tp=71, fp=3812, tn=996081, fn=36"
+    "result_info": "996152 out of total 1000000 pkts, accuracy = 99.62% | Correct gc = 996081, bc = 71 | Data set: 107 out of 1000000 are good pkts.",
+    "F1_info": "acc=0.9962, pre=1.0000, re=0.9962, f1=0.9981 | tp=996081, fp=36, tn=71, fn=3812",
+    "sklearn_f1_info": "[0.996152, 0.9999638596670873, 0.9961875920723517, 0.9980721539471246, None, 71, 36, 3812, 996081]"
 }
