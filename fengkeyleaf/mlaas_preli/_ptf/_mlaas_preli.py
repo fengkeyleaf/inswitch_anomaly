@@ -39,7 +39,7 @@ sys.path.append(
     )
 )
 # Import packages
-from fengkeyleaf.mlaas_preli import mlaas_pkt
+from fengkeyleaf import mlaas_pkt
 
 # PTF commands
 # Complie
@@ -212,7 +212,7 @@ class MlaasPreliTest1hostCase1( MlassPreliTest ):
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 10, 0, False, 2 );
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 10, 0, False, 2 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
@@ -224,7 +224,7 @@ class MlaasPreliTest1hostCase2( MlassPreliTest ):
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 100100, 0, False, 2 );
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 100100, 0, False, 2 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
@@ -236,7 +236,7 @@ class MlaasPreliTest1hostCase3( MlassPreliTest ):
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 0, 20, True, 2 );
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 0, 20, True, 2 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
@@ -248,7 +248,7 @@ class MlaasPreliTest1hostCase4( MlassPreliTest ):
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 0, 11000000, True, 2 );
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 0, 11000000, True, 2 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
@@ -260,7 +260,7 @@ class MlaasPreliTest1hostCase5( MlassPreliTest ):
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 10, 5, True, 2 );
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 10, 5, True, 2 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
@@ -272,7 +272,7 @@ class MlaasPreliTest1hostCase6( MlassPreliTest ):
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 50, 1000000, False, 2 );
+        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 50, 1000000, False, 2 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 
@@ -288,11 +288,11 @@ class MlaasPreliTest2hostCase1( MlassPreliTest ):
         pkt2: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip2, 64, 1, 0, 40, True, 0 )
 
         tu.send_packet( self, self.eg_port, pkt1 )
-        exp_pkt1: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip2, 63, 0, 30, 10, False, 2 );
+        exp_pkt1: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip2, 63, 0, 30, 10, False, 2 )
         tu.verify_packets( self, exp_pkt1, [ self.eg_port ] )
         
         tu.send_packet( self, self.eg_port, pkt2 )
-        exp_pkt2: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip2, 63, 1, 50, 40, True, 2 );
+        exp_pkt2: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip2, 63, 1, 50, 40, True, 2 )
         tu.verify_packets( self, exp_pkt2, [ self.eg_port ] )
 
 

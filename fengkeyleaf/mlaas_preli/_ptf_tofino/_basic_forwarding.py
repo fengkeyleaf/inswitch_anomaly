@@ -44,7 +44,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 # because it will add a py path to the system to import the package, fengkeyleaf
 import _mlaas_preli
 # fengkeyleaf imports
-from fengkeyleaf.logging import my_logging
+from fengkeyleaf import my_logging
 
 __version__ = "1.0"
 

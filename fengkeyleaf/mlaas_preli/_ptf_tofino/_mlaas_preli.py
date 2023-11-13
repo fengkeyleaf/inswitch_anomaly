@@ -75,6 +75,16 @@ class BasicForwardingBaseProgramTest( p4_program_test.P4ProgramTest ):
 
         self.tables = [ self.ipv4_lpm ]
 
+
+class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
+    def setUp( self, tableSetUp = None ) -> None:
+        p4_program_test.P4ProgramTest.setUp( self, self.tableSetUp )
+
+    def tableSetUp( self ):
+        # Since this class is not a test per se, we can use the setup method
+        # for common setup. For example, we can have our tables and annotations ready
+        pass
+
 #
 # Individual tests can now be subclassed from BaseProgramTest
 #
