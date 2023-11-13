@@ -10,6 +10,10 @@
 // . ./bf-sde-9.12.0/run_switchd.sh -p mlaas_preli
 //  . ./bf-sde-9.12.0/run_bfshell.sh
 
+// PTF commands
+// ~/tools/run_p4_tests.sh -p mlaas_preli -t ~/
+// ~/bf-sde-9.12.0/run_p4_tests.sh -p mlaas_preli -t ~/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/_ptf_tofino/ -- --list
+
 // Other p4 files cannot be in the same folder where the entry file is located.
 // Otheriwse, complier error.
 // Note that ERROR: All the attempts to run CPP on /root/inswitch_anomaly/inswitch_anomaly/tofino/mlaas_preli.p4 failed.

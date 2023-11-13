@@ -54,6 +54,8 @@ class TestGroup1( _mlaas_preli.BasicForwardingBaseProgramTest ):
     IP_2: str = "10.0.2.2"
 
     def __init__( self ):
+        super().__init__()
+
         self.l: logging = my_logging.get_logger( logging.INFO )
 
     def setUp( self, tableSetUp = None ):
@@ -122,4 +124,4 @@ class Test1_2( TestGroup1 ):
     """
 
     def runTest( self ):
-        self.test( Test1_1.IP_1, self.swports[ 2 ] )
+        self.test( Test1_1.IP_2, self.swports[ 2 ] )

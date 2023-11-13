@@ -29,6 +29,7 @@ import grpc
 import pdb
 import os
 import struct
+import sys
 
 ######### PTF modules for BFRuntime Client Library APIs #######
 import ptf
@@ -70,7 +71,7 @@ class BasicForwardingBaseProgramTest( p4_program_test.P4ProgramTest ):
         # for common setup. For example, we can have our tables and annotations
         # ready
         self.ipv4_lpm = self.bfrt_info.table_get( "Ingress.ipv4_lpm" )
-        self.ipv4_lpm.info.key_field_annotation_add( "hdr.ipv4.dst_addr", "ipv4" )
+        self.ipv4_lpm.info.key_field_annotation_add( "hdr.ipv4.dstAddr", "ipv4" )
 
         self.tables = [ self.ipv4_lpm ]
 
