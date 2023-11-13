@@ -34,7 +34,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 # Add path dependency, which is allowed to exclude this file from the working directory.
 sys.path.append(
     os.path.join(
-        os.path.dirname( os.path.abspath( __file__  ) ),
+        os.path.dirname( os.path.abspath( __file__ ) ),
         '../../../'
     )
 )
