@@ -25,7 +25,7 @@ header ipv4_h {
 
 // TODO: if a client doesn't the trainning data for a certain parameter,
 // do we count this client? i.e. # of grads plus one?
-header mlass_h {
+header mlaas_h {
     bit<32> idx; // Param index
     unsigned_int32 gradPos; // Positive Gradient for the param
     unsigned_int32 gradNeg; // Negative Gradient for the param

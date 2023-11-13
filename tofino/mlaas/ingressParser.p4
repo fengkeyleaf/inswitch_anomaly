@@ -7,7 +7,7 @@
 struct my_ingress_headers_t {
     ethernet_h   ethernet;
     ipv4_h       ipv4;
-    mlass_h      mlass;
+    mlaas_h      mlaas;
 }
 
 /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
@@ -45,11 +45,11 @@ parser IngressParser( packet_in pkt,
         pkt.extract( hdr.ipv4 );
         ipv4_checksum.add( hdr.ipv4 );
         //log_msg( "ipv4.dstAddr={}", { hdr.ipv4.dstAddr } );
-        transition parse_mlass;
+        transition parse_mlaas;
     }
 
-    state parse_mlass {
-        pkt.extract( hdr.mlass );
+    state parse_mlaas {
+        pkt.extract( hdr.mlaas );
         transition accept;
     }
 }
