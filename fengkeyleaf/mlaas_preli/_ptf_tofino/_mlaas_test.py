@@ -34,6 +34,9 @@ from scapy.packet import Packet
 # ptf imports
 import ptf.testutils as tu
 
+# bfrt imports
+import bfrt_grpc.client as gc
+
 # Called by a program from the working directory.
 """
 file:
@@ -65,6 +68,57 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
         self.in_dmac: str = '08:00:00:00:02:22'
         self.ip1: str = "10.0.1.1"
         self.ip2: str = "10.0.2.2"
+
+        self._multicast_group_setup()
+
+    def _multicast_group_setup( self ) -> None:
+        # Create the multicast nodes
+        # Corresponding bfrt code
+        # bfrt.pre.node.entry(
+        #     MULTICAST_NODE_ID = 105, MULTICAST_RID = 5,
+        #     MULTICAST_LAG_ID = [], DEV_PORT = [ 1, 2 ]
+        # ).push()
+
+        # Ptf code
+        no_mod_node_id = tu.test_param_get( "no_mod_node_id", 105 )
+        print( type( no_mod_node_id ) )
+        no_mod_rid = tu.test_param_get( "no_mod_rid", 5 )
+        print( type( no_mod_rid ) )
+        no_mod_ports = [ self.swports[ p ] for p in tu.test_param_get( "no_mod_ports", [ 1, 2 ] ) ]
+        print( type( no_mod_ports ) )
+        no_mod_key = self.pre_node.make_key( [ gc.KeyTuple( "$MULTICAST_NODE_ID", no_mod_node_id ) ] )
+        print( type( no_mod_key ) )
+
+        no_mod_data = self.pre_node.make_data( [
+            gc.DataTuple( '$MULTICAST_RID', no_mod_rid ),
+            gc.DataTuple( '$DEV_PORT', int_arr_val = no_mod_ports )
+        ] )
+
+        self.pre_node.entry_add( self.dev_tgt, [ no_mod_key ], [ no_mod_data ] )
+        self.l.info( "Added No Mods PRE Node ({}) --> ports {}".format( no_mod_node_id, no_mod_ports ) )
+
+        # Create the multicast group
+        # Corresponding bfrt code
+        # bfrt.pre.mgid.entry(
+        #     MGID = 1,
+        #     MULTICAST_NODE_ID = [ 3 ],
+        #     MULTICAST_NODE_L1_XID_VALID = [ False ],
+        #     MULTICAST_NODE_L1_XID = [ 0 ]
+        # ).push()
+
+        # pft code
+        mgrp_id = tu.test_param_get( "mgrp_id",  1 )
+        key = self.pre_mgid.make_key( [ gc.KeyTuple( '$MGID', mgrp_id ) ] )
+        data = self.pre_mgid.make_data(
+            [
+                gc.DataTuple( '$MULTICAST_NODE_ID', int_arr_val = [  no_mod_node_id ] ),
+                gc.DataTuple( '$MULTICAST_NODE_L1_XID_VALID', bool_arr_val = [ False ] ),
+                gc.DataTuple( '$MULTICAST_NODE_L1_XID', int_arr_val = [ 0 ] )
+            ]
+        )
+
+        self.pre_mgid.entry_add( self.dev_tgt, [ key ], [ data ] )
+        self.l.info( 'Added MGID {} with nodes {}'.format( mgrp_id, [ no_mod_node_id ] ) )
 
 
 def get_mlaas_pkt(

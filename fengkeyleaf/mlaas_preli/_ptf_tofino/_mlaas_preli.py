@@ -71,6 +71,7 @@ class BasicForwardingBaseProgramTest( p4_program_test.P4ProgramTest ):
         # for common setup. For example, we can have our tables and annotations
         # ready
         self.ipv4_lpm = self.bfrt_info.table_get( "Ingress.ipv4_lpm" )
+        print( type( self.ipv4_lpm ) )
         self.ipv4_lpm.info.key_field_annotation_add( "hdr.ipv4.dstAddr", "ipv4" )
 
         self.tables = [ self.ipv4_lpm ]
