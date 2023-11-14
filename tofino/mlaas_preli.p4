@@ -11,8 +11,10 @@
 //  . ./bf-sde-9.12.0/run_bfshell.sh
 
 // PTF commands
-// ~/tools/run_p4_tests.sh -p mlaas_preli -t ~/
+// List all available test cases
 // ~/bf-sde-9.12.0/run_p4_tests.sh -p mlaas_preli -t ~/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/_ptf_tofino/ -- --list
+// Run tests
+// ~/bf-sde-9.12.0/run_p4_tests.sh -p mlaas_preli -t ~/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/_ptf_tofino/
 
 // Other p4 files cannot be in the same folder where the entry file is located.
 // Otheriwse, complier error.

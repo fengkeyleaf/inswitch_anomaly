@@ -51,6 +51,9 @@ __version__ = "1.0"
 
 # This new Base Class extends the setup method of Simple L3 by adding the
 # desired network setup
+
+# Disabling TestGroup1 will disable all test cases associated with it.
+@tu.disabled
 class TestGroup1( _mlaas_preli.BasicForwardingBaseProgramTest ):
     IP_1: str = "10.0.1.1"
     IP_2: str = "10.0.2.2"

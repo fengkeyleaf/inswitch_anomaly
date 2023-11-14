@@ -49,7 +49,7 @@ control Ingress(
 
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
-    Register<bit<16>, _>( POOL_SIZE ) C; // Worker Count
+    Register<bit<16>, _>( POOL_SIZE, 0 ) C; // Worker Count
     RegisterAction<bit<16>, _, bit<16>>( reg = C ) increment_worker_r = {
         void apply( inout bit<16> v, out bit<16> rv ) {
             v = v + 1;
@@ -64,7 +64,7 @@ control Ingress(
     };
 
     // Note that register doesn't support signed integers.
-    Register<unsigned_int32, _>( POOL_SIZE ) P_pos; // Positive gradient pool
+    Register<unsigned_int32, _>( POOL_SIZE, 0 ) P_pos; // Positive gradient pool
     RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_pos ) add_pos_r = {
         void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
             v = v + hdr.mlaas.gradPos;
@@ -81,7 +81,7 @@ control Ingress(
         }
     };
 
-    Register<unsigned_int32, _>( POOL_SIZE ) P_neg; // Negative gradient pool
+    Register<unsigned_int32, _>( POOL_SIZE, 0 ) P_neg; // Negative gradient pool
     RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_neg ) add_neg_r = {
         void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
             v = v + hdr.mlaas.gradNeg;
@@ -95,11 +95,9 @@ control Ingress(
         }
     };
 
+    // A Field variable must be initialized when it's used in a table key match,
     // Pool index converted(bit<15>) by mlaas.idx(bit<32>) 
     pool_index_t idx = -1;
-    // A Field variable must be initialized when it's used in a table key match,
-    // Current count for the current param.
-    bit<16> c = 0;
 
     action send( PortId_t port ) {
         ig_tm_md.ucast_egress_port = port;
@@ -189,12 +187,13 @@ control Ingress(
             // Cannot put the following three lines into an action block b/c
             // error: gradient_addition_neg_t.apply: apply cannot be called from actions
             // gradient_addition_neg_t.apply(); // negative gradient
+
             // Gradient aggregation
             gradient_addition_pos_t.apply(); // positive gradient
             gradient_addition_neg_t.apply(); // negative gradient
-            increment_worker_r.execute( hdr.mlaas.idx ); // increment # of woker
+            bit<16> c = increment_worker_r.execute( hdr.mlaas.idx ); // increment # of woker
 
-            if ( C.read( hdr.mlaas.idx ) == NUMBER_OF_WORKER ) {
+            if ( c == NUMBER_OF_WORKER ) {
                 
                 hdr.mlaas.gradPos = reset_pos.execute( hdr.mlaas.idx );
                 hdr.mlaas.gradNeg = reset_neg.execute( hdr.mlaas.idx );
