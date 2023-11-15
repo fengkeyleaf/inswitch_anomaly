@@ -50,7 +50,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 # because it will add a py path to the system to import the package, fengkeyleaf
 import _mlaas_preli
 # fengkeyleaf imports
-from fengkeyleaf import my_logging, mlaas_pkt
+from fengkeyleaf import mlaas_pkt
 
 __version__ = "1.0"
 
@@ -60,16 +60,12 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
     def __init__( self ):
         super().__init__()
 
-        self.l: logging = my_logging.get_logger( logging.INFO )
-
-        self.ig_port: int = 1
-        self.eg_port: int = 2
+        self.ig_port: int =  1
+        self.eg_port: int =  2
         self.in_smac: str = '08:00:00:00:01:11'
         self.in_dmac: str = '08:00:00:00:02:22'
         self.ip1: str = "10.0.1.1"
         self.ip2: str = "10.0.2.2"
-
-        self._multicast_group_setup()
 
     def _multicast_group_setup( self ) -> None:
         # Create the multicast nodes
@@ -80,11 +76,9 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
         # ).push()
 
         # Ptf code
-        no_mod_node_id = tu.test_param_get( "no_mod_node_id", 105 )
-        print( type( no_mod_node_id ) )
-        no_mod_rid = tu.test_param_get( "no_mod_rid", 5 )
-        print( type( no_mod_rid ) )
-        no_mod_ports = [ self.swports[ p ] for p in tu.test_param_get( "no_mod_ports", [ 1, 2 ] ) ]
+        no_mod_node_id: int = tu.test_param_get( "no_mod_node_id", 105 )
+        no_mod_rid: int = tu.test_param_get( "no_mod_rid", 5 )
+        no_mod_ports: List[ int ] = [ self.swports[ p ] for p in tu.test_param_get( "no_mod_ports", [ 1, 2 ] ) ]
         print( type( no_mod_ports ) )
         no_mod_key = self.pre_node.make_key( [ gc.KeyTuple( "$MULTICAST_NODE_ID", no_mod_node_id ) ] )
         print( type( no_mod_key ) )
@@ -135,14 +129,36 @@ def get_mlaas_pkt(
 
 
 # @tu.disabled
-class MlaasPreliTest1hostCase1( TestGroup1 ):
+class MlaasPreliTest1host1PktCase1( TestGroup1 ):
     def runTest( self ):
+        pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 0 )
+        tu.send_packet( self, self.ig_port, pkt1 )
+
+        exp_pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 1 )
+        tu.verify_packets( self, exp_pkt, [ self.eg_port ] )
+        
+
+@tu.disabled
+class MlaasPreliTest1host1PktCase2( TestGroup1 ):
+    def runTest( self ):
+        pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 5, True, 0 )
+        tu.send_packet( self, self.ig_port, pkt1 )
+
+        exp_pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 0, 5, True, 1 )
+        tu.verify_packets( self, exp_pkt, [ self.eg_port ] )
+
+
+@tu.disabled
+class MlaasPreliTest1hostCase1( TestGroup1 ):
+    def runTest( self ):        
+        self._multicast_group_setup()
+
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 0 )
         pkt2: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 10, 0, False, 2 )
+        exp_pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 10, 0, False, 0 )
         tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
 
 

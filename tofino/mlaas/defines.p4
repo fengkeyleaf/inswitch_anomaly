@@ -18,4 +18,4 @@ typedef bit<32> unsigned_int32;
 typedef bit<15> pool_index_t;
 
 const bit<32> POOL_SIZE = 256;
-const bit<16> NUMBER_OF_WORKER = 2;
+const bit<16> NUMBER_OF_WORKER = 1;

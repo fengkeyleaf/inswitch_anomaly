@@ -69,11 +69,19 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+# fengkeyleaf imports
+from fengkeyleaf import my_logging, mlaas_pkt
+
 __version__ = "1.0"
 
 
 ########## Basic Initialization ############
 class P4ProgramTest( BfRuntimeTest ):
+    def __init__( self ) -> None:
+        super().__init__()
+
+        self.l: logging = my_logging.get_logger( logging.INFO )
+
     # The setUp() method is used to prepare the test fixture. Typically
     # you would use it to establich connection to the gRPC Server
     #

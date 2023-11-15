@@ -22,6 +22,11 @@ control Ingress(
     // }
     // Register<int32, _>( 5, 0 ) calcultor;
 
+    // Registers are accessed via RegisterAction externs, which contain a function named
+    // apply that can read and update the value of one entry of a Register. Up to four
+    // separate RegisterActions may be defined for a single Register extern, but only one
+    // RegisterAction may be executed per packet for a given Register.
+
     // The apply method in a RegisterAction may be declared with either one or two arguments;
     // the first inout argument is the value of the Register entry being read and
     // updated, while the second optional out argument is the value 
@@ -50,16 +55,16 @@ control Ingress(
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
     Register<bit<16>, _>( POOL_SIZE, 0 ) C; // Worker Count
-    RegisterAction<bit<16>, _, bit<16>>( reg = C ) increment_worker_r = {
+    RegisterAction<bit<16>, _, bit<16>>( C ) increment_worker_r = {
         void apply( inout bit<16> v, out bit<16> rv ) {
             v = v + 1;
             rv = v;
         }
     };
-    RegisterAction<bit<16>, _, bit<16>>( reg = C ) reset_worker_r = {
+    RegisterAction<bit<16>, _, bit<16>>( C ) reset_worker_r = {
         void apply( inout bit<16> v, out bit<16> rv ) {
-            v = 0;
             rv = v;
+            v = 0;
         }
     };
 
@@ -114,7 +119,7 @@ control Ingress(
     // The Tofino architecture requires all indirect externs to be addressed with the same expression across all actions they are used in. 
 
     action grad_add_pos_a() {
-        add_pos_r.execute( hdr.mlaas.idx );
+        hdr.mlaas.gradPos = add_pos_r.execute( hdr.mlaas.idx );
     }
 
     // TODO: How to ideal with a normal pkt?
@@ -134,7 +139,7 @@ control Ingress(
     }
 
     action grad_add_neg_a() {
-        add_neg_r.execute( hdr.mlaas.idx );
+        hdr.mlaas.gradNeg = add_neg_r.execute( hdr.mlaas.idx );
     }
 
     table gradient_addition_neg_t {
@@ -193,17 +198,23 @@ control Ingress(
             gradient_addition_neg_t.apply(); // negative gradient
             bit<16> c = increment_worker_r.execute( hdr.mlaas.idx ); // increment # of woker
 
-            if ( c == NUMBER_OF_WORKER ) {
+            hdr.mlaas.numberOfWorker = c;
+
+            reset_worker_r.execute( hdr.mlaas.idx );
+
+            send( 2 );
+
+            // if ( c == NUMBER_OF_WORKER ) {
                 
-                hdr.mlaas.gradPos = reset_pos.execute( hdr.mlaas.idx );
-                hdr.mlaas.gradNeg = reset_neg.execute( hdr.mlaas.idx );
-                reset_worker_r.execute( hdr.mlaas.idx );
+            //     hdr.mlaas.gradPos = reset_pos.execute( hdr.mlaas.idx );
+            //     hdr.mlaas.gradNeg = reset_neg.execute( hdr.mlaas.idx );
+            //     reset_worker_r.execute( hdr.mlaas.idx );
                 
-                // Update pkt's sign is alwasy False, which is easy to verify.
-                hdr.mlaas.sign = 0;
+            //     // Update pkt's sign is alwasy False, which is easy to verify.
+            //     hdr.mlaas.sign = 0;
                 
-                multicast();
-            }
+            //     multicast();
+            // }
         }
     }
 }

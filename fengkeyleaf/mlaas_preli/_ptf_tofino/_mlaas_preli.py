@@ -66,7 +66,7 @@ class BasicForwardingBaseProgramTest( p4_program_test.P4ProgramTest ):
     def setUp( self, tableSetUp = None ) -> None:
         p4_program_test.P4ProgramTest.setUp( self, self.tableSetUp )
 
-    def tableSetUp( self ):
+    def tableSetUp( self ) -> None:
         # Since this class is not a test per se, we can use the setup method
         # for common setup. For example, we can have our tables and annotations
         # ready
@@ -81,7 +81,10 @@ class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
     def setUp( self, tableSetUp = None ) -> None:
         p4_program_test.P4ProgramTest.setUp( self, self.tableSetUp )
 
-    def tableSetUp( self ):
+        self.pre_node = self.bfrt_info.table_get( '$pre.node' )
+        self.pre_mgid = self.bfrt_info.table_get( '$pre.mgid' )
+
+    def tableSetUp( self ) -> None:
         # Since this class is not a test per se, we can use the setup method
         # for common setup. For example, we can have our tables and annotations ready
         pass
