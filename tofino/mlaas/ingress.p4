@@ -1,3 +1,6 @@
+#include "gradient_addition.p4"
+#include "gradient_send.p4"
+
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
 *************************************************************************/
@@ -102,6 +105,9 @@ control Ingress(
     //     }
     // };
 
+    GradientAddition() grad_add_c;
+    GradientSend() grad_send_c;
+
     // A Field variable must be initialized when it's used in a table key match,
     // Pool index converted(bit<15>) by mlaas.idx(bit<32>) 
     pool_index_t idx = -1;
@@ -112,131 +118,6 @@ control Ingress(
 
     action drop() {
         ig_dprsr_md.drop_ctl = 1;
-    }
-
-    action increment_worker() {
-        hdr.mlaas.numberOfWorker = C.read( idx );
-        hdr.mlaas.numberOfWorker = hdr.mlaas.numberOfWorker + 1;
-        // hdr.mlaas.numberOfWorker == the one assigned by C.read( idx ),
-        // not hdr.mlaas.numberOfWorker + 1
-        C.write( idx, hdr.mlaas.numberOfWorker + 1 );
-
-        // Equivalent:
-        // hdr.mlaas.numberOfWorker = C.read( idx );
-        // C.write( idx, hdr.mlaas.numberOfWorker + 1 );
-        // hdr.mlaas.numberOfWorker = hdr.mlaas.numberOfWorker + 1;
-    }
-
-    // Cannot combine gradient_addition_pos_t and gradient_addition_neg_t into one table, gradient_addition_t, b/c
-    // error: table Ingress.gradient_addition_t: There are issues with the following indirect externs:
-    // The action grad_add_pos_a uses Register Ingress.P_pos but does not use Register Ingress.P_neg.
-    // The action grad_add_neg_a uses Register Ingress.P_neg but does not use Register Ingress.P_pos.
-    // The Tofino architecture requires all indirect externs to be addressed with the same expression across all actions they are used in. 
-
-    // Also, error: At most one stateful ALU operation with a given address is allowed per action. Writing to ingress::hdr.mlaas.gradNeg is not allowed here.
-    // i.e. following code is not allowed.
-    // hdr.mlaas.gradPos = P_pos.read( hdr.mlaas.idx );
-    // P_pos.write( hdr.mlaas.idx, 0 );
-    // hdr.mlaas.gradNeg = P_neg.read( hdr.mlaas.idx );
-    // P_neg.write( hdr.mlaas.idx, 0 );
-
-    action grad_add_pos_a() {
-        // It seems that Register.read() and Reister.write() will be executed as a whole,
-        // even if how many lines of code between them,
-        // they're independent.
-        unsigned_int32 r = P_pos.read( idx );
-        P_pos.write( idx, r + hdr.mlaas.gradPos );
-        hdr.mlaas.gradPos = r + hdr.mlaas.gradPos;
-
-        // Incorrect:
-        // We will not get cumlmative positive values.
-        // Only the current hdr.mlaas.gradPos + previous hdr.mlaas.gradPos.
-        // unsigned_int32 r = P_pos.read( idx );
-        // hdr.mlaas.gradPos = r + hdr.mlaas.gradPos;
-        // P_pos.write( idx, hdr.mlaas.gradPos );
-    }
-
-    // TODO: How to ideal with a normal pkt?
-    table gradient_addition_pos_t {
-        key = {
-            idx: range;
-            hdr.mlaas.sign: exact;
-        }
-        actions = {
-            grad_add_pos_a;
-            NoAction;
-        }
-        default_action = NoAction;
-        const entries = {
-            ( 0 .. ( pool_index_t ) POOL_SIZE - 1, 0 ) : grad_add_pos_a;
-        }
-        size = 1;
-    }
-
-    action grad_add_neg_a() {
-        unsigned_int32 r = P_neg.read( idx );
-        P_neg.write( idx, r + hdr.mlaas.gradNeg );
-        hdr.mlaas.gradNeg = r + hdr.mlaas.gradNeg;
-    }
-
-    table gradient_addition_neg_t {
-        key = {
-            idx: range;
-            hdr.mlaas.sign: exact;
-        }
-        actions = {
-            grad_add_neg_a;
-            NoAction;
-        }
-        default_action = NoAction;
-        const entries = {
-            ( 0 .. ( pool_index_t ) POOL_SIZE - 1, 1 ) : grad_add_neg_a;
-        }
-        size = 1;
-    }
-
-    // TODO: define `multicast` action to multicast packets to group 1
-    // Hint: Check v1model for multicast group
-    // TODO: Asynchronous condition, pool idx may be incorrect.
-    action multicast() {
-        ig_tm_md.mcast_grp_a = 1;
-    }
-
-    // error: overlap. Both Register Ingress.P_pos and Ingress.C require the meter address hardware, and cannot be on the same table tbl_grad_send.
-    action grad_send_pos_a() {
-        P_pos.write( idx, 0 );
-    }
-    
-    action grad_send_neg_a() {
-        P_neg.write( idx, 0 );
-    }
-
-    action grad_send_post_a() {
-        P_pos.write( idx, 0 );
-        P_neg.write( idx, 0 );
-
-        // C.write( idx, 0 );
-
-        // Update pkt's sign is alwasy False, which is easy to verify.
-        hdr.mlaas.sign = 0;
-
-        // Send back updates to multicast group 1
-        multicast();
-    }
-
-    table grad_send_t {
-        key = {
-            hdr.mlaas.numberOfWorker: exact;
-        }
-        actions = {
-            grad_send_post_a;
-            NoAction;
-        }
-        default_action = NoAction;
-        const entries = {
-            NUMBER_OF_WORKER : grad_send_post_a;
-        }
-        size = 1;
     }
 
     // bfrt_python
@@ -269,13 +150,13 @@ control Ingress(
             // gradient_addition_neg_t.apply(); // negative gradient
 
             // Gradient aggregation
-            gradient_addition_pos_t.apply(); // positive gradient
-            gradient_addition_neg_t.apply(); // negative gr/adient
-            increment_worker();
+            // gradient_addition_pos_t.apply(); // positive gradient
+            // gradient_addition_neg_t.apply(); // negative gr/adient
+            // increment_worker();
+            grad_add_c.apply( hdr, C, P_pos, P_neg, idx );
             
             // send( 2 );
-
-            grad_send_t.apply();
+            grad_send_c.apply( hdr, ig_tm_md, C, P_pos, P_neg, idx );
         }
     }
 }
