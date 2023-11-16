@@ -43,62 +43,64 @@ control Ingress(
     //     }
     // };
 
-    // Uses of all registers within a single action have to use the same addressing.
-    // i.e. both indices must be the same one.
-    // T read( in I index ); - verified.
-    // TODO: verify => void write( in I index, in T value );
-
     // Each indirect extern has at least one method that can update one of its entries, 
     // e.g. execute(index) for a DirectMeter.
-    // TODO: What is it for Register?
+
+    // Uses of all registers within a single action have to use the same addressing.
+    // i.e. both indices must be the same one.
+    /// Return the value of register at specified index.
+    // T read(in I index);
+
+    /// Write value to register at specified index.
+    // void write(in I index, in T value);
 
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
-    Register<bit<16>, _>( POOL_SIZE, 0 ) C; // Worker Count
-    RegisterAction<bit<16>, _, bit<16>>( C ) increment_worker_r = {
-        void apply( inout bit<16> v, out bit<16> rv ) {
-            v = v + 1;
-            rv = v;
-        }
-    };
-    RegisterAction<bit<16>, _, bit<16>>( C ) reset_worker_r = {
-        void apply( inout bit<16> v, out bit<16> rv ) {
-            rv = v;
-            v = 0;
-        }
-    };
+    Register<bit<16>, pool_index_t>( POOL_SIZE, 0 ) C; // Worker Count
+    // RegisterAction<bit<16>, _, bit<16>>( C ) increment_worker_r = {
+    //     void apply( inout bit<16> v, out bit<16> rv ) {
+    //         v = v + 1;
+    //         rv = v;
+    //     }
+    // };
+    // RegisterAction<bit<16>, _, bit<16>>( C ) reset_worker_r = {
+    //     void apply( inout bit<16> v, out bit<16> rv ) {
+    //         rv = v;
+    //         v = 0;
+    //     }
+    // };
 
     // Note that register doesn't support signed integers.
-    Register<unsigned_int32, _>( POOL_SIZE, 0 ) P_pos; // Positive gradient pool
-    RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_pos ) add_pos_r = {
-        void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
-            v = v + hdr.mlaas.gradPos;
-            rv = v;
-        }
-    };
-    RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_pos ) reset_pos = {
-        void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
-            // Cannot assign pkt field here b/c
-            // error: Can't assign to hdr.mlaas.gradPos in RegisterAction
-            // hdr.mlaas.gradPos = v;
-            rv = v;
-            v = 0;
-        }
-    };
+    Register<unsigned_int32, pool_index_t>( POOL_SIZE, 0 ) P_pos; // Positive gradient pool
+    // RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_pos ) add_pos_r = {
+    //     void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
+    //         v = v + hdr.mlaas.gradPos;
+    //         rv = v;
+    //     }
+    // };
+    // RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_pos ) reset_pos = {
+    //     void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
+    //         // Cannot assign pkt field here b/c
+    //         // error: Can't assign to hdr.mlaas.gradPos in RegisterAction
+    //         // hdr.mlaas.gradPos = v;
+    //         rv = v;
+    //         v = 0;
+    //     }
+    // };
 
-    Register<unsigned_int32, _>( POOL_SIZE, 0 ) P_neg; // Negative gradient pool
-    RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_neg ) add_neg_r = {
-        void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
-            v = v + hdr.mlaas.gradNeg;
-            rv = v;
-        }
-    };
-    RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_neg ) reset_neg = {
-        void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
-            rv = v;
-            v = 0;
-        }
-    };
+    Register<unsigned_int32, pool_index_t>( POOL_SIZE, 0 ) P_neg; // Negative gradient pool
+    // RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_neg ) add_neg_r = {
+    //     void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
+    //         v = v + hdr.mlaas.gradNeg;
+    //         rv = v;
+    //     }
+    // };
+    // RegisterAction<unsigned_int32, _, unsigned_int32>( reg = P_neg ) reset_neg = {
+    //     void apply( inout unsigned_int32 v, out unsigned_int32 rv ) {
+    //         rv = v;
+    //         v = 0;
+    //     }
+    // };
 
     // A Field variable must be initialized when it's used in a table key match,
     // Pool index converted(bit<15>) by mlaas.idx(bit<32>) 
@@ -112,14 +114,46 @@ control Ingress(
         ig_dprsr_md.drop_ctl = 1;
     }
 
+    action increment_worker() {
+        hdr.mlaas.numberOfWorker = C.read( idx );
+        hdr.mlaas.numberOfWorker = hdr.mlaas.numberOfWorker + 1;
+        // hdr.mlaas.numberOfWorker == the one assigned by C.read( idx ),
+        // not hdr.mlaas.numberOfWorker + 1
+        C.write( idx, hdr.mlaas.numberOfWorker + 1 );
+
+        // Equivalent:
+        // hdr.mlaas.numberOfWorker = C.read( idx );
+        // C.write( idx, hdr.mlaas.numberOfWorker + 1 );
+        // hdr.mlaas.numberOfWorker = hdr.mlaas.numberOfWorker + 1;
+    }
+
     // Cannot combine gradient_addition_pos_t and gradient_addition_neg_t into one table, gradient_addition_t, b/c
     // error: table Ingress.gradient_addition_t: There are issues with the following indirect externs:
     // The action grad_add_pos_a uses Register Ingress.P_pos but does not use Register Ingress.P_neg.
     // The action grad_add_neg_a uses Register Ingress.P_neg but does not use Register Ingress.P_pos.
     // The Tofino architecture requires all indirect externs to be addressed with the same expression across all actions they are used in. 
 
+    // Also, error: At most one stateful ALU operation with a given address is allowed per action. Writing to ingress::hdr.mlaas.gradNeg is not allowed here.
+    // i.e. following code is not allowed.
+    // hdr.mlaas.gradPos = P_pos.read( hdr.mlaas.idx );
+    // P_pos.write( hdr.mlaas.idx, 0 );
+    // hdr.mlaas.gradNeg = P_neg.read( hdr.mlaas.idx );
+    // P_neg.write( hdr.mlaas.idx, 0 );
+
     action grad_add_pos_a() {
-        hdr.mlaas.gradPos = add_pos_r.execute( hdr.mlaas.idx );
+        // It seems that Register.read() and Reister.write() will be executed as a whole,
+        // even if how many lines of code between them,
+        // they're independent.
+        unsigned_int32 r = P_pos.read( idx );
+        P_pos.write( idx, r + hdr.mlaas.gradPos );
+        hdr.mlaas.gradPos = r + hdr.mlaas.gradPos;
+
+        // Incorrect:
+        // We will not get cumlmative positive values.
+        // Only the current hdr.mlaas.gradPos + previous hdr.mlaas.gradPos.
+        // unsigned_int32 r = P_pos.read( idx );
+        // hdr.mlaas.gradPos = r + hdr.mlaas.gradPos;
+        // P_pos.write( idx, hdr.mlaas.gradPos );
     }
 
     // TODO: How to ideal with a normal pkt?
@@ -136,10 +170,13 @@ control Ingress(
         const entries = {
             ( 0 .. ( pool_index_t ) POOL_SIZE - 1, 0 ) : grad_add_pos_a;
         }
+        size = 1;
     }
 
     action grad_add_neg_a() {
-        hdr.mlaas.gradNeg = add_neg_r.execute( hdr.mlaas.idx );
+        unsigned_int32 r = P_neg.read( idx );
+        P_neg.write( idx, r + hdr.mlaas.gradNeg );
+        hdr.mlaas.gradNeg = r + hdr.mlaas.gradNeg;
     }
 
     table gradient_addition_neg_t {
@@ -155,6 +192,7 @@ control Ingress(
         const entries = {
             ( 0 .. ( pool_index_t ) POOL_SIZE - 1, 1 ) : grad_add_neg_a;
         }
+        size = 1;
     }
 
     // TODO: define `multicast` action to multicast packets to group 1
@@ -162,6 +200,43 @@ control Ingress(
     // TODO: Asynchronous condition, pool idx may be incorrect.
     action multicast() {
         ig_tm_md.mcast_grp_a = 1;
+    }
+
+    // error: overlap. Both Register Ingress.P_pos and Ingress.C require the meter address hardware, and cannot be on the same table tbl_grad_send.
+    action grad_send_pos_a() {
+        P_pos.write( idx, 0 );
+    }
+    
+    action grad_send_neg_a() {
+        P_neg.write( idx, 0 );
+    }
+
+    action grad_send_post_a() {
+        P_pos.write( idx, 0 );
+        P_neg.write( idx, 0 );
+
+        // C.write( idx, 0 );
+
+        // Update pkt's sign is alwasy False, which is easy to verify.
+        hdr.mlaas.sign = 0;
+
+        // Send back updates to multicast group 1
+        multicast();
+    }
+
+    table grad_send_t {
+        key = {
+            hdr.mlaas.numberOfWorker: exact;
+        }
+        actions = {
+            grad_send_post_a;
+            NoAction;
+        }
+        default_action = NoAction;
+        const entries = {
+            NUMBER_OF_WORKER : grad_send_post_a;
+        }
+        size = 1;
     }
 
     // bfrt_python
@@ -195,26 +270,12 @@ control Ingress(
 
             // Gradient aggregation
             gradient_addition_pos_t.apply(); // positive gradient
-            gradient_addition_neg_t.apply(); // negative gradient
-            bit<16> c = increment_worker_r.execute( hdr.mlaas.idx ); // increment # of woker
+            gradient_addition_neg_t.apply(); // negative gr/adient
+            increment_worker();
+            
+            // send( 2 );
 
-            hdr.mlaas.numberOfWorker = c;
-
-            reset_worker_r.execute( hdr.mlaas.idx );
-
-            send( 2 );
-
-            // if ( c == NUMBER_OF_WORKER ) {
-                
-            //     hdr.mlaas.gradPos = reset_pos.execute( hdr.mlaas.idx );
-            //     hdr.mlaas.gradNeg = reset_neg.execute( hdr.mlaas.idx );
-            //     reset_worker_r.execute( hdr.mlaas.idx );
-                
-            //     // Update pkt's sign is alwasy False, which is easy to verify.
-            //     hdr.mlaas.sign = 0;
-                
-            //     multicast();
-            // }
+            grad_send_t.apply();
         }
     }
 }
