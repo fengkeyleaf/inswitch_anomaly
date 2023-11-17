@@ -1,5 +1,6 @@
 // #include "gradient_addition.p4"
 // #include "gradient_send.p4"
+#include "workerCount.p4"
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
@@ -18,6 +19,7 @@ control Ingress(
     // A Field variable must be initialized when it's used in a table key match,
     // Pool index converted(bit<15>) by mlaas.idx(bit<32>) 
     pool_index_t idx = 0;
+    WorkerCount() worker_counter;
 
     // The type argument I specifies the type of the index of an indirect register extern. 
     // This type can typically be inferred by the compiler.
@@ -70,8 +72,18 @@ control Ingress(
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
     Register<int<32>, pool_index_t>( POOL_SIZE, 0 ) G; // gradients
-    Register<bit<16>, pool_index_t>( POOL_SIZE, 0 ) C; // Worker count
+    RegisterAction<int<32>, pool_index_t, int<32>>( reg = G ) update_grad = {
+        void apply( inout int<32> v, out int<32> rv ) {
+            if ( meta.is_reset ) {
+                v = hdr.mlaas.v;
+            }
+            else {
+                v = v + hdr.mlaas.v;
+            }
 
+            rv = v;
+        }
+    };
 
     action send( PortId_t port ) {
         ig_tm_md.ucast_egress_port = port;
@@ -92,29 +104,6 @@ control Ingress(
         default_action = drop;
     }
 
-    action multicast_a() {
-        ig_tm_md.mcast_grp_a = 1;
-    }
-
-    action grad_add_a() {
-        int<32> r = G.read( idx );
-        G.write( idx, r + hdr.mlaas.v );
-        hdr.mlaas.v = r + hdr.mlaas.v;
-    }
-
-    action increment_worker_a() {
-        hdr.mlaas.numberOfWorker = C.read( idx );
-        hdr.mlaas.numberOfWorker = hdr.mlaas.numberOfWorker + 1;
-        // hdr.mlaas.numberOfWorker == the one assigned by C.read( idx ),
-        // not hdr.mlaas.numberOfWorker + 1
-        C.write( idx, hdr.mlaas.numberOfWorker + 1 );
-
-        // Equivalent:
-        // hdr.mlaas.numberOfWorker = C.read( idx );
-        // C.write( idx, hdr.mlaas.numberOfWorker + 1 );
-        // hdr.mlaas.numberOfWorker = hdr.mlaas.numberOfWorker + 1;
-    }
-
     apply {
         // Basic forwarding/routing.
         // With commenting out this block, 
@@ -127,20 +116,11 @@ control Ingress(
             // idx used to perform a range match cannot be bit<32> b/c
             // error: : Currently in p4c, the table gradient_addition_pos_t_0 cannot perform a range match on key 
             // ingress::hdr.mlaas.idx as the key does not fit in under 5 PHV nibbles
-            idx = ( pool_index_t ) hdr.mlaas.idx;
+            idx = ( bit<15> ) hdr.mlaas.idx;
 
-            grad_add_a();
-            increment_worker_a();
-
-            if ( hdr.mlaas.numberOfWorker == NUMBER_OF_WORKER ) {
-                G.write( idx, 0 );
-                C.write( idx, 0 );
-
-                // Update pkt's sign is alwasy False, which is easy to verify.
-                hdr.mlaas.sign = 0;
-
-                multicast_a();
-            }
+            meta.is_reset = false;
+            hdr.mlaas.v = update_grad.execute( idx );
+            worker_counter.apply( hdr, meta, ig_tm_md );
         }
     }
 }

@@ -13,7 +13,7 @@ struct my_ingress_headers_t {
 /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
 
 struct my_ingress_metadata_t {
-    // int32 res;
+    bool is_reset;
 }
 
 parser IngressParser( packet_in pkt,
