@@ -11,7 +11,6 @@ typedef bit<32> ip4Addr_t;
 
 // Numbers
 const bit<32> MAX_UNSIGNED_INT = ( bit<32> ) -1;
-typedef bit<32> unsigned_int32;
 
 // switchML
 // https://github.com/p4lang/p4app-switchML/blob/main/dev_root/p4/types.p4#L109

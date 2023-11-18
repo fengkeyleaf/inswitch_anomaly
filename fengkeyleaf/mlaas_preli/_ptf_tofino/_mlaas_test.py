@@ -131,10 +131,12 @@ def get_mlaas_pkt(
 # @tu.disabled
 class MlaasPreliTest1host1PktCase1( TestGroup1 ):
     def runTest( self ):
+        self._multicast_group_setup()
+
         pkt1: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
 
-        exp_pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 2 )
+        exp_pkt: Packet = get_mlaas_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5, 0, False, 1 )
         tu.verify_packets( self, exp_pkt, [ self.eg_port ] )
         
 

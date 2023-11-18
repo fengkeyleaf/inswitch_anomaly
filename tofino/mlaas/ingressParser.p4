@@ -14,6 +14,7 @@ struct my_ingress_headers_t {
 
 struct my_ingress_metadata_t {
     bool is_reset;
+    pool_index_t idx;
 }
 
 parser IngressParser( packet_in pkt,
@@ -34,7 +35,6 @@ parser IngressParser( packet_in pkt,
 
     state parse_ethernet {
         pkt.extract( hdr.ethernet );
-        //log_msg( "etherType={}", { hdr.ethernet.etherType } );
         transition select( hdr.ethernet.etherType ) {
             TYPE_IPV4: parse_ipv4;
             default: accept;
@@ -44,12 +44,15 @@ parser IngressParser( packet_in pkt,
     state parse_ipv4 {
         pkt.extract( hdr.ipv4 );
         ipv4_checksum.add( hdr.ipv4 );
-        //log_msg( "ipv4.dstAddr={}", { hdr.ipv4.dstAddr } );
         transition parse_mlaas;
     }
 
     state parse_mlaas {
         pkt.extract( hdr.mlaas );
+        // idx used to perform a range match cannot be bit<32> b/c
+        // error: : Currently in p4c, the table gradient_addition_pos_t_0 cannot perform a range match on key 
+        // ingress::hdr.mlaas.idx as the key does not fit in under 5 PHV nibbles
+        meta.idx = ( pool_index_t ) hdr.mlaas.idx;
         transition accept;
     }
 }
