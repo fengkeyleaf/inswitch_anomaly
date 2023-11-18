@@ -39,6 +39,7 @@ from fengkeyleaf.ml.api import (
 
 from fengkeyleaf.mlaas_preli import (
     mlaas_pkt,
+    mlaas_pkt_tofino,
     worker
 )
 

@@ -12,5 +12,6 @@ __version__ = "1.0"
 
 from fengkeyleaf.mlaas_preli import (
     mlaas_pkt,
+    mlaas_pkt_tofino,
     worker
 )
