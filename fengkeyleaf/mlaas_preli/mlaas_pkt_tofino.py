@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from scapy.all import IntField, ShortField, BitField, Packet, bind_layers
+from scapy.all import IntField, ShortField, SignedIntField, BitField, Packet, bind_layers
 from scapy.layers.inet import IP, Ether
 
 """
@@ -17,12 +17,14 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 class MlaasTofinoPacket( Packet ):
     name = "Mlaas tofino packet"
     fields_desc = [
-        IntField( "idx", 0 ),
+        IntField( "idx", 0 ), # Pool index field, 32 bits
         # Be careful: SignedIntField and intField.
-        IntField( "v", 0 ),
-        BitField( "sign", 0, 1 ),
-        BitField( "reserves", 0, 7 ),
-        ShortField( "numberOfWorker", 0 )
+        # https://scapy.readthedocs.io/en/latest/api/scapy.fields.html#scapy.fields.IntField
+        # https://scapy.readthedocs.io/en/latest/api/scapy.fields.html#scapy.fields.SignedIntField
+        SignedIntField( "v", 0 ), # Gradient value( integer ) field, 32 bits
+        BitField( "sign", 0, 1 ), # Gradient value sign field, 1 bit
+        BitField( "reserves", 0, 7 ), # Reserved bit field, 7 bits
+        ShortField( "numberOfWorker", 0 ) # Number of woker field, 16 bits
     ]
 
 

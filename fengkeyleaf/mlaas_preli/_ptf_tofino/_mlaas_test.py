@@ -25,10 +25,8 @@
 
 import random
 from typing import List
-import logging
 
 # scapy imports
-from scapy.layers.inet import IP, Ether
 from scapy.packet import Packet
 
 # ptf imports
@@ -62,6 +60,7 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
 
         self.ig_port: int =  1
         self.eg_port: int =  2
+        self.rec_verify_ports: List[ int ] = [ self.ig_port, self.eg_port ]
         self.in_smac: str = '08:00:00:00:01:11'
         self.in_dmac: str = '08:00:00:00:02:22'
         self.ip1: str = "10.0.1.1"
@@ -115,26 +114,28 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
         self.l.info( 'Added MGID {} with nodes {}'.format( mgrp_id, [ no_mod_node_id ] ) )
 
 
-# @tu.disabled
+@tu.disabled
 class MlaasPreliTest1host1PktCase1( TestGroup1 ):
     def runTest( self ):
         self._multicast_group_setup()
 
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5,  0 )
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5,  1 )
-        tu.verify_packets( self, exp_pkt, [ self.eg_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 1 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
         
 
-@tu.disabled
+# @tu.disabled
 class MlaasPreliTest1host1PktCase2( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -5, 0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -5, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -5, 1 )
-        tu.verify_packets( self, exp_pkt, [ self.eg_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -5, 1 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
