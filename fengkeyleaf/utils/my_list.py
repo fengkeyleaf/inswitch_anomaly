@@ -20,11 +20,23 @@ __version__ = "1.0"
 
 
 def find_min( L: List[ Any ], k: Callable = lambda x: x ) -> Any:
+    """
+    Find the min value in the list, L.
+    @param L:
+    @param k:
+    @return:
+    """
     if L is None or len( L ) <= 0: return None
     return min( L, key = k )
 
 
 def find_max( L: List[ Any ], k: Callable = lambda x: x ) -> Any:
+    """
+    Find the max value in the list, L.
+    @param L:
+    @param k:
+    @return:
+    """
     if L is None or len( L ) <= 0: return None
     return max( L, key = k )
 

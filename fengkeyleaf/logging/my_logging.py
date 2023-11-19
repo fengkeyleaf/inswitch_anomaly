@@ -59,5 +59,10 @@ def get_logger( ll: int, n: str = None ) -> py_logging.Logger:
 
 
 def get_level_name( n: str ) -> int:
+    """
+    Get logging level name.
+    @param n:
+    @return:
+    """
     # https://docs.python.org/3/library/logging.html#logging.getLevelName
     return py_logging.getLevelName( n.upper() )

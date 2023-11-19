@@ -33,6 +33,13 @@ def equals( e1, e2 ) -> bool:
 
 
 def is_same_key( D: Dict[ Any, Any ], k: Any ) -> bool:
+    """
+    To tell if the first key type in the dict, D, is the same type as the one of k.
+    @note Displaying warning if all key types in D are not identical.
+    @param D:
+    @param k:
+    @return:
+    """
     if not has_same_key( D ):
         l.warning( "Key types in the dict are not all identical." )
 
@@ -40,6 +47,11 @@ def is_same_key( D: Dict[ Any, Any ], k: Any ) -> bool:
 
 
 def has_same_key( D: Dict[ Any, Any ] ) -> bool:
+    """
+    To tell if all key types in the dict, D, are the same type as the one of k.
+    @param D:
+    @return:
+    """
     t: Any = None
     for k in D:
         if t is None:

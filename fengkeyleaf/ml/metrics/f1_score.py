@@ -18,6 +18,10 @@ __version__ = "1.0"
 # https://www.educative.io/answers/what-is-the-f1-score
 # https://www.educative.io/answers/what-is-precision-and-recall
 class F1Score:
+    """
+    Class to calculate F1 score, precision, recall, accuracy and confusion matrix.
+    Binary classification usage only.
+    """
     def __init__( self ) -> None:
         self._tp: int = 0
         self._fp: int = 0
@@ -33,9 +37,16 @@ class F1Score:
         self._y_pre: List[ int ] = []
 
     def add_tp( self ) -> None:
+        """
+        Add one count for true positive.
+        """
         self._tp += 1
 
     def get_tp( self ) -> int:
+        """
+        Get the number of true positive.
+        @return:
+        """
         return self._tp
 
     def add_fp( self ) -> None:
@@ -57,6 +68,10 @@ class F1Score:
         return self._fn
 
     def get_trues( self ) -> int:
+        """
+        Get the number of instances classified as true class, true positive + true negative.
+        @return:
+        """
         return self._tp + self._tn
 
     def get_total( self ) -> int:
@@ -73,6 +88,11 @@ class F1Score:
         self.f1 = 2 * ( self.pre * self.re ) / ( self.pre + self.re )
 
     def add_y( self, y_t: int, y_p: int ) -> None:
+        """
+        Add one to y_true and to y_predict.
+        @param y_t:
+        @param y_p:
+        """
         self._y_true.append( y_t )
         self._y_pre.append( y_p )
 

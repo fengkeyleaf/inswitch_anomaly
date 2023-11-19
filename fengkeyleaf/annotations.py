@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from typing import Callable, Any
 import warnings
 
 """
@@ -14,8 +15,20 @@ __version__ = "1.0"
 
 
 # https://blog.csdn.net/u013632755/article/details/106066972
-def deprecated( func ):
-    def wrapper( *args, **kwargs ):
+def deprecated( func ) -> Callable:
+    """
+    Deprecated annotation.
+
+    Usage:
+    from fengkeyleaf import annotations
+    @annotations.deprecated
+    def your_function():
+        your_code;
+
+    @param func:
+    @return:
+    """
+    def wrapper( *args, **kwargs ) -> Any:
         warnings.warn( func.__name__ + " is deprecated.", category = DeprecationWarning, stacklevel = 2 )
         return func( *args, **kwargs )
 
