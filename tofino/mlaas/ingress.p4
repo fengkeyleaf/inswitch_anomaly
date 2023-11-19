@@ -1,6 +1,22 @@
 #include "./workerCount.p4"
 #include "./gradientUpdate.p4"
 
+// Implementation insight
+// N = Overall number of worker, n = current number of worker, n_w = current number of worker stored in the pkt,
+// is_reset: 1) G.v = G.v + hdr.mlaas.v or G.v = 0 + hdr.mlaas.v
+// Assume N = 3
+//     n                     |      n_w      |    is_reset    |       is_multicast
+// ( 0 < N ) + 1 =           |     1 < N     |        T       |           F
+// ( 1 < N ) + 1 =           |     2 < N     |        F       |           F
+// ( 2 < N ) + 1 =           |     3 <= N    |        F       |           T
+// ( 3 <= N ) => 0 + 1 =     |     1 < N     |        T       |           F
+// ( 1 < N ) + 1 =           |     2 < N     |        F       |           F
+// ( 2 < N ) + 1 =           |     3 <= N    |        F       |           T
+// ( 3 <= N ) => 0 + 1 =     |     1 < N     |        T       |           F
+// ......
+// In summary,
+// is_reset = n_w == 1
+// is_multicast = n_w == N
 
 /*************************************************************************
 **************  I N G R E S S   P R O C E S S I N G   *******************
