@@ -14,6 +14,7 @@ struct my_ingress_headers_t {
 
 struct my_ingress_metadata_t {
     bool is_reset;
+    bool is_multicast;
     pool_index_t idx;
 }
 

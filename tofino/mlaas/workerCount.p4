@@ -73,11 +73,20 @@ control WorkerCount(
     apply {
         hdr.mlaas.numberOfWorker = update_count.execute( meta.idx );
 
+        // Cannot use: meta.is_reset = hdr.mlaas.numberOfWorker == 1 ? true : false;
+        //  error: : source of modify_field invalid 
         if ( hdr.mlaas.numberOfWorker == 1 ) {
             meta.is_reset = true;
         }
         else {
             meta.is_reset = false;
+        }
+
+        if ( hdr.mlaas.numberOfWorker == NUMBER_OF_WORKER ) {
+            meta.is_multicast = true;
+        }
+        else {
+            meta.is_multicast = false;
         }
     }
 }

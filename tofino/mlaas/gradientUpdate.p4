@@ -26,7 +26,7 @@ control GradientUpdate(
     apply {
         hdr.mlaas.v = update_grad.execute( meta.idx );
 
-        if ( meta.is_reset ) {
+        if ( meta.is_multicast ) {
             multicast_a();
         }
     }
