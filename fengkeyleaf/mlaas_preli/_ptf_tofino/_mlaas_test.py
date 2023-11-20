@@ -113,6 +113,10 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
         self.pre_mgid.entry_add( self.dev_tgt, [ key ], [ data ] )
         self.l.info( 'Added MGID {} with nodes {}'.format( mgrp_id, [ no_mod_node_id ] ) )
 
+    # https://stackoverflow.com/a/805082
+    # def runTest( self ) -> None:
+    #     self._multicast_group_setup()
+
 
 @tu.disabled
 class MlaasPreliTest1host1PktCase1( TestGroup1 ):
@@ -126,7 +130,7 @@ class MlaasPreliTest1host1PktCase1( TestGroup1 ):
         tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
         
 
-# @tu.disabled
+@tu.disabled
 class MlaasPreliTest1host1PktCase2( TestGroup1 ):
     def runTest( self ):
         self._multicast_group_setup()
@@ -143,117 +147,115 @@ class MlaasPreliTest1hostCase1( TestGroup1 ):
     def runTest( self ):        
         self._multicast_group_setup()
 
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5,  0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 5,  0 )
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 10,  2 )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 10, 2 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
 class MlaasPreliTest1hostCase2( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 100, 0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 100000, 0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 100, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 100000, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 100100, 2 )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 100100, 2 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
 class MlaasPreliTest1hostCase3( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -5, 0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -15,0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -5, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -15, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, -20, 2 )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -20, 2 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
 class MlaasPreliTest1hostCase4( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -1000000,0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -10000000,0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -1000000, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -10000000, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, -11000000, 2 )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -11000000, 2 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
 class MlaasPreliTest1hostCase5( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 10,0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -5, 0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 10, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -5, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, 5,2 )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 2 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
 class MlaasPreliTest1hostCase6( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -1000000, 0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, 50,  0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -1000000, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 50,  0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, 0, -1000000 + 50, 2 )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -1000000 + 50, 2 )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
 
 @tu.disabled
 class MlaasPreliTest2hostCase1( TestGroup1 ):
     def runTest( self ):
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 0, -10, 0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, 1, 50, 0 )
+        self._multicast_group_setup()
+
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -10, 0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 1, 50, 0 )
         tu.send_packet( self, self.ig_port, pkt1 )
         tu.send_packet( self, self.ig_port, pkt2 )
 
-        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 64, 0, 30,  0 )
-        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 64, 1, -40, 0 )
+        pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 0, 30,  0 )
+        pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 1, -60, 0 )
 
         tu.send_packet( self, self.eg_port, pkt1 )
-        exp_pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 64, 0, 20, 2 )
-        tu.verify_packets( self, exp_pkt1, [ self.eg_port ] )
+        exp_pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 0, 20, 2 )
+        tu.verify_packets( self, exp_pkt1, self.rec_verify_ports )
 
         tu.send_packet( self, self.eg_port, pkt2 )
-        exp_pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 64, 1, 10, 2 )
-        tu.verify_packets( self, exp_pkt2, [ self.eg_port ] )
+        exp_pkt2: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip2, 1, -10, 2 )
+        tu.verify_packets( self, exp_pkt2, self.rec_verify_ports )
 
 
-@tu.disabled
+# @tu.disabled
 class MlaasPreliTest2hostRandom( TestGroup1 ):
     POOL_SIZE: int = 256
     EXP: int = 16
     MAX_INT: int = 2 ** EXP - 1
-    MIN_INT: int = -(2 ** EXP)
+    MIN_INT: int = -( 2 ** EXP )
 
-    # Sacling factor
-
-    @staticmethod
-    def convert_to_pkt( g: int ):
-        pos: int = 0
-        neg: int = 0
-        sign: bool = False  # Positive
-
-        if g < 0:
-            sign = True
-            neg = abs( g )
-        else:
-            pos = g
-
-        return (pos, neg, sign)
+    # TODO: Sacling factor
 
     def training( self, n_workers: int ):
         idx: int = random.randint( 0, MlaasPreliTest2hostRandom.POOL_SIZE - 1 )
@@ -263,24 +265,23 @@ class MlaasPreliTest2hostRandom( TestGroup1 ):
         ]
         s: int = sum( G )
 
-        s_pos: int = 0
-        s_neg: int = 0
         # TODO: random ig_port
-        # TODO: boardcase updates
         for g in G:
-            (pos, neg, sign) = MlaasPreliTest2hostRandom.convert_to_pkt( g )
-            s_pos += pos
-            s_neg += neg
-            pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 64, idx, pos, neg, sign, 0 )
+            pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, idx, g, 0 )
             tu.send_packet( self, self.ig_port, pkt )
 
-        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_dmac, self.in_dmac, self.ip1, 63, idx, s_pos, s_neg, False, n_workers )
-        tu.verify_packets( self, exp_pkt, [ self.ig_port ] )
+        exp_pkt: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, idx, s, n_workers )
+        tu.verify_packets( self, exp_pkt, self.rec_verify_ports )
 
         # TODO: Convert to int when verifying.
 
+    MAX_EPOCHES: int = 10000
+
     def runTest( self ):
-        n_epochs: int = 10000
+        self._multicast_group_setup()
+
+        n_epochs: int = 1
+        n_epochs = MlaasPreliTest2hostRandom.MAX_EPOCHES
         n_workers: int = 16
 
         for _ in range( n_epochs ):
