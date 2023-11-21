@@ -36,7 +36,7 @@ from ptf.testutils import *
 # bfrt imports
 import bfrt_grpc.client as gc
 
-# Directly called from the working directory.
+# Directly called from the directory, ./inswitch_anomaly/fengkeyleaf/mlaas_preli/_ptf_tofino/
 """
 file:
 description:

@@ -49,6 +49,6 @@ if __name__ == '__main__':
 #     f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
     w.load_data( f1, f )
 
-    sleep( 2 ) # Wait for the receiver to initialize.
+    sleep( worker.Worker.SETUP_WAITING_TIME ) # Wait for the receiver to initialize.
     w.training( 0 )
     w.evaluate()

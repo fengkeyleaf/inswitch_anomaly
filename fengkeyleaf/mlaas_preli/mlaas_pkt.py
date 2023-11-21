@@ -55,6 +55,6 @@ def get_mlaas_pkt(
     # pkt.show2()
     return pkt
 
-
-bind_layers( IP, Mlaas_p )
+print( "Binding Mlaas_p" )
+# bind_layers( IP, Mlaas_p )
 

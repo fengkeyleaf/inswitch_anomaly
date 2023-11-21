@@ -6,6 +6,7 @@ from typing import Dict
 
 # scapy imports
 import scapy.packet
+import scapy.all
 
 """
 file:
@@ -15,8 +16,8 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
-from fengkeyleaf.mlaas_preli import worker, mlaas_pkt_tofino
 from fengkeyleaf.my_scapy import receiver
+from fengkeyleaf.mlaas_preli import worker, mlaas_pkt_tofino
 
 __version__ = "1.0"
 
@@ -81,7 +82,7 @@ class Worker( worker.Worker ):
 
         assert self.res is not None
         self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
-        avg_grad: float = self.res[ 1 ] / (self.f * self.res[ 2 ])
+        avg_grad: float = self.res[ 1 ] / ( self.f * self.res[ 2 ] )
 
         self.res = None  # Reset container to assert.
         return avg_grad
@@ -92,7 +93,8 @@ class Worker( worker.Worker ):
         @param p: Received pkt from the switch.
         @rtype: None
         """
-        if mlaas_pkt_tofino.MlaasTofinoPacket not in p:
+        # print( p.show2() )
+        if mlaas_pkt_tofino.MlaasTofinoPacket not in p or p.numberOfWorker <= 0:
             return
 
         self.l.debug( "Rec:" + p.show2( dump = True ) )

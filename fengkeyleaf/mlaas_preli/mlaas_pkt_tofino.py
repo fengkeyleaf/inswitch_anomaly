@@ -11,6 +11,11 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+# p = get_pkt( "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 0, 5, 0 )
+# def print_out( x ):
+#     print( MlaasTofinoPacket in x )
+#     x.show2()
+# sniff( iface = "veth2", prn = lambda x : print_out( x ) )
 
 # https://scapy.readthedocs.io/en/latest/build_dissect.html
 # https://scapy.readthedocs.io/en/latest/api/scapy.fields.html#scapy.fields.BitField
@@ -40,6 +45,6 @@ def get_pkt(
     # pkt.show2()
     return pkt
 
-
+print( "Binding MlaasTofinoPacket" )
 bind_layers( IP, MlaasTofinoPacket )
 

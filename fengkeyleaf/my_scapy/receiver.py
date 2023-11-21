@@ -5,6 +5,8 @@ import sys
 import threading
 import logging
 from typing import Callable
+
+# scapy imports
 import scapy.all
 
 """
@@ -46,4 +48,6 @@ class Receiver( threading.Thread ):
         """
         Only sniff incoming pkts.
         """
-        scapy.all.sniff( iface = self.iface, filter = "inbound", prn = lambda x: self.prn( x ) )
+        self.l.info( "sniffing on %s" % self.iface )
+        # scapy.all.sniff( iface = self.iface, filter = "inbound", prn = lambda x: self.prn( x ) )
+        scapy.all.sniff( iface = self.iface, prn = lambda x: self.prn( x ) )

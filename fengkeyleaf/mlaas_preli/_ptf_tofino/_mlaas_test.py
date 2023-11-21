@@ -33,7 +33,6 @@ from scapy.packet import Packet
 import ptf.testutils as tu
 
 
-
 # Called by a program from the working directory.
 """
 file:

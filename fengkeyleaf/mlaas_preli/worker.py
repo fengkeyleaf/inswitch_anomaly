@@ -42,6 +42,8 @@ class Worker:
     """
     Worker side in SwitchML
     """
+    SETUP_WAITING_TIME: int = 2
+
     EXP: int = 31
     MAX_INT: int = 2 ** EXP - 1
     MIN_INT: int = -( 2 ** EXP )
@@ -183,6 +185,8 @@ class Worker:
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self, ig_port: int ) -> None:
+        self.l.info( "Started traininng" )
+
         n_epochs: int = 30
         batch_size: int = 10
 
