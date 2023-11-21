@@ -32,8 +32,7 @@ from scapy.packet import Packet
 # ptf imports
 import ptf.testutils as tu
 
-# bfrt imports
-import bfrt_grpc.client as gc
+
 
 # Called by a program from the working directory.
 """
@@ -53,65 +52,8 @@ from fengkeyleaf import mlaas_pkt_tofino
 __version__ = "1.0"
 
 
-class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
-
-    def __init__( self ):
-        super().__init__()
-
-        self.ig_port: int =  1
-        self.eg_port: int =  2
-        self.rec_verify_ports: List[ int ] = [ self.ig_port, self.eg_port ]
-        self.in_smac: str = '08:00:00:00:01:11'
-        self.in_dmac: str = '08:00:00:00:02:22'
-        self.ip1: str = "10.0.1.1"
-        self.ip2: str = "10.0.2.2"
-
-    def _multicast_group_setup( self ) -> None:
-        # Create the multicast nodes
-        # Corresponding bfrt code
-        # bfrt.pre.node.entry(
-        #     MULTICAST_NODE_ID = 105, MULTICAST_RID = 5,
-        #     MULTICAST_LAG_ID = [], DEV_PORT = [ 1, 2 ]
-        # ).push()
-
-        # Ptf code
-        no_mod_node_id: int = tu.test_param_get( "no_mod_node_id", 105 )
-        no_mod_rid: int = tu.test_param_get( "no_mod_rid", 5 )
-        no_mod_ports: List[ int ] = [ self.swports[ p ] for p in tu.test_param_get( "no_mod_ports", [ 1, 2 ] ) ]
-        print( type( no_mod_ports ) )
-        no_mod_key = self.pre_node.make_key( [ gc.KeyTuple( "$MULTICAST_NODE_ID", no_mod_node_id ) ] )
-        print( type( no_mod_key ) )
-
-        no_mod_data = self.pre_node.make_data( [
-            gc.DataTuple( '$MULTICAST_RID', no_mod_rid ),
-            gc.DataTuple( '$DEV_PORT', int_arr_val = no_mod_ports )
-        ] )
-
-        self.pre_node.entry_add( self.dev_tgt, [ no_mod_key ], [ no_mod_data ] )
-        self.l.info( "Added No Mods PRE Node ({}) --> ports {}".format( no_mod_node_id, no_mod_ports ) )
-
-        # Create the multicast group
-        # Corresponding bfrt code
-        # bfrt.pre.mgid.entry(
-        #     MGID = 1,
-        #     MULTICAST_NODE_ID = [ 3 ],
-        #     MULTICAST_NODE_L1_XID_VALID = [ False ],
-        #     MULTICAST_NODE_L1_XID = [ 0 ]
-        # ).push()
-
-        # pft code
-        mgrp_id = tu.test_param_get( "mgrp_id",  1 )
-        key = self.pre_mgid.make_key( [ gc.KeyTuple( '$MGID', mgrp_id ) ] )
-        data = self.pre_mgid.make_data(
-            [
-                gc.DataTuple( '$MULTICAST_NODE_ID', int_arr_val = [  no_mod_node_id ] ),
-                gc.DataTuple( '$MULTICAST_NODE_L1_XID_VALID', bool_arr_val = [ False ] ),
-                gc.DataTuple( '$MULTICAST_NODE_L1_XID', int_arr_val = [ 0 ] )
-            ]
-        )
-
-        self.pre_mgid.entry_add( self.dev_tgt, [ key ], [ data ] )
-        self.l.info( 'Added MGID {} with nodes {}'.format( mgrp_id, [ no_mod_node_id ] ) )
+class BasicTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
+    pass
 
     # https://stackoverflow.com/a/805082
     # def runTest( self ) -> None:
@@ -119,8 +61,8 @@ class TestGroup1( _mlaas_preli.MlaasBaseProgramTest ):
 
 
 @tu.disabled
-class MlaasPreliTest1host1PktCase1( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1host1PktCase1( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 0 )
@@ -131,8 +73,8 @@ class MlaasPreliTest1host1PktCase1( TestGroup1 ):
         
 
 @tu.disabled
-class MlaasPreliTest1host1PktCase2( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1host1PktCase2( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -5, 0 )
@@ -143,8 +85,8 @@ class MlaasPreliTest1host1PktCase2( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest1hostCase1( TestGroup1 ):
-    def runTest( self ):        
+class MlaasPreliTest1hostCase1( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 5, 0 )
@@ -157,8 +99,8 @@ class MlaasPreliTest1hostCase1( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest1hostCase2( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1hostCase2( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 100, 0 )
@@ -171,8 +113,8 @@ class MlaasPreliTest1hostCase2( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest1hostCase3( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1hostCase3( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -5, 0 )
@@ -185,8 +127,8 @@ class MlaasPreliTest1hostCase3( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest1hostCase4( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1hostCase4( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -1000000, 0 )
@@ -199,8 +141,8 @@ class MlaasPreliTest1hostCase4( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest1hostCase5( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1hostCase5( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, 10, 0 )
@@ -213,8 +155,8 @@ class MlaasPreliTest1hostCase5( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest1hostCase6( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest1hostCase6( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -1000000, 0 )
@@ -227,8 +169,8 @@ class MlaasPreliTest1hostCase6( TestGroup1 ):
 
 
 @tu.disabled
-class MlaasPreliTest2hostCase1( TestGroup1 ):
-    def runTest( self ):
+class MlaasPreliTest2hostCase1( BasicTestGroup ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         pkt1: Packet = mlaas_pkt_tofino.get_pkt( self.in_smac, self.in_dmac, self.ip1, 0, -10, 0 )
@@ -249,7 +191,7 @@ class MlaasPreliTest2hostCase1( TestGroup1 ):
 
 
 # @tu.disabled
-class MlaasPreliTest2hostRandom( TestGroup1 ):
+class MlaasPreliTest2hostRandom( BasicTestGroup ):
     POOL_SIZE: int = 256
     EXP: int = 16
     MAX_INT: int = 2 ** EXP - 1
@@ -257,7 +199,7 @@ class MlaasPreliTest2hostRandom( TestGroup1 ):
 
     # TODO: Sacling factor
 
-    def training( self, n_workers: int ):
+    def training( self, n_workers: int ) -> None:
         idx: int = random.randint( 0, MlaasPreliTest2hostRandom.POOL_SIZE - 1 )
         G: List[ int ] = [
             random.randint( MlaasPreliTest2hostRandom.MIN_INT, MlaasPreliTest2hostRandom.MAX_INT )
@@ -277,7 +219,7 @@ class MlaasPreliTest2hostRandom( TestGroup1 ):
 
     MAX_EPOCHES: int = 10000
 
-    def runTest( self ):
+    def runTest( self ) -> None:
         self._multicast_group_setup()
 
         n_epochs: int = 1

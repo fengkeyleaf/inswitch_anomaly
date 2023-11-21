@@ -50,5 +50,5 @@ if __name__ == '__main__':
     w.load_data( f1, f )
 
     sleep( 2 ) # Wait for the receiver to initialize.
-    w.training()
+    w.training( 0 )
     w.evaluate()

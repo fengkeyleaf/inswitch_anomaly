@@ -40,7 +40,8 @@ from fengkeyleaf.ml.api import (
 from fengkeyleaf.mlaas_preli import (
     mlaas_pkt,
     mlaas_pkt_tofino,
-    worker
+    worker,
+    woker_tofino
 )
 
 from fengkeyleaf.my_pandas.api import (

@@ -24,18 +24,15 @@
 ###############################################################################
 
 ######### STANDARD MODULE IMPORTS ########
-import logging
-import grpc
-import pdb
 import os
-import struct
-import sys
+from typing import List
 
 ######### PTF modules for BFRuntime Client Library APIs #######
-import ptf
+# ptf imports
+import ptf.testutils as tu
 from ptf.testutils import *
-from bfruntime_client_base_tests import BfRuntimeTest
-import bfrt_grpc.bfruntime_pb2 as bfruntime_pb2
+
+# bfrt imports
 import bfrt_grpc.client as gc
 
 # Directly called from the working directory.
@@ -78,6 +75,18 @@ class BasicForwardingBaseProgramTest( p4_program_test.P4ProgramTest ):
 
 
 class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
+
+    def __init__( self ) -> None:
+        super().__init__()
+
+        self.ig_port: int =  1
+        self.eg_port: int =  2
+        self.rec_verify_ports: List[ int ] = [ self.ig_port, self.eg_port ]
+        self.in_smac: str = '08:00:00:00:01:11'
+        self.in_dmac: str = '08:00:00:00:02:22'
+        self.ip1: str = "10.0.1.1"
+        self.ip2: str = "10.0.2.2"
+
     def setUp( self, tableSetUp = None ) -> None:
         p4_program_test.P4ProgramTest.setUp( self, self.tableSetUp )
 
@@ -88,6 +97,53 @@ class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
         # Since this class is not a test per se, we can use the setup method
         # for common setup. For example, we can have our tables and annotations ready
         pass
+
+    def _multicast_group_setup( self ) -> None:
+        # Create the multicast nodes
+        # Corresponding bfrt code
+        # bfrt.pre.node.entry(
+        #     MULTICAST_NODE_ID = 105, MULTICAST_RID = 5,
+        #     MULTICAST_LAG_ID = [], DEV_PORT = [ 1, 2 ]
+        # ).push()
+
+        # Ptf code
+        no_mod_node_id: int = tu.test_param_get( "no_mod_node_id", 105 )
+        no_mod_rid: int = tu.test_param_get( "no_mod_rid", 5 )
+        no_mod_ports: List[ int ] = [ self.swports[ p ] for p in tu.test_param_get( "no_mod_ports", [ 1, 2 ] ) ]
+        print( type( no_mod_ports ) )
+        no_mod_key = self.pre_node.make_key( [ gc.KeyTuple( "$MULTICAST_NODE_ID", no_mod_node_id ) ] )
+        print( type( no_mod_key ) )
+
+        no_mod_data = self.pre_node.make_data( [
+            gc.DataTuple( '$MULTICAST_RID', no_mod_rid ),
+            gc.DataTuple( '$DEV_PORT', int_arr_val = no_mod_ports )
+        ] )
+
+        self.pre_node.entry_add( self.dev_tgt, [ no_mod_key ], [ no_mod_data ] )
+        self.l.info( "Added No Mods PRE Node ({}) --> ports {}".format( no_mod_node_id, no_mod_ports ) )
+
+        # Create the multicast group
+        # Corresponding bfrt code
+        # bfrt.pre.mgid.entry(
+        #     MGID = 1,
+        #     MULTICAST_NODE_ID = [ 3 ],
+        #     MULTICAST_NODE_L1_XID_VALID = [ False ],
+        #     MULTICAST_NODE_L1_XID = [ 0 ]
+        # ).push()
+
+        # pft code
+        mgrp_id = tu.test_param_get( "mgrp_id",  1 )
+        key = self.pre_mgid.make_key( [ gc.KeyTuple( '$MGID', mgrp_id ) ] )
+        data = self.pre_mgid.make_data(
+            [
+                gc.DataTuple( '$MULTICAST_NODE_ID', int_arr_val = [  no_mod_node_id ] ),
+                gc.DataTuple( '$MULTICAST_NODE_L1_XID_VALID', bool_arr_val = [ False ] ),
+                gc.DataTuple( '$MULTICAST_NODE_L1_XID', int_arr_val = [ 0 ] )
+            ]
+        )
+
+        self.pre_mgid.entry_add( self.dev_tgt, [ key ], [ data ] )
+        self.l.info( 'Added MGID {} with nodes {}'.format( mgrp_id, [ no_mod_node_id ] ) )
 
 #
 # Individual tests can now be subclassed from BaseProgramTest

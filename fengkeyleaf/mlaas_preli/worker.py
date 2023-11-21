@@ -8,7 +8,7 @@ import socket
 import math
 import struct
 from time import sleep
-from typing import Tuple
+from typing import Tuple, Dict
 import numpy as np
 # pyTorch imports
 import torch
@@ -56,7 +56,7 @@ class Worker:
     POOL_SIZE: int = 256
 
     # TODO: Put this class into the package, my_scapy.
-    class _Sender:
+    class Sender:
         """
         Sender to send pkts.
         """
@@ -80,6 +80,7 @@ class Worker:
             iface: str = get_if( target_iface )
 
             self.l.debug( "Sending on interface %s to %s" % ( iface, str( addr ) ) )
+            # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sendp
             scapy.all.sendp( p, iface = iface, verbose = False )
 
             # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Packet.show2
@@ -91,11 +92,13 @@ class Worker:
 
         # Networking communication
         # Sender setting
-        self.sd: Worker._Sender = Worker._Sender( self.l )
+        self.sd: Worker.Sender = Worker.Sender( self.l )
+
+        # TODO: How to dynamically configurate swports.
+        self.swports: Dict[ int, str ] = self._config_swports()
 
         # Receiver setting
-        self.rec: receiver.Receiver = receiver.Receiver( self.process_rec_pkt )
-        self.rec.get_sniffing_iface()
+        self.rec: receiver.Receiver = self._config_rec( -1 )
         self.rec.start()
 
         # Format: ( idx, grad( int ), number of worker )
@@ -120,6 +123,17 @@ class Worker:
         # Scaling factor
         # TODO: How to select this f?
         self.f: int = 10000 # 10 ^ 4
+
+    def _config_swports( self ) -> Dict[ int, str ]:
+        return {
+            # port : iface
+            0: "eth0"
+        }
+
+    def _config_rec( self, p: int ) -> receiver.Receiver:
+        r: receiver.Receiver = receiver.Receiver( self._process_rec_pkt )
+        r.get_sniffing_iface()
+        return r
 
     def load_data( self, f_training: str, f_valid: str = None ) -> None:
         """
@@ -169,7 +183,7 @@ class Worker:
         # https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
-    def training( self ) -> None:
+    def training( self, ig_port: int ) -> None:
         n_epochs: int = 30
         batch_size: int = 10
 
@@ -187,12 +201,12 @@ class Worker:
                 loss.backward()
 
                 # self.opti.step()
-                self.manually_update_params()
+                self._manually_update_params( ig_port )
 
             self.l.info( f'Finished epoch {epoch}, latest loss {loss}' )
 
     # https://pytorch.org/docs/stable/generated/torch.clone.html#torch.clone
-    def manually_update_params( self ) -> None:
+    def _manually_update_params( self, ig_port: int ) -> None:
         """
         Manually compute gradients and then update parameters.
         """
@@ -201,13 +215,14 @@ class Worker:
                 # print( P )
                 # print( P.grad )
                 P.copy_(
-                    self.get_average_grad(
+                    self._get_average_grad(
                         P.clone(),
-                        P.grad.clone()
+                        P.grad.clone(),
+                        ig_port
                     )
                 )
 
-    def get_average_grad( self, P: torch.Tensor, G: torch.Tensor ) -> torch.Tensor:
+    def _get_average_grad( self, P: torch.Tensor, G: torch.Tensor, ig_port: int ) -> torch.Tensor:
         """
 
         @param P: List of lists of parameters.
@@ -222,20 +237,20 @@ class Worker:
             # P[ l ] is a scalar.
             if len( P[ l ].size() ) == 0:
                 assert len( G[ l ].size() ) == 0
-                P[ l ] = P[ l ] - self.lr * self.update_gard( l, G[ l ] )
+                P[ l ] = P[ l ] - self.lr * self._update_gard( l, G[ l ], ig_port )
                 continue
 
             # P[ l ] is a vector.
             assert len( P[ l ].size() ) > 0, str( P[ l ] ) + " | " + str( G[ l ] )
             assert len( P[ l ] ) == len( G[ l ] )
             for i in range( len( P[ l ] ) ):
-                P[ l ][ i ] = P[ l ][ i ] - self.lr * self.update_gard( i, G[ l ][ i ] )
+                P[ l ][ i ] = P[ l ][ i ] - self.lr * self._update_gard( i, G[ l ][ i ], ig_port )
 
         return P
 
     # TODO: Not implement.
     # Algorithm 2 Worker logic.
-    def send_grad( self, U: torch.Tensor ) -> None:
+    def _send_grad( self, U: torch.Tensor ) -> None:
         """
 
         @param U: List of gradients.
@@ -258,7 +273,7 @@ class Worker:
             )
             self.l.debug( "Sent:" + pkt_str )
 
-    def update_gard( self, i: int, g: float ) -> float:
+    def _update_gard( self, i: int, g: float, ig_port: int ) -> float:
         """
         Get a gradient value for each parameter and
         send the value to the switch to do in-switch gradient aggregation.
@@ -272,7 +287,7 @@ class Worker:
         ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( g * self.f ) )
         # TODO: Dst ip and dst interface.
         pkt_str: str = self.sd.send(
-            "10.0.1.1", "eth0",
+            "10.0.1.1", self.swports[ ig_port ],
             mlaas_pkt.get_mlaas_pkt(
                 "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
                 i, pos, neg, sign, 0
@@ -292,7 +307,7 @@ class Worker:
         return avg_grad
 
     # TODO: pkt loss
-    def process_rec_pkt( self, p: scapy.packet.Packet ) -> None:
+    def _process_rec_pkt( self, p: scapy.packet.Packet ) -> None:
         """
         Process the received pkt from the switch.
         @param p: Received pkt from the switch.
@@ -326,7 +341,7 @@ class Worker:
         print( Ether in p )
         # exit( 1 )
 
-    def get_send_data( self, i: int, g: float ) -> bytes:
+    def _get_send_data( self, i: int, g: float ) -> bytes:
         """
 
         @param i: Index for the gradient, g.
@@ -352,5 +367,5 @@ if __name__ == '__main__':
     w: Worker = Worker( lr )
     w.build_model()
     w.load_data( "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv" )
-    w.training()
+    w.training( 0 )
     w.evaluate()

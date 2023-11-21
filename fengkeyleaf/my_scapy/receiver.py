@@ -33,7 +33,10 @@ class Receiver( threading.Thread ):
 
     # TODO: Provide a parameter iface to be sniffed on.
     def get_sniffing_iface( self ) -> None:
-        ifaces = [ i for i in os.listdir( '/sys/class/net/' ) if 'eth' in i ]
+        """
+        Bmv2 usage only
+        """
+        ifaces = [ i for i in os.listdir( '/sys/class/net/' ) if "eth" in i ]
         self.iface = ifaces[ 0 ]
         sys.stdout.flush()
         self.l.info( "sniffing on %s" % self.iface )
