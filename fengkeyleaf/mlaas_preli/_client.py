@@ -22,14 +22,15 @@ sys.path.append(
         '../../'
     )
 )
-from fengkeyleaf import worker
+from fengkeyleaf import worker_bmv2
 
 __version__ = "1.0"
 
 
+# TODO: Not yet test with bmv2 after using worker_bmv2.py
 if __name__ == '__main__':
     lr: float = 0.001
-    w: worker.Worker = worker.Worker( lr, logging.INFO )
+    w: worker_bmv2.Worker = worker_bmv2.Worker( lr, logging.INFO )
     w.build_model()
     # Full dataset
     f: str = "./fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"
@@ -49,6 +50,6 @@ if __name__ == '__main__':
 #     f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
     w.load_data( f1, f )
 
-    sleep( worker.Worker.SETUP_WAITING_TIME ) # Wait for the receiver to initialize.
+    sleep( worker_bmv2.Worker.SETUP_WAITING_TIME ) # Wait for the receiver to initialize.
     w.training( 0 )
     w.evaluate()

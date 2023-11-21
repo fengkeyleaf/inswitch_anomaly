@@ -14,5 +14,6 @@ from fengkeyleaf.mlaas_preli import (
     mlaas_pkt,
     mlaas_pkt_tofino,
     worker,
-    woker_tofino
+    woker_tofino,
+    worker_bmv2
 )
