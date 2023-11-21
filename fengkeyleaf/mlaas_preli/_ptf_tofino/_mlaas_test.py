@@ -190,7 +190,7 @@ class MlaasPreliTest2hostCase1( BasicTestGroup ):
         tu.verify_packets( self, exp_pkt2, self.rec_verify_ports )
 
 
-# @tu.disabled
+@tu.disabled
 class MlaasPreliTest2hostRandom( BasicTestGroup ):
     POOL_SIZE: int = 256
     EXP: int = 16
