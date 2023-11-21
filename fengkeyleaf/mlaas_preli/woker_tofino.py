@@ -23,10 +23,10 @@ __version__ = "1.0"
 
 class Worker( worker.Worker ):
 
-    def _config_rec( self, p: int ) -> receiver.Receiver:
-        r: receiver.Receiver = receiver.Receiver( self._process_rec_pkt )
-        r.iface = self.swports[ p ]
-        return r
+    def config_receiver( self, p: int ) -> None:
+        self.rec = receiver.Receiver( self._process_rec_pkt )
+        self.rec.iface = self.swports[ p ]
+        self.rec.start()
 
     def _config_swports( self ) -> Dict[ int, str ]:
         # Adding interface veth0 as port 0

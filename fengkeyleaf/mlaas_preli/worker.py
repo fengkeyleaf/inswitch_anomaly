@@ -98,8 +98,7 @@ class Worker:
         self.swports: Dict[ int, str ] = self._config_swports()
 
         # Receiver setting
-        self.rec: receiver.Receiver = self._config_rec( -1 )
-        self.rec.start()
+        self.rec: receiver.Receiver = None
 
         # Format: ( idx, grad( int ), number of worker )
         self.res: Tuple[ int, int, int ] = None
@@ -130,10 +129,10 @@ class Worker:
             0: "eth0"
         }
 
-    def _config_rec( self, p: int ) -> receiver.Receiver:
-        r: receiver.Receiver = receiver.Receiver( self._process_rec_pkt )
-        r.get_sniffing_iface()
-        return r
+    def config_receiver( self, p: int ) -> None:
+        self.rec = receiver.Receiver( self._process_rec_pkt )
+        self.rec.get_sniffing_iface()
+        self.rec.start()
 
     def load_data( self, f_training: str, f_valid: str = None ) -> None:
         """
@@ -365,6 +364,7 @@ class Worker:
 if __name__ == '__main__':
     lr: float = 0.001
     w: Worker = Worker( lr )
+    w.config_receiver( -1 )
     w.build_model()
     w.load_data( "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv" )
     w.training( 0 )

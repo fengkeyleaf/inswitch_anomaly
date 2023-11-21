@@ -69,6 +69,7 @@ class OneClientTestCase1( WorkerTestGroup ):
         lr: float = 0.001
 
         w: woker_tofino.Worker = woker_tofino.Worker( lr, logging.INFO )
+        w.config_receiver( self.ig_port )
         w.build_model()
         w.load_data( OneClientTestCase1.ONE_CLIENT_DATASET, OneClientTestCase1.ONE_CLIENT_DATASET )
 
