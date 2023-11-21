@@ -65,6 +65,13 @@ def get_mlaas_pkt(
     return pkt
 
 
-l.info( "Binding Mlaas_p" )
-bind_layers( IP, Mlaas_p )
+# Cannot use inline code, must put them into a function,
+# and call it manually,
+# otherwise importing operation will automatically bind layers for every packet class.
+# resulting in layer conflicts.
+# l.info( "Binding Mlaas_p" )
+# bind_layers( IP, Mlaas_p )
+def binding() -> None:
+    l.info( "Binding Mlaas_p" )
+    bind_layers( IP, Mlaas_p )
 

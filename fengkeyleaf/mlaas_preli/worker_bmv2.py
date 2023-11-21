@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import math
 from time import sleep
 from typing import Dict
@@ -25,6 +26,10 @@ __version__ = "1.0"
 
 
 class Worker( worker.Worker ):
+    def __init__( self, lr: float, ll: int = logging.INFO ) -> None:
+        super().__init__( lr, ll )
+        mlaas_pkt.binding()
+
     """
     Worker side in SwitchML
     """
