@@ -6,7 +6,8 @@ from typing import Dict
 
 # scapy imports
 import scapy.packet
-import scapy.all
+# pyTorch imports
+from scapy.layers.inet import IP, Ether
 
 """
 file:
@@ -17,46 +18,28 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf.my_scapy import receiver
-from fengkeyleaf.mlaas_preli import worker, mlaas_pkt_tofino
+from fengkeyleaf.mlaas_preli import worker, mlaas_pkt
 from fengkeyleaf import annotations
 
 __version__ = "1.0"
 
 
 class Worker( worker.Worker ):
+    """
+    Worker side in SwitchML
+    """
+    @annotations.override
+    def _config_swports( self ) -> Dict[ int, str ]:
+        return {
+            # port : iface
+            0: "eth0"
+        }
 
     @annotations.override
     def config_receiver( self, p: int ) -> None:
         self.rec = receiver.Receiver( self._process_rec_pkt )
-        self.rec.iface = self.swports[ p ]
+        self.rec.get_sniffing_iface()
         self.rec.start()
-
-    @annotations.override
-    def _config_swports( self ) -> Dict[ int, str ]:
-        # Adding interface veth0 as port 0
-        # Adding interface veth2 as port 1
-        # Adding interface veth4 as port 2
-        # Adding interface veth6 as port 3
-        # Adding interface veth8 as port 4
-        # Adding interface veth10 as port 5
-        # Adding interface veth12 as port 6
-        # Adding interface veth14 as port 7
-        # Adding interface veth16 as port 8
-        # Adding interface veth18 as port 9
-        # Adding interface veth20 as port 10
-        # Adding interface veth22 as port 11
-        # Adding interface veth24 as port 12
-        # Adding interface veth26 as port 13
-        # Adding interface veth28 as port 14
-        # Adding interface veth30 as port 15
-        # Adding interface veth32 as port 16
-        # Adding interface veth250 as port 64
-        return {
-            # port : iface
-            0: "veth0",
-            1: "veth2",
-            2: "veth4"
-        }
 
     @annotations.override
     def _update_gard( self, i: int, g: float, ig_port: int ) -> float:
@@ -70,12 +53,13 @@ class Worker( worker.Worker ):
         assert i < self.s
         assert g * self.f <= Worker.MAX_INT
 
+        ( pos, neg, sign ) = mlaas_pkt.convert_to_pkt( math.ceil( g * self.f ) )
         # TODO: Dst ip and dst interface.
         pkt_str: str = self.sd.send(
             "10.0.1.1", self.swports[ ig_port ],
-            mlaas_pkt_tofino.get_pkt(
-                "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1",
-                i, math.ceil( g * self.f ), 0
+            mlaas_pkt.get_mlaas_pkt(
+                "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 64,
+                i, pos, neg, sign, 0
             )
         )
         self.l.debug( "Sent:" + pkt_str )
@@ -86,11 +70,12 @@ class Worker( worker.Worker ):
 
         assert self.res is not None
         self.l.debug( f"idx={self.res[ 0 ]}, grad={self.res[ 1 ]}, # of worker={self.res[ 2 ]}" )
-        avg_grad: float = self.res[ 1 ] / ( self.f * self.res[ 2 ] )
+        avg_grad: float = self.res[ 1 ] / (self.f * self.res[ 2 ])
 
         self.res = None  # Reset container to assert.
         return avg_grad
 
+    # TODO: pkt loss
     @annotations.override
     def _process_rec_pkt( self, p: scapy.packet.Packet ) -> None:
         """
@@ -98,10 +83,40 @@ class Worker( worker.Worker ):
         @param p: Received pkt from the switch.
         @rtype: None
         """
-        # print( p.show2() )
-        if mlaas_pkt_tofino.MlaasTofinoPacket not in p or p.numberOfWorker <= 0:
+        if mlaas_pkt.Mlaas_p not in p:
             return
 
         self.l.debug( "Rec:" + p.show2( dump = True ) )
         assert self.res is None
-        self.res = ( p.idx, p.v, p.numberOfWorker )
+        self.res = ( p.idx, p.gradPos - p.gradNeg, p.numberOfWorker )
+
+        # 6: repeat
+        # 7: receive p(idx, off, vector)
+        # 8: A[p.off : p.off +k] <- p.vector
+        # 9: p.off <- p.off + k · s
+        # p.off = p.off + self.k * self.s
+        # assert self.n >= 0
+        # 10: if p.off < size(U) then
+        # if p.off < self.n:
+        # 11: p.vector U[p.off : p.off + k]
+        # 12: send p
+        # 13: until A is incomplete
+
+    @staticmethod
+    def print_info_rec( p: scapy.packet.Packet ) -> None:
+        print( "process_rec_pkt" )
+        p.show2()
+        print( mlaas_pkt.Mlaas_p in p )
+        print( IP in p )
+        print( Ether in p )
+        # exit( 1 )
+
+
+if __name__ == '__main__':
+    lr: float = 0.001
+    w: Worker = Worker( lr )
+    w.config_receiver( -1 )
+    w.build_model()
+    w.load_data( "./fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data.csv" )
+    w.training( 0 )
+    w.evaluate()

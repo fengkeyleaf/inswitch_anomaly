@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Callable, Any
+from typing import Callable, Any, Type
 import warnings
 
 """
@@ -15,7 +15,7 @@ __version__ = "1.0"
 
 
 # https://blog.csdn.net/u013632755/article/details/106066972
-def deprecated( func ) -> Callable:
+def deprecated( func: Callable ) -> Callable:
     """
     Deprecated annotation.
 
@@ -35,11 +35,53 @@ def deprecated( func ) -> Callable:
     return wrapper
 
 
+def interface( t: Any ) -> Any:
+    """
+    Interface annotation.
+    @param t:
+    @return:
+    """
+    return t
+
+
+def override( func: Callable ) -> Callable:
+    """
+    Override annotation.
+    @param func:
+    @return:
+    """
+    return func
+
+
+def abstract_method( func: Callable ) -> Callable:
+    """
+    Abstract method annotation.
+    @param func:
+    @return:
+    """
+    return func
+
+
+def abstract_class( t: Any ) -> Any:
+    """
+    Abstract class annotation.
+    @param t:
+    @return:
+    """
+    return t
+
+
+@abstract_class
 class _Tester:
     @deprecated
-    def test( self ):
-        pass
+    def test_depre( self ):
+        print( "@deprecated" )
+
+    @interface
+    def test_inter( self ):
+        print( "@interface" )
 
 
 if __name__ == '__main__':
-    _Tester().test()
+    _Tester().test_depre()
+    _Tester().test_inter()

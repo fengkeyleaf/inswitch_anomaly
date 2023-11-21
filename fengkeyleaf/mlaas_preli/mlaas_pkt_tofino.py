@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import logging
+
 from scapy.all import IntField, ShortField, SignedIntField, BitField, Packet, bind_layers
 from scapy.layers.inet import IP, Ether
 
@@ -11,11 +13,19 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
 
+from fengkeyleaf.logging import my_logging
+
+__version__ = "1.0"
+
 # p = get_pkt( "08:00:00:00:01:11", "08:00:00:00:02:22", "10.0.1.1", 0, 5, 0 )
 # def print_out( x ):
 #     print( MlaasTofinoPacket in x )
 #     x.show2()
 # sniff( iface = "veth2", prn = lambda x : print_out( x ) )
+
+
+l: logging.Logger = my_logging.get_logger( logging.INFO )
+
 
 # https://scapy.readthedocs.io/en/latest/build_dissect.html
 # https://scapy.readthedocs.io/en/latest/api/scapy.fields.html#scapy.fields.BitField
@@ -45,6 +55,7 @@ def get_pkt(
     # pkt.show2()
     return pkt
 
-print( "Binding MlaasTofinoPacket" )
+
+l.info( "Binding MlaasTofinoPacket" )
 bind_layers( IP, MlaasTofinoPacket )
 

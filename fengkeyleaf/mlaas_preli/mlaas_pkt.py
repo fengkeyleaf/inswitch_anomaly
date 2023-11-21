@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from typing import Tuple
 
+# scapy imports
 from scapy.all import IntField, ShortField, BitField, Packet, bind_layers
 from scapy.layers.inet import IP, Ether
 
@@ -12,6 +14,13 @@ language: python3 3.11.3
 author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
         Personal website: https://fengkeyleaf.com
 """
+
+from fengkeyleaf.logging import my_logging
+
+__version__ = "1.0"
+
+
+l: logging.Logger = my_logging.get_logger( logging.INFO )
 
 
 # https://scapy.readthedocs.io/en/latest/build_dissect.html
@@ -55,6 +64,7 @@ def get_mlaas_pkt(
     # pkt.show2()
     return pkt
 
-print( "Binding Mlaas_p" )
-# bind_layers( IP, Mlaas_p )
+
+l.info( "Binding Mlaas_p" )
+bind_layers( IP, Mlaas_p )
 
