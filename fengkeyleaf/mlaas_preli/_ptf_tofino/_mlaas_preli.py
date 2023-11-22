@@ -111,11 +111,9 @@ class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
         no_mod_node_id: int = tu.test_param_get( "no_mod_node_id", 105 )
         no_mod_rid: int = tu.test_param_get( "no_mod_rid", 5 )
         no_mod_ports: List[ int ] = [ self.swports[ p ] for p in tu.test_param_get( "no_mod_ports", [ 1, 2 ] ) ]
-        print( type( no_mod_ports ) )
-        no_mod_key = self.pre_node.make_key( [ gc.KeyTuple( "$MULTICAST_NODE_ID", no_mod_node_id ) ] )
-        print( type( no_mod_key ) )
+        no_mod_key: bfrt_grpc.client._Key = self.pre_node.make_key( [ gc.KeyTuple( "$MULTICAST_NODE_ID", no_mod_node_id ) ] )
 
-        no_mod_data = self.pre_node.make_data( [
+        no_mod_data: bfrt_grpc.client._Data = self.pre_node.make_data( [
             gc.DataTuple( '$MULTICAST_RID', no_mod_rid ),
             gc.DataTuple( '$DEV_PORT', int_arr_val = no_mod_ports )
         ] )
@@ -133,9 +131,9 @@ class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
         # ).push()
 
         # pft code
-        mgrp_id = tu.test_param_get( "mgrp_id",  1 )
-        key = self.pre_mgid.make_key( [ gc.KeyTuple( '$MGID', mgrp_id ) ] )
-        data = self.pre_mgid.make_data(
+        mgrp_id: int = tu.test_param_get( "mgrp_id",  1 )
+        key: bfrt_grpc.client._Key = self.pre_mgid.make_key( [ gc.KeyTuple( '$MGID', mgrp_id ) ] )
+        data: bfrt_grpc.client._Data = self.pre_mgid.make_data(
             [
                 gc.DataTuple( '$MULTICAST_NODE_ID', int_arr_val = [  no_mod_node_id ] ),
                 gc.DataTuple( '$MULTICAST_NODE_L1_XID_VALID', bool_arr_val = [ False ] ),

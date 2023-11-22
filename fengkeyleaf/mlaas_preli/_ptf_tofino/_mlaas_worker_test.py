@@ -49,11 +49,12 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
     # Using absolute path here.
     # Replace with your file paths before running the ptf test.
 
-    # Full dataset
-    FULL_DATASET: str = "../../../fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"
-    # Partial dataset
     # One client
+    # Full dataset
+    FULL_DATASET: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/other/neural_network/pima-indians-diabetes.data.csv"
+    # Partial dataset
     ONE_CLIENT_DATASET: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_small.csv"
+    
     # Two clients
     # Both have partial data sets.
     # Equal size, small
@@ -75,10 +76,10 @@ class OneClientTestCase1( WorkerTestGroup ):
 
         lr: float = 0.001
 
-        w: woker_tofino.Worker = woker_tofino.Worker( lr, logging.DEBUG )
+        w: woker_tofino.Worker = woker_tofino.Worker( lr, logging.INFO )
         w.config_receiver( self.ig_port )
         w.build_model()
-        w.load_data( OneClientTestCase1.ONE_CLIENT_DATASET, OneClientTestCase1.ONE_CLIENT_DATASET )
+        w.load_data( OneClientTestCase1.FULL_DATASET, OneClientTestCase1.FULL_DATASET )
 
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
         w.training( self.ig_port )

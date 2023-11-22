@@ -24,12 +24,15 @@ __version__ = "1.0"
 
 class Receiver( threading.Thread ):
     def __init__(
-            self, prn: Callable = None, ll: int = logging.INFO
+            self, prn: Callable = None, 
+            stop_filter: Callable = None,
+            ll: int = logging.INFO
     ) -> None:
         super().__init__()
 
         self.iface: str = None
         self.prn: Callable = prn
+        self.stop_filter: Callable = stop_filter
 
         self.l: logging.Logger = my_logging.get_logger( ll )
 
@@ -43,11 +46,13 @@ class Receiver( threading.Thread ):
         sys.stdout.flush()
         self.l.info( "sniffing on %s" % self.iface )
 
+    # TODO: bvm2 - inbound, tofino - outbound and inbound.
     # https://stackoverflow.com/questions/24664893/python-scapy-sniff-only-incoming-packets/75405277#75405277
+    # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sniff
     def run( self ) -> None:
         """
         Only sniff incoming pkts.
         """
         self.l.info( "sniffing on %s" % self.iface )
         # scapy.all.sniff( iface = self.iface, filter = "inbound", prn = lambda x: self.prn( x ) )
-        scapy.all.sniff( iface = self.iface, prn = lambda x: self.prn( x ) )
+        scapy.all.sniff( iface = self.iface, prn = lambda x: self.prn( x ), stop_filter = self.stop_filter )

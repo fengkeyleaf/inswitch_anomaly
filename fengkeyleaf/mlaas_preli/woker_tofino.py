@@ -103,7 +103,8 @@ class Worker( worker.Worker ):
         @param p: Received pkt from the switch.
         @rtype: None
         """
-        # print( p.show2() )
+        # multicast pkts will be considered as incoming pkts in tofino,
+        # pkts with numberOfWorker > 0 are outcoming ones.
         if mlaas_pkt_tofino.MlaasTofinoPacket not in p or p.numberOfWorker <= 0:
             return
 

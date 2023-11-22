@@ -56,6 +56,7 @@ control WorkerCount(
     // Assume that worker count == grad count,
     // and increment grad count even if the worker doesn't provide the grad, 0 by default.
     
+    // Need to guarantee that count must be positive after renewing $ of worker field.
     Register<bit<16>, pool_index_t>( POOL_SIZE, 0 ) C; // Worker count
     RegisterAction<bit<16>, pool_index_t, bit<16>>( reg = C ) update_count = {
         void apply( inout bit<16> v, out bit<16> rv ) {

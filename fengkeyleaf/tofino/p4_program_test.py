@@ -54,6 +54,7 @@ import logging
 import grpc
 import pdb
 import copy
+from typing import List
 
 ######### PTF modules for BFRuntime Client Library APIs #######
 import ptf
@@ -103,48 +104,50 @@ class P4ProgramTest( BfRuntimeTest ):
     #     ipv4_host
     #     ipv4_lpm
     def setUp( self, tableSetUp = None ):
-        self.client_id = 0
+        self.client_id: int = 0
 
         # Use your own program name below
-        self.p4_name = test_param_get( 'p4_name', '' )
+        self.p4_name: str = test_param_get( 'p4_name', '' )
 
-        self.dev = 0
-        self.dev_tgt = gc.Target( self.dev, pipe_id = 0xFFFF )
+        self.dev: int = 0
+        self.dev_tgt: bfrt_grpc.client.Target = gc.Target( self.dev, pipe_id = 0xFFFF )
 
-        print( '\n' )
-        print( 'Test Setup' )
-        print( '==========' )
+        self.l.info( "" )
+        self.l.info( 'Test Setup' )
+        self.l.info( '==========' )
 
         BfRuntimeTest.setUp( self, self.client_id, self.p4_name )
 
         # This is the simple case when you run only one program on the target.
         # Otherwise, you might have to retrieve multiple bfrt_info objects and
         # in that case you will need to specify program name as a parameter
-        self.bfrt_info = self.interface.bfrt_info_get()
+        self.bfrt_info: bfrt_grpc.client._BfRtInfo = self.interface.bfrt_info_get()
 
-        print( '    Connected to Device: {}, Program: {}, ClientId: {}'.format(
+        self.l.info( 'Connected to Device: {}, Program: {}, ClientId: {}'.format(
             self.dev, self.p4_name, self.client_id ) )
 
         # Create a list of all ports available on the device
-        self.swports = [ ]
+        self.swports: List[ int ] = [ ]
 
         for (device, port, ifname) in ptf.config[ 'interfaces' ]:
             self.swports.append( port )
         self.swports.sort()
         # print('Interfaces:', ptf.config['interfaces'])
-        print( '    SWPorts:', self.swports )
+        self.l.info( 'SWPorts:%s' % self.swports )
 
         # Understand what are we running on
-        self.arch = test_param_get( 'arch' )
-        self.target = test_param_get( 'target' )
+        self.arch: str = test_param_get( 'arch' )
+        self.target: str = test_param_get( 'target' )
 
         if self.arch == 'tofino':
             self.dev_prefix = 'tf1'
+            print( type( self.dev_prefix ) )
             self.dev_config = {
                 'num_pipes': 4,
                 'eth_cpu_port_list': [ 64, 65, 66, 67 ],
                 'pcie_cpu_port': 320
             }
+            print( type( self.dev_config ) )
         elif self.arch == 'tofino2':
             self.dev_prefix = 'tf2'
             self.dev_config = {
@@ -155,11 +158,13 @@ class P4ProgramTest( BfRuntimeTest ):
 
         try:
             self.dev_conf_tbl = self.bfrt_info.table_get( 'device_configuration' )
+            print( type( self.dev_conf_tbl ) )
             conf_tbl_prefix = self.dev_conf_tbl.info.name.split( '.' )[ 0 ]
+            print( type( self.dev_conf_tbl ) )
 
             # Check that there is no mismatch
             if conf_tbl_prefix != self.dev_prefix:
-                print( """
+                self.l.error( """
                       ERROR: You requested to run the test on '{}',
                              but the device {} only has '{}' tables in it.
 
@@ -174,6 +179,7 @@ class P4ProgramTest( BfRuntimeTest ):
 
             # Get the device configuration (default entry)
             resp = self.dev_conf_tbl.default_entry_get( self.dev_tgt )
+            print( type( resp ) )
             for data, _ in resp:
                 self.dev_config = data.to_dict()
                 break
@@ -184,7 +190,9 @@ class P4ProgramTest( BfRuntimeTest ):
         #
         # This is a couple of convenient shortcuts, but you can add more
         self.cpu_eth_port = self.dev_config[ 'eth_cpu_port_list' ][ 0 ]
+        print( type( self.cpu_eth_port ) )
         self.cpu_pcie_port = self.dev_config[ 'pcie_cpu_port' ]
+        print( type( self.cpu_pcie_port ) )
 
         # print('Device Configuration:')
         # for k in self.dev_config:
@@ -194,7 +202,7 @@ class P4ProgramTest( BfRuntimeTest ):
         # for common setup. For example, we can have our tables and annotations
         # ready
 
-        self.tables = [ ]
+        self.tables: List = []
 
         # The function table_setup() can be passed in to perform the
         # program-specific test customization as described below
@@ -224,9 +232,9 @@ class P4ProgramTest( BfRuntimeTest ):
     # Use tearDown() method to return the DUT to the initial state by cleaning
     # all the configuration and clearing up the connection
     def tearDown( self ):
-        print( '\n' )
-        print( 'Test TearDown:' )
-        print( '==============' )
+        self.l.info( "" )
+        self.l.info( 'Test TearDown:' )
+        self.l.info( '==============' )
 
         self.cleanUp()
 
@@ -236,13 +244,13 @@ class P4ProgramTest( BfRuntimeTest ):
     # Use Cleanup Method to clear the tables before and after the test starts
     # (the latter is done as a part of tearDown()
     def cleanUp( self ):
-        print( '\n' )
-        print( 'Table Cleanup:' )
-        print( '==============' )
+        self.l.info( "" )
+        self.l.info( 'Table Cleanup:' )
+        self.l.info( '==============' )
 
         try:
             for t in self.tables:
-                print( '  Clearing Table {}'.format( t.info.name_get() ) )
+                self.l.info( 'Clearing Table {}'.format( t.info.name_get() ) )
 
                 # Empty list of keys means 'all entries'
                 t.entry_del( self.dev_tgt, [ ] )
@@ -253,7 +261,7 @@ class P4ProgramTest( BfRuntimeTest ):
                 except:
                     pass
         except Exception as e:
-            print( 'Error cleaning up: {}'.format( e ) )
+            self.l.error( 'Error cleaning up: {}'.format( e ) )
 
     #
     # This is a simple helper method that takes a list of entries and programs
@@ -269,8 +277,8 @@ class P4ProgramTest( BfRuntimeTest ):
         if target is None:
             target = self.dev_tgt
 
-        key_list = [ ]
-        data_list = [ ]
+        key_list = []
+        data_list = []
         for k, a, d in entries:
             key_list.append( table.make_key( [ gc.KeyTuple( *f ) for f in k ] ) )
             data_list.append( table.make_data( [ gc.DataTuple( *p ) for p in d ], a ) )
