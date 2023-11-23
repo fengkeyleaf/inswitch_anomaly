@@ -107,6 +107,7 @@ class MlaasBaseProgramTest( p4_program_test.P4ProgramTest ):
         #     MULTICAST_LAG_ID = [], DEV_PORT = [ 1, 2 ]
         # ).push()
 
+        self.l.info( "Adding multicase group:\n==========" )
         # Ptf code
         no_mod_node_id: int = tu.test_param_get( "no_mod_node_id", 105 )
         no_mod_rid: int = tu.test_param_get( "no_mod_rid", 5 )

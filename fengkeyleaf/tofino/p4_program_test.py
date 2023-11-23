@@ -112,9 +112,7 @@ class P4ProgramTest( BfRuntimeTest ):
         self.dev: int = 0
         self.dev_tgt: bfrt_grpc.client.Target = gc.Target( self.dev, pipe_id = 0xFFFF )
 
-        self.l.info( "" )
-        self.l.info( 'Test Setup' )
-        self.l.info( '==========' )
+        self.l.info( '\nTest Setup\n==========' )
 
         BfRuntimeTest.setUp( self, self.client_id, self.p4_name )
 
@@ -232,9 +230,7 @@ class P4ProgramTest( BfRuntimeTest ):
     # Use tearDown() method to return the DUT to the initial state by cleaning
     # all the configuration and clearing up the connection
     def tearDown( self ):
-        self.l.info( "" )
-        self.l.info( 'Test TearDown:' )
-        self.l.info( '==============' )
+        self.l.info( '\nTest TearDown:\n==============' )
 
         self.cleanUp()
 
@@ -244,9 +240,7 @@ class P4ProgramTest( BfRuntimeTest ):
     # Use Cleanup Method to clear the tables before and after the test starts
     # (the latter is done as a part of tearDown()
     def cleanUp( self ):
-        self.l.info( "" )
-        self.l.info( 'Table Cleanup:' )
-        self.l.info( '==============' )
+        self.l.info( '\nTable Cleanup:\n==============' )
 
         try:
             for t in self.tables:
