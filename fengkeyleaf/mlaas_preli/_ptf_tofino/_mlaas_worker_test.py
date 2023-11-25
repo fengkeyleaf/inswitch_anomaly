@@ -72,11 +72,19 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
     # f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
     
     @staticmethod
-    def init_worker( tf: str, vf: str, p: int ) -> woker_tofino.Worker:
-        w: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
+    def init_worker( tf: str, vf: str, p: int, n: str ) -> woker_tofino.Worker:
+        """
+
+        @param tf: training file path
+        @param vf: validation file path
+        @param p: sending port
+        @param n: worker name
+        @return:
+        """
+        w: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, n, logging.INFO )
         w.config_receiver( p )
         w.build_model()
-        w.load_data( OneClientTestCase1.FULL_DATASET, OneClientTestCase1.FULL_DATASET )
+        w.load_data( tf, vf )
 
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
         return w
@@ -87,7 +95,7 @@ class OneClientTestCase1( WorkerTestGroup ):
     def runTest( self ) -> None:
         self._multicast_group_setup()
 
-        w: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
+        w: woker_tofino.Worker = woker_tofino.Worker( lr = OneClientTestCase1.LR, ll = logging.INFO )
         w.config_receiver( self.ig_port )
         w.build_model()
         w.load_data( OneClientTestCase1.FULL_DATASET, OneClientTestCase1.FULL_DATASET )
@@ -102,20 +110,20 @@ class TwoClientsTestCase2( WorkerTestGroup ):
     def runTest( self ) -> None:
         self._multicast_group_setup()
 
-        self.l.info( "Initlizing 1st worker." )
+        self.l.info( "Initializing 1st worker." )
         w1: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
             TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
-            self.ig_port
+            self.ig_port, "1st worker"
         )
         w1.set_sen_port( self.ig_port )
         w1.start()
 
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )
 
-        self.l.info( "Initlizing 2nd worker." )
+        self.l.info( "Initializing 2nd worker." )
         w2: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
             TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
-            self.eg_port
+            self.eg_port, "2nd worker"
         )
         w2.set_sen_port( self.eg_port )
         w2.start()

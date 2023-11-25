@@ -26,8 +26,11 @@ __version__ = "1.0"
 
 
 class Worker( worker.Worker ):
-    def __init__( self, lr: float, ll: int = logging.INFO ) -> None:
-        super().__init__( lr, ll )
+    def __init__(
+            self, lr: float,
+            name: str = "Default worker bmv2 name", ll: int = logging.INFO
+    ) -> None:
+        super().__init__( lr, name, ll )
         mlaas_pkt.binding()
 
     """

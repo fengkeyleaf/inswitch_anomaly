@@ -86,8 +86,14 @@ class Worker( threading.Thread ):
             # https://scapy.readthedocs.io/en/latest/api/scapy.packet.html#scapy.packet.Packet.show2
             return p.show2( dump = True )
 
-    def __init__( self, lr: float, ll: int = logging.INFO ) -> None:
+    def __init__(
+            self, lr: float,
+            name: str = "Default worker name", ll: int = logging.INFO
+    ) -> None:
         super().__init__()
+
+        # Info setting
+        self.name: str = name
 
         # Logging
         self.l: logging.Logger = my_logging.get_logger( ll )
@@ -182,7 +188,7 @@ class Worker( threading.Thread ):
         self.opti = optim.SGD( self.model.parameters(), self.lr )
 
     def training( self, ig_port: int ) -> None:
-        self.l.info( "Started traininng" )
+        self.l.info( self.name + ": Started training" )
 
         n_epochs: int = 30
         batch_size: int = 10
@@ -203,7 +209,7 @@ class Worker( threading.Thread ):
                 # self.opti.step()
                 self._manually_update_params( ig_port )
 
-            self.l.info( f'Finished epoch {epoch}, latest loss {loss}' )
+            self.l.info( f"{self.name}: Finished epoch {epoch}, latest loss {loss}" )
 
     # https://pytorch.org/docs/stable/generated/torch.clone.html#torch.clone
     def _manually_update_params( self, ig_port: int ) -> None:
@@ -286,4 +292,4 @@ class Worker( threading.Thread ):
             y_pred = self.model( self.X_valid )
 
         accuracy = ( y_pred.round() == self.y_valid ).float().mean()
-        self.l.info( f"Accuracy {accuracy}" )
+        self.l.info( f"{self.name}: Accuracy {accuracy}" )
