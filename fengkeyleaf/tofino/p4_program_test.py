@@ -54,7 +54,7 @@ import logging
 import grpc
 import pdb
 import copy
-from typing import List
+from typing import List, Dict, Any, Generator
 
 ######### PTF modules for BFRuntime Client Library APIs #######
 import ptf
@@ -138,14 +138,12 @@ class P4ProgramTest( BfRuntimeTest ):
         self.target: str = test_param_get( 'target' )
 
         if self.arch == 'tofino':
-            self.dev_prefix = 'tf1'
-            print( type( self.dev_prefix ) )
-            self.dev_config = {
+            self.dev_prefix: str = 'tf1'
+            self.dev_config: Dict[ str, Any ] = {
                 'num_pipes': 4,
                 'eth_cpu_port_list': [ 64, 65, 66, 67 ],
                 'pcie_cpu_port': 320
             }
-            print( type( self.dev_config ) )
         elif self.arch == 'tofino2':
             self.dev_prefix = 'tf2'
             self.dev_config = {
@@ -155,10 +153,8 @@ class P4ProgramTest( BfRuntimeTest ):
             }
 
         try:
-            self.dev_conf_tbl = self.bfrt_info.table_get( 'device_configuration' )
-            print( type( self.dev_conf_tbl ) )
-            conf_tbl_prefix = self.dev_conf_tbl.info.name.split( '.' )[ 0 ]
-            print( type( self.dev_conf_tbl ) )
+            self.dev_conf_tbl: bfrt_grpc.client._Table = self.bfrt_info.table_get( 'device_configuration' )
+            conf_tbl_prefix: bfrt_grpc.client._Table = self.dev_conf_tbl.info.name.split( '.' )[ 0 ]
 
             # Check that there is no mismatch
             if conf_tbl_prefix != self.dev_prefix:
@@ -176,8 +172,7 @@ class P4ProgramTest( BfRuntimeTest ):
                 quit()
 
             # Get the device configuration (default entry)
-            resp = self.dev_conf_tbl.default_entry_get( self.dev_tgt )
-            print( type( resp ) )
+            resp: Generator = self.dev_conf_tbl.default_entry_get( self.dev_tgt )
             for data, _ in resp:
                 self.dev_config = data.to_dict()
                 break
@@ -187,10 +182,8 @@ class P4ProgramTest( BfRuntimeTest ):
 
         #
         # This is a couple of convenient shortcuts, but you can add more
-        self.cpu_eth_port = self.dev_config[ 'eth_cpu_port_list' ][ 0 ]
-        print( type( self.cpu_eth_port ) )
-        self.cpu_pcie_port = self.dev_config[ 'pcie_cpu_port' ]
-        print( type( self.cpu_pcie_port ) )
+        self.cpu_eth_port: int = self.dev_config[ 'eth_cpu_port_list' ][ 0 ]
+        self.cpu_pcie_port: int = self.dev_config[ 'pcie_cpu_port' ]
 
         # print('Device Configuration:')
         # for k in self.dev_config:
@@ -276,6 +269,8 @@ class P4ProgramTest( BfRuntimeTest ):
         for k, a, d in entries:
             key_list.append( table.make_key( [ gc.KeyTuple( *f ) for f in k ] ) )
             data_list.append( table.make_data( [ gc.DataTuple( *p ) for p in d ], a ) )
+        print( type( key_list[ 0 ] ) )
+        print( type( data_list[ 0 ] ) )
         table.entry_add( target, key_list, data_list )
 
 #

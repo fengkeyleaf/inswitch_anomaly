@@ -25,7 +25,6 @@
 
 import logging
 from time import sleep
-import os
 
 # Called by a program from the working directory.
 """
@@ -46,6 +45,8 @@ __version__ = "1.0"
 
 
 class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
+    LR: float = 0.001
+
     # Using absolute path here.
     # Replace with your file paths before running the ptf test.
 
@@ -58,15 +59,25 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
     # Two clients
     # Both have partial data sets.
     # Equal size, small
-    # f = "./fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/small/pima-indians-diabetes.data_part1.csv"
-    # f = "./fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/small/pima-indians-diabetes.data_part2.csv"
+    TWO_CLIENT_SMALL_EQUAL_DATASET1: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/small/pima-indians-diabetes.data_part1.csv"
+    TWO_CLIENT_SMALL_EQUAL_DATASET2: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/small/pima-indians-diabetes.data_part2.csv"
     # Normal
-    # f1: str = "./fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part1.csv"
-    # f2: str = "./fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part2.csv"
+    # f1: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part1.csv"
+    # f2: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part2.csv"
     # Inequal size
     # f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part1.csv"
     # f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
-    pass
+    
+    @staticmethod
+    def initi_worker( tf: str, vf: str, p: int ) -> woker_tofino.Worker:
+        w: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
+        w.config_receiver( p )
+        w.build_model()
+        w.load_data( OneClientTestCase1.FULL_DATASET, OneClientTestCase1.FULL_DATASET )
+
+        sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
+        
+
 
 
 # @tu.disabled
@@ -74,9 +85,7 @@ class OneClientTestCase1( WorkerTestGroup ):
     def runTest( self ) -> None:
         self._multicast_group_setup()
 
-        lr: float = 0.001
-
-        w: woker_tofino.Worker = woker_tofino.Worker( lr, logging.INFO )
+        w: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
         w.config_receiver( self.ig_port )
         w.build_model()
         w.load_data( OneClientTestCase1.FULL_DATASET, OneClientTestCase1.FULL_DATASET )
@@ -84,3 +93,17 @@ class OneClientTestCase1( WorkerTestGroup ):
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
         w.training( self.ig_port )
         w.evaluate()
+
+
+class TwoClientsTestCase2( WorkerTestGroup ):
+    def runTest( self ) -> None:
+        self._multicast_group_setup()
+
+        w1: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
+        w1.config_receiver( self.ig_port )
+        w1.build_model()
+        w1.load_data( OneClientTestCase1.TWO_CLIENT_SMALL_EQUAL_DATASET1, OneClientTestCase1.FULL_DATASET )
+
+        sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
+        w1.training( self.ig_port )
+        w1.evaluate()
