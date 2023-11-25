@@ -69,15 +69,14 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
     # f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
     
     @staticmethod
-    def initi_worker( tf: str, vf: str, p: int ) -> woker_tofino.Worker:
+    def init_worker( tf: str, vf: str, p: int ) -> woker_tofino.Worker:
         w: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
         w.config_receiver( p )
         w.build_model()
         w.load_data( OneClientTestCase1.FULL_DATASET, OneClientTestCase1.FULL_DATASET )
 
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
-        
-
+        return w
 
 
 # @tu.disabled
@@ -99,11 +98,19 @@ class TwoClientsTestCase2( WorkerTestGroup ):
     def runTest( self ) -> None:
         self._multicast_group_setup()
 
-        w1: woker_tofino.Worker = woker_tofino.Worker( OneClientTestCase1.LR, logging.INFO )
-        w1.config_receiver( self.ig_port )
-        w1.build_model()
-        w1.load_data( OneClientTestCase1.TWO_CLIENT_SMALL_EQUAL_DATASET1, OneClientTestCase1.FULL_DATASET )
+        w1: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
+            TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
+            self.ig_port
+        )
+        w1.set_sen_port( self.ig_port )
+        w1.start()
 
-        sleep( woker_tofino.Worker.SETUP_WAITING_TIME )  # Wait for the receiver to initialize.
-        w1.training( self.ig_port )
-        w1.evaluate()
+        sleep( woker_tofino.Worker.SETUP_WAITING_TIME )
+
+        w2: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
+            TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
+            self.eg_port
+        )
+        w2.set_sen_port( self.eg_port )
+        w2.start()
+

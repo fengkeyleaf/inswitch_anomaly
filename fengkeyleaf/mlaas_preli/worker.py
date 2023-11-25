@@ -7,8 +7,9 @@ import logging
 import socket
 import math
 import struct
-from time import sleep
+import threading
 from typing import Tuple, Dict
+
 import numpy as np
 # pyTorch imports
 import torch
@@ -35,7 +36,7 @@ __version__ = "1.0"
 
 # Reference material: https://www.usenix.org/conference/nsdi21/presentation/sapio
 @annotations.abstract_class
-class Worker:
+class Worker( threading.Thread ):
     """
     Worker side in SwitchML
     """

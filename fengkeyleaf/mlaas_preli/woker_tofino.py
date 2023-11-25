@@ -30,6 +30,8 @@ class Worker( worker.Worker ):
         super().__init__( lr, ll )
         mlaas_pkt_tofino.binding()
 
+        self._sen_port: int = -1
+
     @annotations.override
     def config_receiver( self, p: int ) -> None:
         self.rec = receiver.Receiver( self._process_rec_pkt )
@@ -111,3 +113,16 @@ class Worker( worker.Worker ):
         self.l.debug( "Rec:" + p.show2( dump = True ) )
         assert self.res is None
         self.res = ( p.idx, p.v, p.numberOfWorker )
+
+    def set_sen_port( self, p: int ) -> None:
+        """
+        Set sending port when using the worker as a thread.
+        @param p:
+        """
+        self._sen_port = p
+
+    @annotations.override
+    def run( self ) -> None:
+        assert self._sen_port >= 0
+        self.training( self._sen_port )
+        self.evaluate()

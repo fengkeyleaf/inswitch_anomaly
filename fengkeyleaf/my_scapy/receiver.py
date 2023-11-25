@@ -18,6 +18,7 @@ author: @Xiaoyu Tongyang, fengkeyleaf@gmail.com
 """
 
 from fengkeyleaf.logging import my_logging
+from fengkeyleaf import annotations
 
 __version__ = "1.0"
 
@@ -49,6 +50,7 @@ class Receiver( threading.Thread ):
     # TODO: bvm2 - inbound, tofino - outbound and inbound.
     # https://stackoverflow.com/questions/24664893/python-scapy-sniff-only-incoming-packets/75405277#75405277
     # https://scapy.readthedocs.io/en/latest/api/scapy.sendrecv.html#scapy.sendrecv.sniff
+    @annotations.override
     def run( self ) -> None:
         """
         Only sniff incoming pkts.
