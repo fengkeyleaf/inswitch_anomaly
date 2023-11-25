@@ -87,6 +87,8 @@ class Worker( threading.Thread ):
             return p.show2( dump = True )
 
     def __init__( self, lr: float, ll: int = logging.INFO ) -> None:
+        super().__init__()
+
         # Logging
         self.l: logging.Logger = my_logging.get_logger( ll )
 

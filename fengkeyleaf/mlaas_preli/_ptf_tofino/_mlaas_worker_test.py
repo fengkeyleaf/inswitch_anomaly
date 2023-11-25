@@ -26,6 +26,9 @@
 import logging
 from time import sleep
 
+# ptf imports
+import ptf.testutils as tu
+
 # Called by a program from the working directory.
 """
 file:
@@ -79,7 +82,7 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
         return w
 
 
-# @tu.disabled
+@tu.disabled
 class OneClientTestCase1( WorkerTestGroup ):
     def runTest( self ) -> None:
         self._multicast_group_setup()
@@ -94,10 +97,12 @@ class OneClientTestCase1( WorkerTestGroup ):
         w.evaluate()
 
 
+# @tu.disabled
 class TwoClientsTestCase2( WorkerTestGroup ):
     def runTest( self ) -> None:
         self._multicast_group_setup()
 
+        self.l.info( "Initlizing 1st worker." )
         w1: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
             TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
             self.ig_port
@@ -107,6 +112,7 @@ class TwoClientsTestCase2( WorkerTestGroup ):
 
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )
 
+        self.l.info( "Initlizing 2nd worker." )
         w2: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
             TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
             self.eg_port
