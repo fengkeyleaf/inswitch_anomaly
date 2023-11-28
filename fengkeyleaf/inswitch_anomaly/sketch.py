@@ -160,7 +160,7 @@ class Sketch:
         """
         Increment TLS for all IPs.
         """
-        # Increment every element in T by 1, as well as c.
+        # Increment the TLS of every tracked ip in s.
         for k in self.S.keys():
             self.S[ k ][ TLS_STR ] += 1
         for k in self.D.keys():
@@ -169,7 +169,7 @@ class Sketch:
 
         # if this sketch has limitation and c >= 1000
         if self.l > 0 and self.c >= Sketch.TLS_THRESHOLD:
-            # then Reset every element in T to 0, as well as c.
+            # then Reset the TLS of every tracked ip to 0, as well as c.
             for k in self.S.keys():
                 self.S[ k ][ TLS_STR ] = 0
             for k in self.D.keys():

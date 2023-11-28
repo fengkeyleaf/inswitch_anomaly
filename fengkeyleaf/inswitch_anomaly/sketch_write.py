@@ -116,13 +116,13 @@ class SketchWriter:
 
         # s <- sketch without the limitation threshold.
         s: sketch.Sketch = sketch.Sketch( self.lim )
-        # D <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
+        # SD <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
 
         L: List[ int ] = []
         # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.iterrows.html
         # for every pkt, p, in P
         for ( idx, _ ) in df.iterrows():
-            # Increment the TLS of every tracked ip in s.
+            # L = SKETCHCLASSIFICATION( p )
             # None of element in the sketch right now, so no effect execute this step first.
             # s.post_process()
 
@@ -138,7 +138,7 @@ class SketchWriter:
                 L.append( idx )
 
         return df.drop( L )
-        # return D
+        # return SD
 
     def _write_balanced( self, df: pandas.DataFrame, f: str ) -> None:
         """
@@ -235,7 +235,7 @@ class SketchWriter:
         # if ifAddGood or ifAddBad
         # IF START
         if self.is_not_balancing or ( if_add_good or if_add_bad ):
-            # then d <- [
+            # then D <- [
             #   			[ srcCount in s, srcTL in s, dstCount in s, dstTLS in s ],
             #               label
             #   	    ]

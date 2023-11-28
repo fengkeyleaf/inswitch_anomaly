@@ -77,20 +77,37 @@ REPLACE( i, a )
 
 ```java
 // Python Version
-// Entry algorithm
-Algorithm SKETCHCLASSIFICATION( p )
-Input. Incomming packet, p.
-Output. List of feature values extracted from the sketch based on the packet, p.
-Initialize the following global variables:
+// Global algorithm ( Data sampling )
+Algorithm DATASAMPLING( P )
+Input. P is input data set to generate a sketch csv file. Assuming we have labled data.
+Output. Balanced sketch csv file to train a decision tree.
+gdp <- gc / len( P ) // good Drop Percent
+bdp <- bc / len( P ) // bad Drop Percent
+s <- sketch without the limitation threshold.
+Initialize the following global variables for the sketch s:	
 	c <- 0 // Global IP counter.
     l <- 0 // non-positive, indicating that this sketch has limitation.
 	S <- Array of size of n, each element in it is a dict[ src ip, its info ].
 	D <- Array of size of n, each element in it is a dict[ dst ip, its info ].
+SD <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
+for every pkt, p, in P
+    L = SKETCHCLASSIFICATION( p )
+    ifAddGood <- p is a good one and randDoube() > gdp
+    ifAddBad <- p is a bad one and randDoube() > bdp
+    if ifAddGood or ifAddBad
+        then SD <- [ *L, label ]
+return SD
+
+// Sketching algorithm
+Algorithm SKETCHCLASSIFICATION( p )
+Input. Incomming packet, p.
+Output. List of feature values extracted from the sketch based on the packet, p.
+// Record p's srcIP and p's dstIP in s.
 ADD( S, p.header.ipv4.srcAddr )
 ADD( D, p.header.ipv4.dstAddr )
-Increment every element in T by 1, as well as c.
+Increment the TLS of every tracked ip in s.
 if l > 0 and c >= 1000
-    then Reset every element in T to 0, as well as c.
+    then Reset the TLS of every tracked ip to 0, as well as c.
 return [ p's srcCount, p's srcTLS, p's dstCount, p's dstTLS ]
     
 Algorithm ADD( dic, ip )
