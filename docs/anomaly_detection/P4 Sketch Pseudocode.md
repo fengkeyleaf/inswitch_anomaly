@@ -79,17 +79,17 @@ REPLACE( i, a )
 // Python Version
 // Global algorithm ( Data sampling )
 Algorithm DATASAMPLING( P )
-Input. P is input data set to generate a sketch csv file. Assuming we have labled data.
+Input. P is an input data set to generate a sketch csv file. Assuming we have labled data.
 Output. Balanced sketch csv file to train a decision tree.
-gdp <- gc / len( P ) // good Drop Percent
-bdp <- bc / len( P ) // bad Drop Percent
+gdp <- gc / len( P ) // Good Drop Percent
+bdp <- bc / len( P ) // Bad Drop Percent
 s <- sketch without the limitation threshold.
 Initialize the following global variables for the sketch s:	
 	c <- 0 // Global IP counter.
-    l <- 0 // non-positive, indicating that this sketch has limitation.
+    l <- 0 // Non-positive, indicating that this sketch has limitation.
 	S <- Array of size of n, each element in it is a dict[ src ip, its info ].
 	D <- Array of size of n, each element in it is a dict[ dst ip, its info ].
-SD <- list of sketch data formatted as [ [ srcCount, srcTLS, dstCount, dstTLS ], label ]
+SD <- list of sketch data formatted as [ [ srcCount, srcLTS, dstCount, dstLTS ], label ]
 for every pkt, p, in P
     L = SKETCHCLASSIFICATION( p )
     ifAddGood <- p is a good one and randDoube() > gdp
@@ -105,7 +105,7 @@ Output. List of feature values extracted from the sketch based on the packet, p.
 // Record p's srcIP and p's dstIP in s.
 ADD( S, p.header.ipv4.srcAddr )
 ADD( D, p.header.ipv4.dstAddr )
-Increment the TLS of every tracked ip in s.
+Increment the LTS of every tracked ip in s.
 if l > 0 and c >= 1000
     then Reset the TLS of every tracked ip to 0, as well as c.
 return [ p's srcCount, p's srcTLS, p's dstCount, p's dstTLS ]
