@@ -37,14 +37,6 @@ from fengkeyleaf.ml.api import (
     f1_score
 )
 
-from fengkeyleaf.mlaas_preli import (
-    mlaas_pkt,
-    mlaas_pkt_tofino,
-    worker,
-    woker_tofino,
-    worker_bmv2
-)
-
 from fengkeyleaf.my_pandas.api import (
     my_dataframe
 )
@@ -52,10 +44,6 @@ from fengkeyleaf.my_pandas.api import (
 from fengkeyleaf.my_scapy.api import (
     sender,
     receiver
-)
-
-from fengkeyleaf.tofino.api import (
-    p4_program_test
 )
 
 from fengkeyleaf.utils.api import (
