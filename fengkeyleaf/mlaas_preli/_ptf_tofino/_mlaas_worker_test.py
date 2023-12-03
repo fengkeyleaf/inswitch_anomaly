@@ -65,8 +65,8 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
     TWO_CLIENT_SMALL_EQUAL_DATASET1: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/small/pima-indians-diabetes.data_part1.csv"
     TWO_CLIENT_SMALL_EQUAL_DATASET2: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/small/pima-indians-diabetes.data_part2.csv"
     # Normal
-    # f1: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part1.csv"
-    # f2: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part2.csv"
+    TWO_CLIENT_NORMAL_EQUAL_DATASET1: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part1.csv"
+    TWO_CLIENT_NORMAL_EQUAL_DATASET2: str = "/root/inswitch_anomaly/inswitch_anomaly/fengkeyleaf/mlaas_preli/test_data/two_clients_equal_size/pima-indians-diabetes.data_part2.csv"
     # Inequal size
     # f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part1.csv"
     # f = "fengkeyleaf/mlaas_preli/test_data/pima-indians-diabetes.data_part2.csv"
@@ -93,6 +93,11 @@ class WorkerTestGroup( _mlaas_preli.MlaasBaseProgramTest ):
 @tu.disabled
 class OneClientTestCase1( WorkerTestGroup ):
     def runTest( self ) -> None:
+        """
+        Initialize one client to train a DNN with in-network gradient aggregation.
+        One switch, not using threading to start.
+        @return: 
+        """
         self._multicast_group_setup()
 
         w: woker_tofino.Worker = woker_tofino.Worker( lr = OneClientTestCase1.LR, ll = logging.INFO )
@@ -108,22 +113,29 @@ class OneClientTestCase1( WorkerTestGroup ):
 # @tu.disabled
 class TwoClientsTestCase2( WorkerTestGroup ):
     def runTest( self ) -> None:
+        """
+        Initialize two clients to train a shared DNN with in-network gradient aggregation.
+        One switch, using threading to start.
+        @return: 
+        """
         self._multicast_group_setup()
 
-        self.l.info( "Initializing 1st worker." )
+        n1: str = "1st worker"
+        self.l.info( "Initializing " +  n1 )
         w1: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
-            TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
-            self.ig_port, "1st worker"
+            TwoClientsTestCase2.TWO_CLIENT_NORMAL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
+            self.ig_port, n1
         )
         w1.set_sen_port( self.ig_port )
         w1.start()
 
         sleep( woker_tofino.Worker.SETUP_WAITING_TIME )
 
-        self.l.info( "Initializing 2nd worker." )
+        n2: str = "2nd worker"
+        self.l.info( "Initializing " + n2 )
         w2: woker_tofino.Worker = TwoClientsTestCase2.init_worker(
-            TwoClientsTestCase2.TWO_CLIENT_SMALL_EQUAL_DATASET1, TwoClientsTestCase2.FULL_DATASET,
-            self.eg_port, "2nd worker"
+            TwoClientsTestCase2.TWO_CLIENT_NORMAL_EQUAL_DATASET2, TwoClientsTestCase2.FULL_DATASET,
+            self.eg_port, n2
         )
         w2.set_sen_port( self.eg_port )
         w2.start()
