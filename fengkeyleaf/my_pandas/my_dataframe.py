@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import numpy
-import pandas
 from typing import List, Tuple, Dict
 import logging
+
+import numpy
+import pandas
 
 """
 file: .py

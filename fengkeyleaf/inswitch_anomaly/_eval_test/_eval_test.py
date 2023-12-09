@@ -28,7 +28,9 @@ __version__ = "1.0"
 
 
 if __name__ == '__main__':
+    # File path to the input dataset you want to verify with. Must be re-formatted.
     fp: str = "D:/networking/datasets/anomoaly_detection/New folder/re-formatted/UNSW_2018_IoT_Botnet_Dataset_2_reformatted.csv"
+    # Open the json file containing all packet IDs received on host2 to evaluate.
     with open( "./output_sample_2.json", "r" ) as f_json:
         D: Dict = json.load( f_json )
         evaulator.Evaluator().evaluate( fp, D )
